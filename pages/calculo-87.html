@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Função 87 - Proteções Elétricas</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Navegação -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">Proteções Ingeteam</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link">Início</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">Funções de Proteção</a>
+                    <div class="dropdown-content">
+                        <a href="calculo-51.html" class="dropdown-item">Função 51</a>
+                        <a href="calculo-67.html" class="dropdown-item">Função 67</a>
+                        <a href="calculo-21.html" class="dropdown-item">Função 21</a>
+                        <a href="calculo-87.html" class="dropdown-item">Função 87</a>
+                        <a href="calculo-ref.html" class="dropdown-item">Função REF</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="sobre.html" class="nav-link">Sobre</a>
+                </li>
+                <li class="nav-item">
+                    <a href="referencias.html" class="nav-link">Referências</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Função 87 - Proteção Diferencial de Transformador</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Descrição da Função</h5>
+                    <p class="card-text">
+                        A função de proteção 87 é uma proteção diferencial utilizada principalmente em transformadores de potência. 
+                        Ela compara as correntes que entram e saem da zona protegida, atuando quando há uma diferença significativa 
+                        que indica uma falta interna no equipamento.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Parâmetros de Entrada</h5>
+                </div>
+                <div class="card-body">
+                    <form class="calc-form" id="form-87">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="potenciaNominal" class="form-label">Potência Nominal do Transformador (MVA)</label>
+                                    <input type="number" class="form-control" id="potenciaNominal" placeholder="Ex: 30" step="0.1">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="grupoVetorial" class="form-label">Grupo Vetorial</label>
+                                    <select class="form-select" id="grupoVetorial">
+                                        <option value="">Selecione...</option>
+                                        <option value="Dyn1">Dyn1</option>
+                                        <option value="Dyn11">Dyn11</option>
+                                        <option value="YNd1">YNd1</option>
+                                        <option value="YNd11">YNd11</option>
+                                        <option value="YNyn0">YNyn0</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="tensaoPrimario" class="form-label">Tensão Nominal Primário (kV)</label>
+                                    <input type="number" class="form-control" id="tensaoPrimario" placeholder="Ex: 138" step="0.1">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="tensaoSecundario" class="form-label">Tensão Nominal Secundário (kV)</label>
+                                    <input type="number" class="form-control" id="tensaoSecundario" placeholder="Ex: 13.8" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="relacaoTCPrimario" class="form-label">Relação do TC Primário</label>
+                                    <input type="number" class="form-control" id="relacaoTCPrimario" placeholder="Ex: 200/5">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="relacaoTCSecundario" class="form-label">Relação do TC Secundário</label>
+                                    <input type="number" class="form-control" id="relacaoTCSecundario" placeholder="Ex: 1500/5">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="pickupDiferencial" class="form-label">Pickup Diferencial (%)</label>
+                                    <input type="number" class="form-control" id="pickupDiferencial" placeholder="Ex: 20" step="1">
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="slope1" class="form-label">Slope 1 (%)</label>
+                                    <input type="number" class="form-control" id="slope1" placeholder="Ex: 25" step="1">
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="slope2" class="form-label">Slope 2 (%)</label>
+                                    <input type="number" class="form-control" id="slope2" placeholder="Ex: 50" step="1">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="pontoInflexao1" class="form-label">Ponto de Inflexão 1 (pu)</label>
+                                    <input type="number" class="form-control" id="pontoInflexao1" placeholder="Ex: 2" step="0.1">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="pontoInflexao2" class="form-label">Ponto de Inflexão 2 (pu)</label>
+                                    <input type="number" class="form-control" id="pontoInflexao2" placeholder="Ex: 5" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
+                            <button type="submit" class="btn btn-primary">Calcular</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Resultados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="results-area">
+                        <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="text-muted">© <span id="current-year"></span> - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
+        </div>
+    </footer>
+
+    <script>
+        // Atualiza o ano atual no rodapé
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

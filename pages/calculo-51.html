@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Função 51 - Proteções Elétricas</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <!-- Navegação -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">Proteções Ingeteam</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link">Início</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">Funções de Proteção</a>
+                    <div class="dropdown-content">
+                        <a href="calculo-51.html" class="dropdown-item">Função 51</a>
+                        <a href="calculo-67.html" class="dropdown-item">Função 67</a>
+                        <a href="calculo-21.html" class="dropdown-item">Função 21</a>
+                        <a href="calculo-87.html" class="dropdown-item">Função 87</a>
+                        <a href="calculo-ref.html" class="dropdown-item">Função REF</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="sobre.html" class="nav-link">Sobre</a>
+                </li>
+                <li class="nav-item">
+                    <a href="referencias.html" class="nav-link">Referências</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Função 51 - Proteção de Sobrecorrente Temporizada</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Descrição da Função</h5>
+                    <p class="card-text">
+                        A função de proteção 51 é uma proteção de sobrecorrente temporizada que atua quando a corrente 
+                        ultrapassa um valor pré-determinado por um tempo específico. Esta função é amplamente utilizada 
+                        para proteção contra sobrecargas e curtos-circuitos em sistemas elétricos.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">Parâmetros de Entrada</h5>
+                </div>
+                <div class="card-body">
+                    <form class="calc-form" id="form-51">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="correnteNominal" class="form-label">Corrente Nominal (A)</label>
+                                    <input type="number" class="form-control" id="correnteNominal" placeholder="Ex: 100">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="relacaoTC" class="form-label">Relação do TC</label>
+                                    <input type="number" class="form-control" id="relacaoTC" placeholder="Ex: 200/5">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="pickup" class="form-label">Pickup (múltiplo da corrente nominal)</label>
+                                    <input type="number" class="form-control" id="pickup" placeholder="Ex: 1.2" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="curva" class="form-label">Tipo de Curva</label>
+                                    <select class="form-select" id="curva">
+                                        <option value="">Selecione...</option>
+                                        <option value="normalmente-inversa">Normalmente Inversa (IEC)</option>
+                                        <option value="muito-inversa">Muito Inversa (IEC)</option>
+                                        <option value="extremamente-inversa">Extremamente Inversa (IEC)</option>
+                                        <option value="moderadamente-inversa">Moderadamente Inversa (IEEE)</option>
+                                        <option value="muito-inversa-ieee">Muito Inversa (IEEE)</option>
+                                        <option value="extremamente-inversa-ieee">Extremamente Inversa (IEEE)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="dial" class="form-label">Dial de Tempo</label>
+                                    <input type="number" class="form-control" id="dial" placeholder="Ex: 0.5" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="correnteFalta" class="form-label">Corrente de Falta (A)</label>
+                                    <input type="number" class="form-control" id="correnteFalta" placeholder="Ex: 2000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
+                            <button type="submit" class="btn btn-primary">Calcular</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Resultados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="results-area">
+                        <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="text-muted">© <span id="current-year"></span> - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
+        </div>
+    </footer>
+
+    <script>
+        // Atualiza o ano atual no rodapé
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

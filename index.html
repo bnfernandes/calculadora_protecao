@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCC Proteções Elétricas</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Navegação -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="index.html" class="navbar-brand">Proteções Ingeteam</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Início</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">Funções de Proteção</a>
+                    <div class="dropdown-content">
+                        <a href="pages/calculo-51.html" class="dropdown-item">Função 51</a>
+                        <a href="pages/calculo-67.html" class="dropdown-item">Função 67</a>
+                        <a href="pages/calculo-21.html" class="dropdown-item">Função 21</a>
+                        <a href="pages/calculo-87.html" class="dropdown-item">Função 87</a>
+                        <a href="pages/calculo-ref.html" class="dropdown-item">Função REF</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="pages/sobre.html" class="nav-link">Sobre</a>
+                </li>
+                <li class="nav-item">
+                    <a href="pages/referencias.html" class="nav-link">Referências</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Seção de destaque -->
+            <div class="hero-section">
+                <h1 class="hero-title">Cálculo de Proteções Elétricas</h1>
+                <p class="hero-subtitle">Baseado nos equipamentos da família Ingepac EF da Ingeteam</p>
+            </div>
+
+            <div class="row mb-5">
+                <div class="col-6">
+                    <img src="https://www.ingeteam.com/Portals/0/Images/Products/1.1.1.1.1.1.jpg" 
+                         alt="Equipamento Ingepac EF" 
+                         style="max-height: 300px; width: auto; margin: 0 auto; display: block; border-radius: 8px;">
+                </div>
+                <div class="col-6">
+                    <h2 style="color: #e30613;">Trabalho de Conclusão de Curso</h2>
+                    <p class="mb-3">
+                        Este site apresenta ferramentas para cálculo e parametrização das principais funções de proteção 
+                        utilizadas em sistemas elétricos, com foco nos equipamentos da linha Ingepac EF da Ingeteam.
+                    </p>
+                    <p>
+                        Selecione uma das funções de proteção abaixo para acessar sua ferramenta de cálculo específica.
+                    </p>
+                </div>
+            </div>
+            
+            <h3 class="text-center mb-4" style="color: #555;">Funções de Proteção Disponíveis</h3>
+            
+            <div class="row">
+                <div class="col-4">
+                    <div class="card feature-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: #e30613;">Função 51</h5>
+                            <p class="card-text">Proteção de Sobrecorrente Temporizada</p>
+                            <a href="pages/calculo-51.html" class="btn btn-outline">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="card feature-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: #e30613;">Função 67</h5>
+                            <p class="card-text">Proteção Direcional</p>
+                            <a href="pages/calculo-67.html" class="btn btn-outline">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="card feature-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: #e30613;">Função 21</h5>
+                            <p class="card-text">Proteção de Distância</p>
+                            <a href="pages/calculo-21.html" class="btn btn-outline">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-6">
+                    <div class="card feature-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: #e30613;">Função 87</h5>
+                            <p class="card-text">Proteção Diferencial de Transformador</p>
+                            <a href="pages/calculo-87.html" class="btn btn-outline">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6">
+                    <div class="card feature-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: #e30613;">Função REF</h5>
+                            <p class="card-text">Proteção Diferencial de Terra Restrita</p>
+                            <a href="pages/calculo-ref.html" class="btn btn-outline">Acessar</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="text-muted">© <span id="current-year"></span> - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
+        </div>
+    </footer>
+
+    <script>
+        // Atualiza o ano atual no rodapé
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+    <script src="js/main.js"></script>
+</body>
+</html>
