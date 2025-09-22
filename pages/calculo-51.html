@@ -60,59 +60,91 @@
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="correnteNominal" class="form-label">Corrente Nominal (A)</label>
-                                    <input type="number" class="form-control" id="correnteNominal" placeholder="Ex: 100">
+                                    <label for="correntePartida" class="form-label">Corrente de Partida [Asec]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="correntePartida" placeholder="Ex: 5.0" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                    <small class="form-text text-muted">Corrente secundária de arranque</small>
                                 </div>
                             </div>
+
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="relacaoTC" class="form-label">Relação do TC</label>
-                                    <input type="number" class="form-control" id="relacaoTC" placeholder="Ex: 200/5">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="pickup" class="form-label">Pickup (múltiplo da corrente nominal)</label>
-                                    <input type="number" class="form-control" id="pickup" placeholder="Ex: 1.2" step="0.01">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="curva" class="form-label">Tipo de Curva</label>
-                                    <select class="form-select" id="curva">
+                                    <label for="tipoCurva" class="form-label">Tipo de Curva</label>
+                                    <select class="form-select" id="tipoCurva">
                                         <option value="">Selecione...</option>
-                                        <option value="normalmente-inversa">Normalmente Inversa (IEC)</option>
-                                        <option value="muito-inversa">Muito Inversa (IEC)</option>
-                                        <option value="extremamente-inversa">Extremamente Inversa (IEC)</option>
-                                        <option value="moderadamente-inversa">Moderadamente Inversa (IEEE)</option>
-                                        <option value="muito-inversa-ieee">Muito Inversa (IEEE)</option>
-                                        <option value="extremamente-inversa-ieee">Extremamente Inversa (IEEE)</option>
+                                        <option value="ANSI-EI">ANSI-EI Extrema Inversa</option>
+                                        <option value="ANSI-MI">ANSI-MI Muito Inversa</option>
+                                        <option value="ANSI-NI">ANSI-NI Normal Inversa</option>
+                                        <option value="ANSI-MODI">ANSI-MODI Moderadamente Inversa</option>
+                                        <option value="IEC-NI">IEC-NI Normal Inversa</option>
+                                        <option value="IEC-MI">IEC-MI Muito Inversa</option>
+                                        <option value="IEC-EI">IEC-EI Extrema Inversa</option>
+                                        <option value="IEC-IC">IEC-IC Curto Inversa</option>
+                                        <option value="IEC-IL">IEC-IL Longa Inversa</option>
+                                        <option value="IEC-MIEs">IEC-MIEs Muito Inversa especial</option>
+                                        <option value="IEEE-MI">IEEE Moderadamente Inversa</option>
+                                        <option value="IEEE-VI">IEEE Muito Inversa</option>
+                                        <option value="IEEE-EI">IEEE Extremamente Inversa</option>
+                                        <option value="TEMPO-FIXO">Tempo fixo</option>
                                     </select>
                                 </div>
                             </div>
+
                         </div>
                         
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="dial" class="form-label">Dial de Tempo</label>
-                                    <input type="number" class="form-control" id="dial" placeholder="Ex: 0.5" step="0.01">
+                                    <label for="indiceTempo" class="form-label">Índice de Tempo (Multiplicador)</label>
+                                    <input type="number" class="form-control form-control-short" id="indiceTempo" placeholder="Ex: 0.5" step="0.01" min="0.01" max="10">
+                                    <small class="form-text text-muted">Multiplicador da curva característica</small>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="correnteFalta" class="form-label">Corrente de Falta (A)</label>
-                                    <input type="number" class="form-control" id="correnteFalta" placeholder="Ex: 2000">
+                                    <label for="tempoFixoMinimo" class="form-label">Tempo Fixo / Mínimo [ms]</label>
+                                    <div class="input-group">
+
+                                        <input type="number" class="form-control" id="tempoFixoMinimo" placeholder="Ex: 100" step="10">
+                                        <span class="input-group-text">ms</span>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="correnteFalta" class="form-label">Corrente de Falta [Asec]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="correnteFalta" placeholder="Ex: 25.0" step="0.1">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                    <small class="form-text text-muted">Preencha este campo ou o Fator</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="fator" class="form-label">Fator (Corrente de Falta / Arranque)</label>
+                                    <input type="number" class="form-control form-control-short" id="fator" placeholder="Ex: 5.0" step="0.1">
+                                    <small class="form-text text-muted">Preencha este campo ou a Corrente de Falta</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-info-circle"></i> Se ambos os campos "Corrente de Falta" e "Fator" forem preenchidos, o sistema considerará a Corrente de Falta para os cálculos.
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
-                            <button type="submit" class="btn btn-primary">Calcular</button>
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnLimpar">
+                                <i class="fas fa-eraser"></i> Limpar
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="btnCalcular">
+                                <i class="fas fa-calculator"></i> Calcular
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -123,8 +155,22 @@
                     <h5 class="card-title">Resultados</h5>
                 </div>
                 <div class="card-body">
-                    <div class="results-area">
+                    <div class="results-area" id="resultados">
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
+                    </div>
+                    
+                    <!-- Área para equações -->
+                    <div id="equacoes" style="display: none;">
+                        <h6 class="mt-4">Equação Utilizada:</h6>
+                        <div id="equacao-latex" class="text-center p-3" style="background-color: #f8f9fa; border-radius: 5px; margin: 10px 0;"></div>
+                    </div>
+                    
+                    <!-- Área para gráfico -->
+                    <div id="grafico-container" style="display: none;">
+                        <h6 class="mt-4">Curva Característica:</h6>
+                        <div style="position: relative; height: 400px; width: 100%; margin: 20px 0;">
+                            <canvas id="grafico-curva"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -141,7 +187,144 @@
     <script>
         // Atualiza o ano atual no rodapé
         document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        // Interação entre os campos de corrente de falta e fator
+        document.addEventListener('DOMContentLoaded', function() {
+            const correntePartida = document.getElementById('correntePartida');
+            const correnteFalta = document.getElementById('correnteFalta');
+            const fator = document.getElementById('fator');
+            
+            // Quando a corrente de falta é alterada, calcula o fator
+            correnteFalta.addEventListener('input', function() {
+                if (this.value && correntePartida.value) {
+                    fator.value = (parseFloat(this.value) / parseFloat(correntePartida.value)).toFixed(2);
+                }
+            });
+            
+            // Quando o fator é alterado, calcula a corrente de falta
+            fator.addEventListener('input', function() {
+                if (this.value && correntePartida.value) {
+                    correnteFalta.value = (parseFloat(this.value) * parseFloat(correntePartida.value)).toFixed(2);
+                }
+            });
+            
+            // Quando a corrente de partida é alterada e já existe um fator, recalcula a corrente de falta
+            correntePartida.addEventListener('input', function() {
+                if (this.value && fator.value) {
+                    correnteFalta.value = (parseFloat(fator.value) * parseFloat(this.value)).toFixed(2);
+                }
+            });
+            
+            // Botão limpar
+            document.getElementById('btnLimpar').addEventListener('click', function() {
+                document.getElementById('form-51').reset();
+                document.getElementById('resultados').innerHTML = '<p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>';
+                document.getElementById('equacoes').style.display = 'none';
+                document.getElementById('grafico-container').style.display = 'none';
+            });
+            
+            // Formulário de cálculo
+            document.getElementById('form-51').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                try {
+                    // Coleta os dados do formulário
+                    const parametros = {
+                        correntePartida: parseFloat(document.getElementById('correntePartida').value),
+                        tipoCurva: document.getElementById('tipoCurva').value,
+                        indiceTempo: parseFloat(document.getElementById('indiceTempo').value),
+                        tempoFixoMinimo: parseFloat(document.getElementById('tempoFixoMinimo').value) || 0,
+                        correnteFalta: parseFloat(document.getElementById('correnteFalta').value) || null,
+                        fator: parseFloat(document.getElementById('fator').value) || null
+                    };
+                    
+                    // Validações básicas
+                    if (!parametros.correntePartida || parametros.correntePartida <= 0) {
+                        throw new Error('Corrente de partida deve ser maior que zero');
+                    }
+                    
+                    if (!parametros.tipoCurva) {
+                        throw new Error('Selecione um tipo de curva');
+                    }
+                    
+                    if (!parametros.indiceTempo || parametros.indiceTempo <= 0) {
+                        throw new Error('Índice de tempo deve ser maior que zero');
+                    }
+                    
+                    if (!parametros.correnteFalta && !parametros.fator) {
+                        throw new Error('Forneça a corrente de falta ou o fator');
+                    }
+                    
+                    // Executa o cálculo
+                    const resultado = calcularFuncao51(parametros);
+                    
+                    // Exibe os resultados
+                    let html = '<div class="row">';
+                    html += '<div class="col-6">';
+                    html += '<h6>Parâmetros Calculados:</h6>';
+                    html += `<p><strong>Fator (I/Ip):</strong> ${resultado.fatorCalculado.toFixed(3)}</p>`;
+                    html += `<p><strong>Tempo de Atuação:</strong> ${resultado.tempoAtuacao.toFixed(3)} s</p>`;
+                    html += `<p><strong>Corrente de Partida:</strong> ${parametros.correntePartida} A</p>`;
+                    
+                    if (parametros.correnteFalta) {
+                        html += `<p><strong>Corrente de Falta:</strong> ${parametros.correnteFalta} A</p>`;
+                    }
+                    
+                    html += '</div>';
+                    html += '<div class="col-6">';
+                    html += '<h6>Configuração da Proteção:</h6>';
+                    html += `<p><strong>Tipo de Curva:</strong> ${parametros.tipoCurva}</p>`;
+                    html += `<p><strong>Multiplicador (TMS):</strong> ${parametros.indiceTempo}</p>`;
+                    
+                    if (parametros.tempoFixoMinimo > 0) {
+                        html += `<p><strong>Tempo Mínimo:</strong> ${parametros.tempoFixoMinimo} ms</p>`;
+                    }
+                    
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    document.getElementById('resultados').innerHTML = html;
+                    
+                    // Exibe a equação
+                    // const equacaoLatex = formatarEquacaoLatex(parametros.tipoCurva, parametros.indiceTempo);
+                    // document.getElementById('equacao-latex').innerHTML = `$$${equacaoLatex}$$`;
+                    // document.getElementById('equacoes').style.display = 'block';
+                    
+                    // Renderiza a equação com MathJax
+                    // if (window.MathJax) {
+                        // Limpa o conteúdo anterior para garantir a renderização correta
+                    //     document.getElementById("equacao-latex").innerHTML = `$$${equacaoLatex}$$`;
+                    //     MathJax.typesetPromise([document.getElementById("equacao-latex")]);
+                    // }
+                    
+                    // Cria o gráfico
+                    document.getElementById('grafico-container').style.display = 'block';
+                    
+                    // Destroi gráfico anterior se existir
+                    const canvasElement = document.getElementById('grafico-curva');
+                    const existingChart = Chart.getChart(canvasElement);
+                    if (existingChart) {
+                        existingChart.destroy();
+                    }
+                    
+                    // Cria novo gráfico
+                    const pontoAtuacao = {
+                        x: resultado.fatorCalculado,
+                        y: resultado.tempoAtuacao
+                    };
+                    
+                  criarGrafico('grafico-curva', resultado.pontosCurva, resultado);             
+                } catch (error) {
+                    document.getElementById('resultados').innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}</div>`;
+                    document.getElementById('equacoes').style.display = 'none';
+                    document.getElementById('grafico-container').style.display = 'none';
+                }
+            });
+        });
     </script>
+    <script src="../js/lib/chart.min.js"></script>
+    <script src="../js/calc_51.js"></script>
+    <script src="../js/lib/mathjax/tex-chtml.js" defer></script>
     <script src="../js/main.js"></script>
 </body>
 </html>

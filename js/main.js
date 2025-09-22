@@ -21,8 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     calcForms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            const resultsArea = form.closest('.card').nextElementSibling.querySelector('.results-area');
-            resultsArea.innerHTML = '<p class="text-center">Cálculo em desenvolvimento. Esta funcionalidade será implementada em breve.</p>';
+            // A mensagem de cálculo em desenvolvimento será removida, pois a função 51 já está implementada.
         });
         
         const clearBtn = form.querySelector('.btn-secondary');

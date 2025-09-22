@@ -155,6 +155,12 @@ body {
   font-size: 16px;
 }
 
+.form-control-short {
+  flex: 1;              /* ocupa o mesmo espaço que os outros */
+  width: 100%;          /* mantém responsivo */
+  box-sizing: border-box;
+}
+
 .form-control:focus {
   outline: none;
   border-color: #e30613;
@@ -174,6 +180,59 @@ body {
   outline: none;
   border-color: #e30613;
   box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.25);
+}
+
+.form-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.input-group {
+  display: flex;
+  width: 100%;
+}
+
+.input-group .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  flex: 1;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #495057;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #e9ecef;
+  border: 1px solid #ddd;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  min-width: 25px;
+  justify-content: center;
+}
+
+.alert {
+  position: relative;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert i {
+  margin-right: 8px;
 }
 
 /* Botões */
@@ -332,89 +391,7 @@ body {
   margin-bottom: 30px;
 }
 
-.feature-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.feature-card .card-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  flex: 1;
-}
-
-.feature-card .card-text {
-  flex-grow: 1;
-}
-
-.feature-card .btn {
-  margin-top: 15px;
-  align-self: flex-start;
-}
-
-/* Resultados */
-.results-area {
-  min-height: 150px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  margin-top: 20px;
-}
-
-/* Footer */
-.footer {
-  background-color: #f8f9fa;
-  padding: 20px 0;
-  margin-top: 40px;
-  border-top: 1px solid #eee;
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-  .navbar-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .navbar-nav {
-    margin-top: 15px;
-    flex-direction: column;
-  }
-  
-  .nav-item {
-    margin-left: 0;
-    margin-top: 10px;
-  }
-  
-  .dropdown-content {
-    position: static;
-    box-shadow: none;
-    padding-left: 20px;
-  }
-  
-  .col-6, .col-4, .col-3 {
-    flex: 0 0 100%;
-    max-width: 100%;
-  }
-  
-  .row {
-    margin-right: 0;
-    margin-left: 0;
-  }
-
-  .protection-grid {
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
-  }
-  
-  .protection-card {
-    max-width: 100%;
-  }
-}
-
+/* Novo layout de cards de proteção */
 .protection-grid {
   display: flex;
   justify-content: space-between;
@@ -499,4 +476,88 @@ body {
 
 .protection-button:hover i {
   transform: translateX(5px);
+}
+
+/* Antigos estilos de feature-card mantidos para compatibilidade */
+.feature-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-card .card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+}
+
+.feature-card .card-text {
+  flex-grow: 1;
+}
+
+.feature-card .btn {
+  margin-top: 15px;
+  align-self: flex-start;
+}
+
+/* Resultados */
+.results-area {
+  min-height: 150px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-top: 20px;
+}
+
+/* Footer */
+.footer {
+  background-color: #f8f9fa;
+  padding: 20px 0;
+  margin-top: 40px;
+  border-top: 1px solid #eee;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .navbar-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .navbar-nav {
+    margin-top: 15px;
+    flex-direction: column;
+  }
+  
+  .nav-item {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+  
+  .dropdown-content {
+    position: static;
+    box-shadow: none;
+    padding-left: 20px;
+  }
+  
+  .col-6, .col-4, .col-3 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  
+  .row {
+    margin-right: 0;
+    margin-left: 0;
+  }
+  
+  .protection-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+  
+  .protection-card {
+    max-width: 100%;
+  }
 }
