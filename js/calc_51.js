@@ -20,7 +20,6 @@ const CURVE_CONSTANTS = {
     'IEEE-EI': { padrao: 'IEEE', K: 28.2, a: 2, c: 0.1217, tr: 29.1 }
 };
 
-
 // Função para calcular o tempo de atuação
 function calcularTempoAtuacao(tipoCurva, multiplicador, I, I0, tempoMinimo = 0) {
     if (tipoCurva === 'TEMPO-FIXO') {
@@ -119,10 +118,10 @@ function calcularFuncao51(parametros) {
     };
 }
 
-// Função para formatar equação LaTeX
-function formatarEquacaoLatex(tipoCurva, multiplicador) {
+// Função para formatar equação em HTML puro
+function formatarEquacaoHTML(tipoCurva, multiplicador) {
     if (tipoCurva === 'TEMPO-FIXO') {
-        return `t = ${multiplicador} \\text{ ms}`;
+        return `<div class="formula">t = ${multiplicador} ms</div>`;
     }
     
     const constants = CURVE_CONSTANTS[tipoCurva];
@@ -130,18 +129,83 @@ function formatarEquacaoLatex(tipoCurva, multiplicador) {
     
     const { padrao } = constants;
     let equacao = '';
+    
     if (padrao === 'IEC') {
         const { K, a } = constants;
-        equacao = `T = M \\times \\frac{K}{(\\frac{I}{I_0})^{a}-1}`;
-        equacao = equacao.replace('M', multiplicador).replace('K', K).replace('a', a);
+        equacao = `
+            <div class="formula">
+                <div class="formula-title">Fórmula IEC:</div>
+                <div class="formula-equation">
+                    T = M × <span class="fraction">
+                        <span class="numerator">K</span>
+                        <span class="denominator">(I/I<sub>0</sub>)<sup>a</sup> - 1</span>
+                    </span>
+                </div>
+                <div class="formula-constants">
+                    <div class="constants-title">Onde:</div>
+                    <div class="constant">T = tempo de disparo (seg)</div>
+                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
+                    <div class="constant">I = intensidade medida</div>
+                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
+                    <div class="constant">K = ${K}</div>
+                    <div class="constant">a = ${a}</div>
+                </div>
+            </div>
+        `;
     } else if (padrao === 'ANSI') {
         const { A, B, C, D, E } = constants;
-        equacao = `T = M \\times (A + \\frac{B}{(\\frac{I}{I_0}-C)} + \\frac{D}{(\\frac{I}{I_0}-C)^2} + \\frac{E}{(\\frac{I}{I_0}-C)^3})`;
-        equacao = equacao.replace('M', multiplicador).replace('A', A).replace('B', B).replace('C', C).replace('D', D).replace('E', E);
+        equacao = `
+            <div class="formula">
+                <div class="formula-title">Fórmula ANSI:</div>
+                <div class="formula-equation">
+                    T = M × (A + <span class="fraction">
+                        <span class="numerator">B</span>
+                        <span class="denominator">I/I<sub>0</sub> - C</span>
+                    </span> + <span class="fraction">
+                        <span class="numerator">D</span>
+                        <span class="denominator">(I/I<sub>0</sub> - C)<sup>2</sup></span>
+                    </span> + <span class="fraction">
+                        <span class="numerator">E</span>
+                        <span class="denominator">(I/I<sub>0</sub> - C)<sup>3</sup></span>
+                    </span>)
+                </div>
+                <div class="formula-constants">
+                    <div class="constants-title">Onde:</div>
+                    <div class="constant">T = tempo de disparo (seg)</div>
+                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
+                    <div class="constant">I = intensidade medida</div>
+                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
+                    <div class="constant">A = ${A}</div>
+                    <div class="constant">B = ${B}</div>
+                    <div class="constant">C = ${C}</div>
+                    <div class="constant">D = ${D}</div>
+                    <div class="constant">E = ${E}</div>
+                </div>
+            </div>
+        `;
     } else if (padrao === 'IEEE') {
         const { K, a, c } = constants;
-        equacao = `T = M \\times (\\frac{K}{(\\frac{I}{I_0})^{a}-1} + c)`;
-        equacao = equacao.replace('M', multiplicador).replace('K', K).replace('a', a).replace('c', c);
+        equacao = `
+            <div class="formula">
+                <div class="formula-title">Fórmula IEEE:</div>
+                <div class="formula-equation">
+                    T = M × (<span class="fraction">
+                        <span class="numerator">K</span>
+                        <span class="denominator">(I/I<sub>0</sub>)<sup>a</sup> - 1</span>
+                    </span> + c)
+                </div>
+                <div class="formula-constants">
+                    <div class="constants-title">Onde:</div>
+                    <div class="constant">T = tempo de disparo (seg)</div>
+                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
+                    <div class="constant">I = intensidade medida</div>
+                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
+                    <div class="constant">K = ${K}</div>
+                    <div class="constant">a = ${a}</div>
+                    <div class="constant">c = ${c}</div>
+                </div>
+            </div>
+        `;
     }
     
     return equacao;
@@ -229,4 +293,4 @@ function criarGrafico(canvasId, pontosCurva, pontoAtuacao = null) {
 // Exporta as funções para uso global
 window.calcularFuncao51 = calcularFuncao51;
 window.criarGrafico = criarGrafico;
-window.formatarEquacaoLatex = formatarEquacaoLatex;
+window.formatarEquacaoHTML = formatarEquacaoHTML;

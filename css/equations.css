@@ -1,0 +1,117 @@
+/* Estilos para fórmulas matemáticas em HTML puro */
+.formula {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    font-family: 'Times New Roman', serif;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.formula-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #495057;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.formula-equation {
+    font-size: 1.3em;
+    text-align: center;
+    margin: 15px 0;
+    color: #212529;
+    line-height: 1.6;
+}
+
+.fraction {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0 5px;
+    position: relative;
+}
+
+.numerator {
+    display: block;
+    border-bottom: 1px solid #000;
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    font-size: 0.9em;
+}
+
+.denominator {
+    display: block;
+    padding-top: 2px;
+    font-size: 0.9em;
+}
+
+.formula-constants {
+    margin-top: 15px;
+    font-size: 0.95em;
+    background-color: #ffffff;
+    border-radius: 6px;
+    padding: 12px;
+    border-left: 4px solid #007bff;
+}
+
+.constants-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 1em;
+}
+
+.constant {
+    margin: 3px 0;
+    padding-left: 10px;
+    color: #6c757d;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Estilos para sobrescritos e subscritos */
+sup {
+    font-size: 0.8em;
+    vertical-align: super;
+    line-height: 0;
+}
+
+sub {
+    font-size: 0.8em;
+    vertical-align: sub;
+    line-height: 0;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    .formula {
+        padding: 15px;
+        margin: 10px 0;
+    }
+    
+    .formula-equation {
+        font-size: 1.1em;
+    }
+    
+    .formula-constants {
+        padding: 10px;
+    }
+    
+    .constant {
+        font-size: 0.85em;
+    }
+}
+
+/* Melhorias visuais adicionais */
+.formula:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease;
+}
+
+.formula-equation .fraction:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
