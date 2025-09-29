@@ -561,3 +561,16 @@ body {
     max-width: 100%;
   }
 }
+
+/* Estilos para o gráfico */
+#grafico-curva {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Estilo para campos readonly */
+input[readonly] {
+    background-color: #e9ecef; /* Um cinza claro */
+    opacity: 1; /* Garante que não fique transparente */
+    cursor: not-allowed; /* Indica que o campo não é editável */
+}
