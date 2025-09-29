@@ -63,7 +63,7 @@
                                 <div class="form-group">
                                     <label for="correntePartida" class="form-label">I<sub>0</sub> - Corrente de Partida [Asec]</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="correntePartida" placeholder="Ex: 5.0" step="0.01">
+                                        <input type="number" class="form-control" id="correntePartida" placeholder="Ex: 5.0" min="0.02" max="150.00" step="0.01">
                                         <span class="input-group-text">A</span>
                                     </div>
                                     <small class="form-text text-muted">Corrente secundária que ativa a função</small>
@@ -99,7 +99,7 @@
                             <div class="col-6">
                                 <div class="form-group">
                                     <label for="indiceTempo" class="form-label">M - Índice de Tempo</label>
-                                    <input type="number" class="form-control form-control-short" id="indiceTempo" placeholder="Ex: 0.5" step="0.01" min="0.01" max="10">
+                                    <input type="number" class="form-control form-control-short" id="indiceTempo" placeholder="Ex: 0.5" min="0.01" max="10" step="0.01">
                                     <small class="form-text text-muted">Multiplicador da curva característica</small>
                                 </div>
                             </div>
@@ -107,7 +107,7 @@
                                 <div class="form-group">
                                     <label for="tempoFixoMinimo" class="form-label">Tempo Fixo / Mínimo [ms]</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="tempoFixoMinimo" placeholder="Ex: 100" step="10">
+                                        <input type="number" class="form-control" id="tempoFixoMinimo" placeholder="Ex: 100" min="0" max="600000" step="10">
                                         <span class="input-group-text">ms</span>
                                     </div>
                                 </div>
@@ -119,7 +119,7 @@
                                 <div class="form-group">
                                     <label for="correnteFalta" class="form-label">I - Corrente de Falta [Asec]</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="correnteFalta" placeholder="Ex: 25.0" step="0.001">
+                                        <input type="number" class="form-control" id="correnteFalta" placeholder="Ex: 25.0" min="0.02" max="150.00" step="0.01">
                                         <span class="input-group-text">A</span>
                                     </div>
                                 </div>
@@ -127,7 +127,7 @@
                             <div class="col-6">
                                 <div class="form-group">
                                     <label for="fator" class="form-label">I / I<sub>0</sub></label>
-                                    <input type="number" class="form-control form-control-short" id="fator" placeholder="" step="0.001" min="1.01" max="40" readonly>
+                                    <input type="number" class="form-control form-control-short" id="fator" placeholder="" readonly>
                                     <small class="form-text text-muted">Razão entre a corrente de falta e a corrente de partida</small>
                                 </div>
                             </div>
