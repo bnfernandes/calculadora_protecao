@@ -170,6 +170,238 @@ function calcularFuncao67(parametros) {
     };
 }
 
+// Função para gerar pontos da região de operação
+function gerarPontosRegiaoOperacao(anguloMin, anguloMax, numPontos = 500) {
+    const pontos = [];
+    
+    for (let i = 0; i <= numPontos; i++) {
+        const progresso = i / numPontos;
+        const angulo = anguloMin + (anguloMax - anguloMin) * progresso;
+        const anguloRad = angulo * Math.PI / 180;
+        
+        // Alternar entre raio interno (0.4) e externo (3.0)
+        const raio = (i % 2 === 0) ? 0.4 : 3.0;
+        
+        const x = raio * Math.cos(anguloRad);
+        const y = raio * Math.sin(anguloRad);
+        
+        pontos.push({ x, y });
+    }
+    
+    return pontos;
+}
+
+// Função para criar gráfico fasorial
+function criarGraficoFasorial(canvasId, fase, resultados) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destruir gráfico anterior se existir
+    if (canvas.chartInstance) {
+        canvas.chartInstance.destroy();
+    }
+    
+    const { parametrosUsados } = resultados;
+    
+    // Obter dados da fase específica
+    let Vpol, anguloMin, anguloMax, corrente;
+    let corFase, nomeFase;
+    
+    if (fase === 'Ia') {
+        Vpol = resultados.VpolIa.fasor;
+        anguloMin = resultados.regiaoDisparoIa.min;
+        anguloMax = resultados.regiaoDisparoIa.max;
+        corrente = Complexo.fromPolar(parametrosUsados.ia.magnitude, parametrosUsados.ia.angulo);
+        corFase = 'rgba(0, 0, 255, 0.8)'; // Azul
+        nomeFase = 'Ia';
+    } else if (fase === 'Ib') {
+        Vpol = resultados.VpolIb.fasor;
+        anguloMin = resultados.regiaoDisparoIb.min;
+        anguloMax = resultados.regiaoDisparoIb.max;
+        corrente = Complexo.fromPolar(parametrosUsados.ib.magnitude, parametrosUsados.ib.angulo);
+        corFase = 'rgba(0, 0, 0, 0.8)'; // Preto
+        nomeFase = 'Ib';
+    } else { // Ic
+        Vpol = resultados.VpolIc.fasor;
+        anguloMin = resultados.regiaoDisparoIc.min;
+        anguloMax = resultados.regiaoDisparoIc.max;
+        corrente = Complexo.fromPolar(parametrosUsados.ic.magnitude, parametrosUsados.ic.angulo);
+        corFase = 'rgba(255, 0, 0, 0.8)'; // Vermelho
+        nomeFase = 'Ic';
+    }
+    
+    // Criar fasores de tensão
+    const Va = Complexo.fromPolar(parametrosUsados.va.magnitude, parametrosUsados.va.angulo);
+    const Vb = Complexo.fromPolar(parametrosUsados.vb.magnitude, parametrosUsados.vb.angulo);
+    const Vc = Complexo.fromPolar(parametrosUsados.vc.magnitude, parametrosUsados.vc.angulo);
+    
+    // Normalizar tensões (maior tensão = 1)
+    const maxTensao = Math.max(Va.magnitude(), Vb.magnitude(), Vc.magnitude());
+    const escala = 1.0 / maxTensao;
+    
+    // Normalizar corrente para 0.7
+    const escalaCorrente = 0.7 / corrente.magnitude();
+    
+    // Gerar pontos da região de operação
+    const pontosRegiao = gerarPontosRegiaoOperacao(anguloMin, anguloMax);
+    
+    // Preparar datasets
+    const datasets = [
+        // Região de operação (sombreada)
+        {
+            label: 'Região de Operação',
+            data: pontosRegiao,
+            backgroundColor: corFase.replace('0.8', '0.15'),
+            borderColor: corFase.replace('0.8', '0.5'),
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: true,
+            pointRadius: 0,
+            showLine: true,
+            tension: 0,
+            order: 10
+        },
+        // Tensão Va (azul, linha contínua)
+        {
+            label: 'Va',
+            data: [
+                { x: 0, y: 0 },
+                { x: Va.real * escala, y: Va.imag * escala }
+            ],
+            borderColor: 'rgba(0, 0, 255, 1)',
+            backgroundColor: 'rgba(0, 0, 255, 1)',
+            borderWidth: 3,
+            pointRadius: 5,
+            showLine: true,
+            fill: false,
+            order: 1
+        },
+        // Tensão Vb (preto, linha contínua)
+        {
+            label: 'Vb',
+            data: [
+                { x: 0, y: 0 },
+                { x: Vb.real * escala, y: Vb.imag * escala }
+            ],
+            borderColor: 'rgba(0, 0, 0, 1)',
+            backgroundColor: 'rgba(0, 0, 0, 1)',
+            borderWidth: 3,
+            pointRadius: 5,
+            showLine: true,
+            fill: false,
+            order: 1
+        },
+        // Tensão Vc (vermelho, linha contínua)
+        {
+            label: 'Vc',
+            data: [
+                { x: 0, y: 0 },
+                { x: Vc.real * escala, y: Vc.imag * escala }
+            ],
+            borderColor: 'rgba(255, 0, 0, 1)',
+            backgroundColor: 'rgba(255, 0, 0, 1)',
+            borderWidth: 3,
+            pointRadius: 5,
+            showLine: true,
+            fill: false,
+            order: 1
+        },
+        // Corrente (cor da fase, linha tracejada)
+        {
+            label: nomeFase,
+            data: [
+                { x: 0, y: 0 },
+                { x: corrente.real * escalaCorrente, y: corrente.imag * escalaCorrente }
+            ],
+            borderColor: corFase,
+            backgroundColor: corFase,
+            borderWidth: 3,
+            borderDash: [10, 5],
+            pointRadius: 5,
+            showLine: true,
+            fill: false,
+            order: 1
+        }
+    ];
+    
+    // Criar gráfico
+    canvas.chartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 1,
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'center',
+                    min: -1.2,
+                    max: 1.2,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        drawBorder: true
+                    },
+                    ticks: {
+                        stepSize: 0.5
+                    },
+                    title: {
+                        display: true,
+                        text: 'Parte Real'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'center',
+                    min: -1.2,
+                    max: 1.2,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        drawBorder: true
+                    },
+                    ticks: {
+                        stepSize: 0.5
+                    },
+                    title: {
+                        display: true,
+                        text: 'Parte Imaginária'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Diagrama Fasorial - Fase ${nomeFase}`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const x = context.parsed.x.toFixed(3);
+                            const y = context.parsed.y.toFixed(3);
+                            return `${label}: (${x}, ${y})`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 // Função para formatar resultados em HTML
 function formatarResultadosHTML(resultados) {
     const { parametrosUsados } = resultados;
@@ -199,6 +431,13 @@ function formatarResultadosHTML(resultados) {
     html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIa.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
     html += `<p class="resultado-destaque">${resultados.regiaoDisparoIa.min.toFixed(2)}° < θ<sub>a</sub> < ${resultados.regiaoDisparoIa.max.toFixed(2)}°</p>`;
     html += '</div>';
+    
+    html += '<div class="calculo-item mb-3">';
+    html += '<h6>Gráfico Fasorial:</h6>';
+    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
+    html += '<canvas id="grafico-ia"></canvas>';
+    html += '</div>';
+    html += '</div>';
     html += '</div>';
     
     // Região de disparo Ib
@@ -224,6 +463,13 @@ function formatarResultadosHTML(resultados) {
     html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIb.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
     html += `<p class="resultado-destaque">${resultados.regiaoDisparoIb.min.toFixed(2)}° < θ<sub>b</sub> < ${resultados.regiaoDisparoIb.max.toFixed(2)}°</p>`;
     html += '</div>';
+    
+    html += '<div class="calculo-item mb-3">';
+    html += '<h6>Gráfico Fasorial:</h6>';
+    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
+    html += '<canvas id="grafico-ib"></canvas>';
+    html += '</div>';
+    html += '</div>';
     html += '</div>';
     
     // Região de disparo Ic
@@ -248,6 +494,13 @@ function formatarResultadosHTML(resultados) {
     html += `<p class="formula-display">θ<sub>min</sub> = θ<sub>max torque</sub> - ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIc.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
     html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIc.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
     html += `<p class="resultado-destaque">${resultados.regiaoDisparoIc.min.toFixed(2)}° < θ<sub>c</sub> < ${resultados.regiaoDisparoIc.max.toFixed(2)}°</p>`;
+    html += '</div>';
+    
+    html += '<div class="calculo-item mb-3">';
+    html += '<h6>Gráfico Fasorial:</h6>';
+    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
+    html += '<canvas id="grafico-ic"></canvas>';
+    html += '</div>';
     html += '</div>';
     html += '</div>';
     
@@ -308,6 +561,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Exibir resultados
             const resultadosDiv = document.getElementById('resultados');
             resultadosDiv.innerHTML = formatarResultadosHTML(resultados);
+            
+            // Criar gráficos após o DOM ser atualizado
+            setTimeout(() => {
+                criarGraficoFasorial('grafico-ia', 'Ia', resultados);
+                criarGraficoFasorial('grafico-ib', 'Ib', resultados);
+                criarGraficoFasorial('grafico-ic', 'Ic', resultados);
+            }, 100);
 
         } catch (error) {
             const resultadosDiv = document.getElementById('resultados');
@@ -329,5 +589,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Exportar funções para uso global
 window.calcularFuncao67 = calcularFuncao67;
 window.formatarResultadosHTML = formatarResultadosHTML;
+window.criarGraficoFasorial = criarGraficoFasorial;
 window.Complexo = Complexo;
 
