@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Função 67 - Proteções Elétricas</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/equations.css">
 </head>
 <body>
     <!-- Navegação -->
@@ -60,74 +61,185 @@
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="correnteNominal" class="form-label">Corrente Nominal (A)</label>
-                                    <input type="number" class="form-control" id="correnteNominal" placeholder="Ex: 100">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="relacaoTC" class="form-label">Relação do TC</label>
-                                    <input type="number" class="form-control" id="relacaoTC" placeholder="Ex: 200/5">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="tensaoNominal" class="form-label">Tensão Nominal (kV)</label>
-                                    <input type="number" class="form-control" id="tensaoNominal" placeholder="Ex: 13.8" step="0.1">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="relacaoTP" class="form-label">Relação do TP</label>
-                                    <input type="number" class="form-control" id="relacaoTP" placeholder="Ex: 13800/115">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="anguloCaracteristico" class="form-label">Ângulo Característico (graus)</label>
-                                    <input type="number" class="form-control" id="anguloCaracteristico" placeholder="Ex: 45">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="pickup" class="form-label">Pickup (múltiplo da corrente nominal)</label>
-                                    <input type="number" class="form-control" id="pickup" placeholder="Ex: 1.2" step="0.01">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="curva" class="form-label">Tipo de Curva</label>
-                                    <select class="form-select" id="curva">
-                                        <option value="">Selecione...</option>
-                                        <option value="normalmente-inversa">Normalmente Inversa (IEC)</option>
-                                        <option value="muito-inversa">Muito Inversa (IEC)</option>
-                                        <option value="extremamente-inversa">Extremamente Inversa (IEC)</option>
-                                        <option value="moderadamente-inversa">Moderadamente Inversa (IEEE)</option>
-                                        <option value="muito-inversa-ieee">Muito Inversa (IEEE)</option>
-                                        <option value="extremamente-inversa-ieee">Extremamente Inversa (IEEE)</option>
+                                    <label for="sequenciaFases" class="form-label">Sequência de Fases</label>
+                                    <select class="form-select" id="sequenciaFases">
+                                        <option value="ABC">ABC</option>
+                                        <option value="ACB">ACB</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="dial" class="form-label">Dial de Tempo</label>
-                                    <input type="number" class="form-control" id="dial" placeholder="Ex: 0.5" step="0.01">
+                                    <label for="criterioDirecional" class="form-label">Critério Direcional</label>
+                                    <input type="text" class="form-control form-control-short" id="criterioDirecional" value="Quadratura" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="angulo" class="form-label">Ângulo [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="angulo" placeholder="Ex: 90" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="amplitude" class="form-label">Amplitude [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="amplitude" placeholder="Ex: 130" min="90" max="170" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="direcional" class="form-label">Direcional</label>
+                                    <select class="form-select" id="direcional">
+                                        <option value="Frente">Frente</option>
+                                        <option value="Reverso">Reverso</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-5 mb-3">Grandezas Elétricas de Falta</h5>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="iaMagnitude" class="form-label">Ia [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="iaMagnitude" placeholder="Ex: 5.00" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="iaAngulo" class="form-label">θ<sub>Ia</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="iaAngulo" placeholder="Ex: 0" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ibMagnitude" class="form-label">Ib [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ibMagnitude" placeholder="Ex: 5.00" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ibAngulo" class="form-label">θ<sub>Ib</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ibAngulo" placeholder="Ex: 240" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="icMagnitude" class="form-label">Ic [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="icMagnitude" placeholder="Ex: 5.00" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="icAngulo" class="form-label">θ<sub>Ic</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="icAngulo" placeholder="Ex: 120" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vaMagnitude" class="form-label">Va [V]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vaMagnitude" placeholder="Ex: 66.40" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">V</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vaAngulo" class="form-label">θ<sub>Va</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vaAngulo" placeholder="Ex: 0" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vbMagnitude" class="form-label">Vb [V]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vbMagnitude" placeholder="Ex: 66.40" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">V</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vbAngulo" class="form-label">θ<sub>Vb</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vbAngulo" placeholder="Ex: 240" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vcMagnitude" class="form-label">Vc [V]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vcMagnitude" placeholder="Ex: 66.40" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">V</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="vcAngulo" class="form-label">θ<sub>Vc</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="vcAngulo" placeholder="Ex: 120" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
-                            <button type="submit" class="btn btn-primary">Calcular</button>
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnLimpar">Limpar</button>
+                            <button type="submit" class="btn btn-primary" id="btnCalcular">Calcular</button>
                         </div>
                     </form>
                 </div>
@@ -138,7 +250,7 @@
                     <h5 class="card-title">Resultados</h5>
                 </div>
                 <div class="card-body">
-                    <div class="results-area">
+                    <div class="results-area" id="resultados">
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
                     </div>
                 </div>
@@ -154,9 +266,13 @@
     </footer>
 
     <script>
-        // Atualiza o ano atual no rodapé
-        document.getElementById('current-year').textContent = new Date().getFullYear();
+        // Atualiza o ano atual no rodape
+        document.getElementById("current-year").textContent = new Date().getFullYear();
     </script>
+    <script src="../js/calc_67.js"></script>
     <script src="../js/main.js"></script>
 </body>
 </html>
+
+
+
