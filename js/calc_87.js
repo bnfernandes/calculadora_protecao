@@ -57,7 +57,13 @@ function calcularDiferencial87() {
         numEnrolamentos: parseInt(document.getElementById('numEnrolamentos').value),
         enrolRef: parseInt(document.getElementById('enrolRef').value),
         seqFases: document.getElementById('sequenciaFases').value,
-        potencia: parseFloat(document.getElementById('potencia').value) || 0
+        potencia: parseFloat(document.getElementById('potencia').value) || 0,
+        // Parâmetros da curva
+        sensibilidade: parseFloat(document.getElementById('sensibilidade').value) || 0.3,
+        pontoInflexao1: parseFloat(document.getElementById('pontoInflexao1').value) || 1.5,
+        pontoInflexao2: parseFloat(document.getElementById('pontoInflexao2').value) || 5.0,
+        inclinacao1: parseFloat(document.getElementById('inclinacao1').value) || 25,
+        inclinacao2: parseFloat(document.getElementById('inclinacao2').value) || 50
     };
 
     // Dados dos enrolamentos
@@ -169,7 +175,7 @@ function calcularDiferencial87() {
     exibirResultados(config, enrolamentos, taps, constantesC, resultados);
 
     // Criar gráfico
-    criarGraficoDiferencial(resultados);
+    criarGraficoDiferencial(resultados, config);
 }
 
 // Função para calcular as constantes C
@@ -385,8 +391,47 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
         const faseKey = `fase${fase}`;
         html += '<div class="resultado-box fase-box">';
         html += `<h6>Fase ${fase}</h6>`;
-        html += `<p><strong>Corrente Diferencial (I<sub>dif</sub>):</strong> <span class="resultado-destaque">${resultados[faseKey].idif.toFixed(4)} A</span></p>`;
-        html += `<p><strong>Corrente de Frenagem (I<sub>fren</sub>):</strong> <span class="resultado-destaque">${resultados[faseKey].ifren.toFixed(4)} A</span></p>`;
+        
+        // Fórmula da Corrente Diferencial
+        html += '<div class="formula-box mt-3">';
+        html += '<p><strong>Corrente Diferencial (I<sub>dif</sub>):</strong></p>';
+        if (config.modeloRele === 'TD') {
+            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(Σ I<sub>enrol</sub> × C / TAP)|</p>';
+            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(I<sub>1</sub> × C<sub>1</sub> / TAP<sub>1</sub>) + (I<sub>2</sub> × C<sub>2</sub> / TAP<sub>2</sub>)';
+            if (config.numEnrolamentos === 3) {
+                html += ' + (I<sub>3</sub> × C<sub>3</sub> / TAP<sub>3</sub>)';
+            }
+            html += '|</p>';
+        } else {
+            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(I<sub>1</sub> × C<sub>1</sub>) + (RTC<sub>2</sub>/RTC<sub>1</sub>) × (I<sub>2</sub> × C<sub>2</sub>)';
+            if (config.numEnrolamentos === 3) {
+                html += ' + (RTC<sub>3</sub>/RTC<sub>1</sub>) × (I<sub>3</sub> × C<sub>3</sub>)';
+            }
+            html += '| / εTAP<sub>1</sub></p>';
+        }
+        html += `<p class="resultado-valor">I<sub>dif</sub> = ${resultados[faseKey].idif.toFixed(4)} A</p>`;
+        html += '</div>';
+        
+        // Fórmula da Corrente de Frenagem
+        html += '<div class="formula-box mt-3">';
+        html += '<p><strong>Corrente de Frenagem (I<sub>fren</sub>):</strong></p>';
+        if (config.modeloRele === 'TD') {
+            html += '<p class="formula-detalhe">I<sub>fren</sub> = (Σ |I<sub>enrol</sub> × C / TAP|) / 2</p>';
+            html += '<p class="formula-detalhe">I<sub>fren</sub> = (|I<sub>1</sub> × C<sub>1</sub> / TAP<sub>1</sub>| + |I<sub>2</sub> × C<sub>2</sub> / TAP<sub>2</sub>|';
+            if (config.numEnrolamentos === 3) {
+                html += ' + |I<sub>3</sub> × C<sub>3</sub> / TAP<sub>3</sub>|';
+            }
+            html += ') / 2</p>';
+        } else {
+            html += '<p class="formula-detalhe">I<sub>fren</sub> = (|I<sub>1</sub> × C<sub>1</sub>| + (RTC<sub>2</sub>/RTC<sub>1</sub>) × |I<sub>2</sub> × C<sub>2</sub>|';
+            if (config.numEnrolamentos === 3) {
+                html += ' + (RTC<sub>3</sub>/RTC<sub>1</sub>) × |I<sub>3</sub> × C<sub>3</sub>|';
+            }
+            html += ') / (2 × εTAP<sub>1</sub>)</p>';
+        }
+        html += `<p class="resultado-valor">I<sub>fren</sub> = ${resultados[faseKey].ifren.toFixed(4)} A</p>`;
+        html += '</div>';
+        
         html += '</div>';
     });
 
@@ -419,7 +464,7 @@ document.getElementById('btn-limpar').addEventListener('click', function() {
 
 
 // Função para criar gráfico diferencial com ECharts
-function criarGraficoDiferencial(resultados) {
+function criarGraficoDiferencial(resultados, config) {
     const container = document.getElementById('grafico-diferencial');
     if (!container) return;
 
@@ -434,13 +479,12 @@ function criarGraficoDiferencial(resultados) {
     const maxIfren = Math.max(resultados.faseA.ifren, resultados.faseB.ifren, resultados.faseC.ifren, 10);
     const maxIdif = Math.max(resultados.faseA.idif, resultados.faseB.idif, resultados.faseC.idif, 5);
 
-    // Gerar curva característica do relé (exemplo simplificado)
-    // Curva com 2 slopes: pickup mínimo, slope1, ponto de inflexão, slope2
-    const pickupMin = 0.3; // 30% do TAP (exemplo)
-    const slope1 = 0.25; // 25%
-    const slope2 = 0.50; // 50%
-    const pontoInflexao1 = 2.0; // pu
-    const pontoInflexao2 = 5.0; // pu
+    // Parâmetros da curva (do formulário)
+    const pickupMin = config.sensibilidade; // Sensibilidade (xTAP)
+    const slope1 = config.inclinacao1 / 100; // Inclinação 1 (convertida para decimal)
+    const slope2 = config.inclinacao2 / 100; // Inclinação 2 (convertida para decimal)
+    const pontoInflexao1 = config.pontoInflexao1; // Ponto de inflexão 1 (xTAP)
+    const pontoInflexao2 = config.pontoInflexao2; // Ponto de inflexão 2 (xTAP)
 
     const curvaCaracteristica = [];
     
