@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Função 87 - Proteções Elétricas</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/equations.css">
 </head>
 <body>
     <!-- Navegação -->
@@ -57,97 +58,469 @@
                 </div>
                 <div class="card-body">
                     <form class="calc-form" id="form-87">
+                        <h5 class="mb-3">Configurações Gerais</h5>
+                        
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="potenciaNominal" class="form-label">Potência Nominal do Transformador (MVA)</label>
-                                    <input type="number" class="form-control" id="potenciaNominal" placeholder="Ex: 30" step="0.1">
+                                    <label for="modeloRele" class="form-label">Modelo de Relé</label>
+                                    <select class="form-select" id="modeloRele">
+                                        <option value="TD">EF TD</option>
+                                        <option value="LD">EF LD</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="grupoVetorial" class="form-label">Grupo Vetorial</label>
-                                    <select class="form-select" id="grupoVetorial">
-                                        <option value="">Selecione...</option>
-                                        <option value="Dyn1">Dyn1</option>
-                                        <option value="Dyn11">Dyn11</option>
-                                        <option value="YNd1">YNd1</option>
-                                        <option value="YNd11">YNd11</option>
-                                        <option value="YNyn0">YNyn0</option>
+                                    <label for="sequenciaFases" class="form-label">Sequência de Fases</label>
+                                    <select class="form-select" id="sequenciaFases">
+                                        <option value="ABC">ABC</option>
+                                        <option value="ACB">ACB</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="tensaoPrimario" class="form-label">Tensão Nominal Primário (kV)</label>
-                                    <input type="number" class="form-control" id="tensaoPrimario" placeholder="Ex: 138" step="0.1">
+                                    <label for="numEnrolamentos" class="form-label">Número de Enrolamentos</label>
+                                    <select class="form-select" id="numEnrolamentos">
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="tensaoSecundario" class="form-label">Tensão Nominal Secundário (kV)</label>
-                                    <input type="number" class="form-control" id="tensaoSecundario" placeholder="Ex: 13.8" step="0.1">
+                                    <label for="enrolRef" class="form-label">Enrolamento de Referência</label>
+                                    <select class="form-select" id="enrolRef">
+                                        <option value="1">Enrolamento 1</option>
+                                        <option value="2">Enrolamento 2</option>
+                                        <option value="3">Enrolamento 3</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="relacaoTCPrimario" class="form-label">Relação do TC Primário</label>
-                                    <input type="number" class="form-control" id="relacaoTCPrimario" placeholder="Ex: 200/5">
+                                    <label for="kv1" class="form-label">Tensão Nominal Enrolamento 1 [kV]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="kv1" placeholder="Ex: 69" min="1" max="10000" step="0.1">
+                                        <span class="input-group-text">kV</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="relacaoTCSecundario" class="form-label">Relação do TC Secundário</label>
-                                    <input type="number" class="form-control" id="relacaoTCSecundario" placeholder="Ex: 1500/5">
+                                    <label for="kv2" class="form-label">Tensão Nominal Enrolamento 2 [kV]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="kv2" placeholder="Ex: 13.8" min="1" max="10000" step="0.1">
+                                        <span class="input-group-text">kV</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-4">
+
+                        <div class="row" id="rowKv3">
+                            <div class="col-6">
                                 <div class="form-group">
-                                    <label for="pickupDiferencial" class="form-label">Pickup Diferencial (%)</label>
-                                    <input type="number" class="form-control" id="pickupDiferencial" placeholder="Ex: 20" step="1">
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="slope1" class="form-label">Slope 1 (%)</label>
-                                    <input type="number" class="form-control" id="slope1" placeholder="Ex: 25" step="1">
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="slope2" class="form-label">Slope 2 (%)</label>
-                                    <input type="number" class="form-control" id="slope2" placeholder="Ex: 50" step="1">
+                                    <label for="kv3" class="form-label">Tensão Nominal Enrolamento 3 [kV]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="kv3" placeholder="Ex: 13.8" min="1" max="10000" step="0.1">
+                                        <span class="input-group-text">kV</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="pontoInflexao1" class="form-label">Ponto de Inflexão 1 (pu)</label>
-                                    <input type="number" class="form-control" id="pontoInflexao1" placeholder="Ex: 2" step="0.1">
+                                    <label for="rtc1" class="form-label">RTC Enrolamento 1</label>
+                                    <input type="number" class="form-control form-control-short" id="rtc1" placeholder="Ex: 80" min="1" max="10000" step="0.1">
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="pontoInflexao2" class="form-label">Ponto de Inflexão 2 (pu)</label>
-                                    <input type="number" class="form-control" id="pontoInflexao2" placeholder="Ex: 5" step="0.1">
+                                    <label for="rtc2" class="form-label">RTC Enrolamento 2</label>
+                                    <input type="number" class="form-control form-control-short" id="rtc2" placeholder="Ex: 80" min="1" max="10000" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="rowRtc3">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="rtc3" class="form-label">RTC Enrolamento 3</label>
+                                    <input type="number" class="form-control form-control-short" id="rtc3" placeholder="Ex: 320" min="1" max="10000" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="conexao1" class="form-label">Conexão Enrolamento 1</label>
+                                    <select class="form-select" id="conexao1">
+                                        <option value="Y">Y</option>
+                                        <option value="D">D</option>
+                                        <option value="Z">Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="conexao2" class="form-label">Conexão Enrolamento 2</label>
+                                    <select class="form-select" id="conexao2">
+                                        <option value="Y">Y</option>
+                                        <option value="D">D</option>
+                                        <option value="Z">Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="rowConexao3">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="conexao3" class="form-label">Conexão Enrolamento 3</label>
+                                    <select class="form-select" id="conexao3">
+                                        <option value="Y">Y</option>
+                                        <option value="D">D</option>
+                                        <option value="Z">Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="codHor2" class="form-label">Código Horário Ref-2</label>
+                                    <input type="number" class="form-control form-control-short" id="codHor2" placeholder="0-11" min="0" max="11" step="1">
+                                </div>
+                            </div>
+                            <div class="col-6" id="colCodHor3">
+                                <div class="form-group">
+                                    <label for="codHor3" class="form-label">Código Horário Ref-3</label>
+                                    <input type="number" class="form-control form-control-short" id="codHor3" placeholder="0-11" min="0" max="11" step="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="filtroHom1" class="form-label">Filtro Homopolar Enrolamento 1</label>
+                                    <select class="form-select" id="filtroHom1">
+                                        <option value="Inativo">Inativo</option>
+                                        <option value="Ativo">Ativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="filtroHom2" class="form-label">Filtro Homopolar Enrolamento 2</label>
+                                    <select class="form-select" id="filtroHom2">
+                                        <option value="Inativo">Inativo</option>
+                                        <option value="Ativo">Ativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="rowFiltroHom3">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="filtroHom3" class="form-label">Filtro Homopolar Enrolamento 3</label>
+                                    <select class="form-select" id="filtroHom3">
+                                        <option value="Inativo">Inativo</option>
+                                        <option value="Ativo">Ativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="potencia" class="form-label">Potência do Transformador (MVA) - Se 0, usar TAP inserido</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="potencia" placeholder="Ex: 30" min="0" max="5000" step="0.1">
+                                        <span class="input-group-text">MVA</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="tap1" class="form-label">TAP Enrolamento 1 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="tap1" placeholder="Ex: 5" min="0.1" max="20" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="tap2" class="form-label">TAP Enrolamento 2 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="tap2" placeholder="Ex: 5" min="0.1" max="20" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="rowTap3">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="tap3" class="form-label">TAP Enrolamento 3 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="tap3" placeholder="Ex: 1" min="0.1" max="20" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="polaridade1" class="form-label">Polaridade Enrolamento 1</label>
+                                    <select class="form-select" id="polaridade1">
+                                        <option value="Entrante">Entrante</option>
+                                        <option value="Saliente">Saliente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="polaridade2" class="form-label">Polaridade Enrolamento 2</label>
+                                    <select class="form-select" id="polaridade2">
+                                        <option value="Entrante">Entrante</option>
+                                        <option value="Saliente">Saliente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="rowPolaridade3">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="polaridade3" class="form-label">Polaridade Enrolamento 3</label>
+                                    <select class="form-select" id="polaridade3">
+                                        <option value="Entrante">Entrante</option>
+                                        <option value="Saliente">Saliente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-5 mb-3">Grandezas Elétricas de Falta</h5>
+
+                        <h6 class="mt-4 mb-3">Enrolamento 1</h6>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ia1Mag" class="form-label">Ia1 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ia1Mag" placeholder="Ex: 7.375" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ia1Ang" class="form-label">θ<sub>Ia1</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ia1Ang" placeholder="Ex: 0" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ib1Mag" class="form-label">Ib1 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ib1Mag" placeholder="Ex: 4" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ib1Ang" class="form-label">θ<sub>Ib1</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ib1Ang" placeholder="Ex: 240" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ic1Mag" class="form-label">Ic1 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ic1Mag" placeholder="Ex: 7.375" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ic1Ang" class="form-label">θ<sub>Ic1</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ic1Ang" placeholder="Ex: 120" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4 mb-3">Enrolamento 2</h6>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ia2Mag" class="form-label">Ia2 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ia2Mag" placeholder="Ex: 5.125" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ia2Ang" class="form-label">θ<sub>Ia2</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ia2Ang" placeholder="Ex: 180" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ib2Mag" class="form-label">Ib2 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ib2Mag" placeholder="Ex: 5.125" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ib2Ang" class="form-label">θ<sub>Ib2</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ib2Ang" placeholder="Ex: 60" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ic2Mag" class="form-label">Ic2 [A]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ic2Mag" placeholder="Ex: 5.125" min="0.02" max="150.00" step="0.01">
+                                        <span class="input-group-text">A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ic2Ang" class="form-label">θ<sub>Ic2</sub> [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="ic2Ang" placeholder="Ex: 300" min="0" max="359" step="1">
+                                        <span class="input-group-text">º</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="enrolamento3Section">
+                            <h6 class="mt-4 mb-3">Enrolamento 3</h6>
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ia3Mag" class="form-label">Ia3 [A]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ia3Mag" placeholder="Ex: 0" min="0.02" max="150.00" step="0.01">
+                                            <span class="input-group-text">A</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ia3Ang" class="form-label">θ<sub>Ia3</sub> [º]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ia3Ang" placeholder="Ex: 0" min="0" max="359" step="1">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ib3Mag" class="form-label">Ib3 [A]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ib3Mag" placeholder="Ex: 0" min="0.02" max="150.00" step="0.01">
+                                            <span class="input-group-text">A</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ib3Ang" class="form-label">θ<sub>Ib3</sub> [º]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ib3Ang" placeholder="Ex: 0" min="0" max="359" step="1">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ic3Mag" class="form-label">Ic3 [A]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ic3Mag" placeholder="Ex: 0" min="0.02" max="150.00" step="0.01">
+                                            <span class="input-group-text">A</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ic3Ang" class="form-label">θ<sub>Ic3</sub> [º]</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ic3Ang" placeholder="Ex: 0" min="0" max="359" step="1">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
-                            <button type="submit" class="btn btn-primary">Calcular</button>
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnLimpar">Limpar</button>
+                            <button type="submit" class="btn btn-primary" id="btnCalcular">Calcular</button>
                         </div>
                     </form>
                 </div>
@@ -158,7 +531,7 @@
                     <h5 class="card-title">Resultados</h5>
                 </div>
                 <div class="card-body">
-                    <div class="results-area">
+                    <div class="results-area" id="resultados">
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
                     </div>
                 </div>
@@ -166,17 +539,39 @@
         </div>
     </main>
 
-    <!-- Rodapé -->
+    <!-- Footer -->
     <footer class="footer">
-        <div class="container text-center">
-            <p class="text-muted">© <span id="current-year"></span> - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
+        <div class="container">
+            <p>&copy; 2025 - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
         </div>
     </footer>
 
+    <!-- Scripts -->
+    <script src="../js/lib/echarts.min.js"></script>
+    <script src="../js/calc_87.js"></script>
     <script>
-        // Atualiza o ano atual no rodapé
-        document.getElementById('current-year').textContent = new Date().getFullYear();
+        // Controlar visibilidade do enrolamento 3
+        document.getElementById('numEnrolamentos').addEventListener('change', function() {
+            const enrol3Elements = [
+                'rowKv3', 'rowRtc3', 'rowConexao3', 'colCodHor3', 
+                'rowFiltroHom3', 'rowTap3', 'rowPolaridade3', 'enrolamento3Section'
+            ];
+            
+            const mostrar = this.value === '3';
+            enrol3Elements.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.style.display = mostrar ? '' : 'none';
+                }
+            });
+        });
+
+        // Inicializar com 2 enrolamentos (ocultar enrolamento 3)
+        document.addEventListener('DOMContentLoaded', function() {
+            const event = new Event('change');
+            document.getElementById('numEnrolamentos').dispatchEvent(event);
+        });
     </script>
-    <script src="../js/main.js"></script>
 </body>
 </html>
+
