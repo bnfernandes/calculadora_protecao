@@ -32,7 +32,12 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
     html += '<div class="resultado-secao">';
     html += '<h6 class="resultado-titulo">Constantes C (Fator de Correção)</h6>';
     for (let i = 0; i < config.numEnrolamentos; i++) {
-        const conexaoNome = ['', 'Y (Estrela)', 'D (Delta)', 'Z (Zigzag)'][enrolamentos[i].conexao];
+        // CORREÇÃO: Mapear conexão corretamente (string para número)
+        let conexaoNome = '';
+        if (enrolamentos[i].conexao === 'Y') conexaoNome = 'Y (Estrela)';
+        else if (enrolamentos[i].conexao === 'D') conexaoNome = 'D (Delta)';
+        else if (enrolamentos[i].conexao === 'Z') conexaoNome = 'Z (Zigzag)';
+        
         html += '<div class="resultado-box">';
         html += `<p><strong>${enrolamentos[i].nome}</strong> (${conexaoNome}):</p>`;
         html += `<p class="resultado-valor">C = ${C[i].toFixed(4)}</p>`;
@@ -44,6 +49,7 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
     html += '<div class="resultado-secao">';
     html += '<h6 class="resultado-titulo">Correntes Diferencial e de Frenagem</h6>';
     
+    // CORREÇÃO: modeloRele agora é número (1=TD, 2=LD)
     const modeloNome = config.modeloRele === 1 ? 'EF TD' : 'EF LD';
     html += `<p><strong>Modelo de Relé:</strong> ${modeloNome}</p>`;
 
@@ -55,14 +61,16 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
         // Fórmula da Corrente Diferencial
         html += '<div class="formula-box mt-3">';
         html += '<p><strong>Corrente Diferencial (I<sub>dif</sub>):</strong></p>';
-        if (config.modeloRele === 'TD') {
-            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(Σ I<sub>enrol</sub> × C / TAP)|</p>';
-            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(I<sub>1</sub> × C<sub>1</sub> / TAP<sub>1</sub>) + (I<sub>2</sub> × C<sub>2</sub> / TAP<sub>2</sub>)';
+        
+        // CORREÇÃO: modeloRele agora é número
+        if (config.modeloRele === 1) { // TD
+            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(Σ I<sub>enrol</sub> / (TAP × C))|</p>';
+            html += '<p class="formula-detalhe">I<sub>dif</sub> = |(I<sub>1</sub> / (TAP<sub>1</sub> × C<sub>1</sub>)) + (I<sub>2</sub> / (TAP<sub>2</sub> × C<sub>2</sub>))';
             if (config.numEnrolamentos === 3) {
-                html += ' + (I<sub>3</sub> × C<sub>3</sub> / TAP<sub>3</sub>)';
+                html += ' + (I<sub>3</sub> / (TAP<sub>3</sub> × C<sub>3</sub>))';
             }
             html += '|</p>';
-        } else {
+        } else { // LD
             html += '<p class="formula-detalhe">I<sub>dif</sub> = |(I<sub>1</sub> × C<sub>1</sub>) + (RTC<sub>2</sub>/RTC<sub>1</sub>) × (I<sub>2</sub> × C<sub>2</sub>)';
             if (config.numEnrolamentos === 3) {
                 html += ' + (RTC<sub>3</sub>/RTC<sub>1</sub>) × (I<sub>3</sub> × C<sub>3</sub>)';
@@ -75,14 +83,16 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
         // Fórmula da Corrente de Frenagem
         html += '<div class="formula-box mt-3">';
         html += '<p><strong>Corrente de Frenagem (I<sub>fren</sub>):</strong></p>';
-        if (config.modeloRele === 'TD') {
-            html += '<p class="formula-detalhe">I<sub>fren</sub> = (Σ |I<sub>enrol</sub> × C / TAP|) / 2</p>';
-            html += '<p class="formula-detalhe">I<sub>fren</sub> = (|I<sub>1</sub> × C<sub>1</sub> / TAP<sub>1</sub>| + |I<sub>2</sub> × C<sub>2</sub> / TAP<sub>2</sub>|';
+        
+        // CORREÇÃO: modeloRele agora é número
+        if (config.modeloRele === 1) { // TD
+            html += '<p class="formula-detalhe">I<sub>fren</sub> = (Σ |I<sub>enrol</sub> / (TAP × C)|) / 2</p>';
+            html += '<p class="formula-detalhe">I<sub>fren</sub> = (|I<sub>1</sub> / (TAP<sub>1</sub> × C<sub>1</sub>)| + |I<sub>2</sub> / (TAP<sub>2</sub> × C<sub>2</sub>)|';
             if (config.numEnrolamentos === 3) {
-                html += ' + |I<sub>3</sub> × C<sub>3</sub> / TAP<sub>3</sub>|';
+                html += ' + |I<sub>3</sub> / (TAP<sub>3</sub> × C<sub>3</sub>)|';
             }
             html += ') / 2</p>';
-        } else {
+        } else { // LD
             html += '<p class="formula-detalhe">I<sub>fren</sub> = (|I<sub>1</sub> × C<sub>1</sub>| + (RTC<sub>2</sub>/RTC<sub>1</sub>) × |I<sub>2</sub> × C<sub>2</sub>|';
             if (config.numEnrolamentos === 3) {
                 html += ' + (RTC<sub>3</sub>/RTC<sub>1</sub>) × |I<sub>3</sub> × C<sub>3</sub>|';
@@ -107,3 +117,4 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
 
     document.getElementById('resultados').innerHTML = html;
 }
+
