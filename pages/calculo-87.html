@@ -575,6 +575,9 @@
                     <div class="results-area" id="resultados">
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
                     </div>
+                    
+                    <!-- Gráfico Diferencial -->
+                    <div id="grafico-diferencial" style="width: 100%; height: 500px; margin-top: 30px;"></div>
                 </div>
             </div>
         </div>
@@ -590,6 +593,8 @@
     <!-- Scripts -->
     <script src="../js/lib/echarts.min.js"></script>
     <script src="../js/calc_87.js"></script>
+    <script src="../js/calc_87_eq.js"></script>
+    <script src="../js/calc_87_grafico.js"></script>
     <script>
         // Controlar visibilidade do enrolamento 3
         document.getElementById('numEnrolamentos').addEventListener('change', function() {
