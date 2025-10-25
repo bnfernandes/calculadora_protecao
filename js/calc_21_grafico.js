@@ -1,105 +1,118 @@
 // ============================================================================
 // FUNÇÃO 21 - PROTEÇÃO DE DISTÂNCIA
 // Arquivo: calc_21_grafico.js
-// Descrição: Geração de gráficos com ECharts
+// Descrição: Geração de gráficos com ECharts (dois gráficos separados)
 // ============================================================================
 
 /**
- * Cria o gráfico da proteção 21 no plano R-X
+ * Cria dois gráficos separados: um para fase-fase e outro para fase-terra
  * @param {Object} resultados - Resultados calculados
  */
-function criarGrafico21(resultados) {
-    console.log('Criando gráfico da Função 21...');
+function criarGraficosFaseFaseFaseTerra(resultados) {
+    const areaResultados = document.getElementById('resultados');
+    if (!areaResultados) return;
     
-    // Verificar se existe área de gráfico, senão criar
-    let areaGrafico = document.getElementById('grafico-21');
-    if (!areaGrafico) {
-        const areaResultados = document.getElementById('resultados');
-        if (!areaResultados) return;
-        
-        // Criar container do gráfico
-        const divGrafico = document.createElement('div');
-        divGrafico.className = 'resultado-secao mt-4';
-        divGrafico.innerHTML = `
-            <h6 class="resultado-titulo">Gráfico - Plano R-X</h6>
-            <div id="grafico-21" style="width: 100%; height: 600px;"></div>
-        `;
-        areaResultados.appendChild(divGrafico);
-        areaGrafico = document.getElementById('grafico-21');
-    }
+    // Remover gráficos anteriores se existirem
+    const graficosAntigos = document.querySelectorAll('.grafico-protecao-21');
+    graficosAntigos.forEach(g => g.remove());
     
-    // Inicializar ECharts
+    // Criar container para gráfico fase-fase
+    const divGraficoFaseFase = document.createElement('div');
+    divGraficoFaseFase.className = 'resultado-secao mt-4 grafico-protecao-21';
+    divGraficoFaseFase.innerHTML = `
+        <h6 class="resultado-titulo">Gráfico - Faltas Fase-Fase (Plano R-X)</h6>
+        <div id="grafico-21-fase-fase" style="width: 100%; height: 600px;"></div>
+    `;
+    areaResultados.appendChild(divGraficoFaseFase);
+    
+    // Criar container para gráfico fase-terra
+    const divGraficoFaseTerra = document.createElement('div');
+    divGraficoFaseTerra.className = 'resultado-secao mt-4 grafico-protecao-21';
+    divGraficoFaseTerra.innerHTML = `
+        <h6 class="resultado-titulo">Gráfico - Faltas Fase-Terra (Plano R-X)</h6>
+        <div id="grafico-21-fase-terra" style="width: 100%; height: 600px;"></div>
+    `;
+    areaResultados.appendChild(divGraficoFaseTerra);
+    
+    // Gerar gráfico fase-fase
+    criarGraficoFaseFase(resultados);
+    
+    // Gerar gráfico fase-terra
+    criarGraficoFaseTerra(resultados);
+}
+
+/**
+ * Cria o gráfico para faltas fase-fase
+ * @param {Object} resultados - Resultados calculados
+ */
+function criarGraficoFaseFase(resultados) {
+    const areaGrafico = document.getElementById('grafico-21-fase-fase');
+    if (!areaGrafico) return;
+    
     const chart = echarts.init(areaGrafico);
-    
-    // Preparar séries de dados
     const series = [];
     const cores = ['#e30613', '#0066cc', '#00cc66', '#ff9900', '#9933cc'];
     
     resultados.zonas.forEach((zona, idx) => {
-        // Série para Fase
-        if (zona.fase && zona.fase.vertices && zona.fase.vertices.length > 0) {
-            const dadosFase = zona.fase.vertices.map(v => [v.R, v.X]);
-            // Fechar o polígono
-            if (dadosFase.length > 0) {
-                dadosFase.push(dadosFase[0]);
+        if (zona.faseFase) {
+            // Série para Frente
+            if (zona.faseFase.frente && zona.faseFase.frente.vertices.length > 0) {
+                const dadosFrente = zona.faseFase.frente.vertices.map(v => [v.R, v.X]);
+                dadosFrente.push(dadosFrente[0]); // Fechar polígono
+                
+                series.push({
+                    name: `Z${zona.numero} - Frente`,
+                    type: 'line',
+                    data: dadosFrente,
+                    lineStyle: {
+                        color: cores[idx % cores.length],
+                        width: 2
+                    },
+                    itemStyle: {
+                        color: cores[idx % cores.length]
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    smooth: false,
+                    areaStyle: {
+                        color: cores[idx % cores.length],
+                        opacity: 0.1
+                    }
+                });
             }
             
-            series.push({
-                name: `Zona ${zona.numero} - Fase`,
-                type: 'line',
-                data: dadosFase,
-                lineStyle: {
-                    color: cores[idx % cores.length],
-                    width: 2
-                },
-                itemStyle: {
-                    color: cores[idx % cores.length]
-                },
-                symbol: 'circle',
-                symbolSize: 6,
-                smooth: false,
-                areaStyle: {
-                    color: cores[idx % cores.length],
-                    opacity: 0.1
-                }
-            });
-        }
-        
-        // Série para Terra
-        if (zona.terra && zona.terra.vertices && zona.terra.vertices.length > 0) {
-            const dadosTerra = zona.terra.vertices.map(v => [v.R, v.X]);
-            // Fechar o polígono
-            if (dadosTerra.length > 0) {
-                dadosTerra.push(dadosTerra[0]);
+            // Série para Reverso
+            if (zona.faseFase.reverso && zona.faseFase.reverso.vertices.length > 0) {
+                const dadosReverso = zona.faseFase.reverso.vertices.map(v => [v.R, v.X]);
+                dadosReverso.push(dadosReverso[0]); // Fechar polígono
+                
+                series.push({
+                    name: `Z${zona.numero} - Reverso`,
+                    type: 'line',
+                    data: dadosReverso,
+                    lineStyle: {
+                        color: cores[idx % cores.length],
+                        width: 2,
+                        type: 'dashed'
+                    },
+                    itemStyle: {
+                        color: cores[idx % cores.length]
+                    },
+                    symbol: 'triangle',
+                    symbolSize: 6,
+                    smooth: false,
+                    areaStyle: {
+                        color: cores[idx % cores.length],
+                        opacity: 0.05
+                    }
+                });
             }
-            
-            series.push({
-                name: `Zona ${zona.numero} - Terra`,
-                type: 'line',
-                data: dadosTerra,
-                lineStyle: {
-                    color: cores[idx % cores.length],
-                    width: 2,
-                    type: 'dashed'
-                },
-                itemStyle: {
-                    color: cores[idx % cores.length]
-                },
-                symbol: 'diamond',
-                symbolSize: 6,
-                smooth: false,
-                areaStyle: {
-                    color: cores[idx % cores.length],
-                    opacity: 0.05
-                }
-            });
         }
     });
     
-    // Configurar opções do gráfico
     const option = {
         title: {
-            text: 'Característica de Proteção de Distância - Plano R-X',
+            text: 'Região de Operação - Faltas Fase-Fase',
             left: 'center',
             textStyle: {
                 fontSize: 16,
@@ -147,9 +160,6 @@ function criarGrafico21(resultados) {
                     type: 'dashed',
                     color: '#ddd'
                 }
-            },
-            min: function(value) {
-                return Math.min(0, value.min - 0.1);
             }
         },
         yAxis: {
@@ -214,7 +224,6 @@ function criarGrafico21(resultados) {
         ]
     };
     
-    // Aplicar configuração
     chart.setOption(option);
     
     // Responsividade
@@ -223,18 +232,15 @@ function criarGrafico21(resultados) {
     });
     
     // Armazenar instância do gráfico
-    window.grafico21Instance = chart;
+    window.graficoFaseFaseInstance = chart;
 }
 
 /**
- * Cria gráfico comparativo entre zonas
+ * Cria o gráfico para faltas fase-terra
  * @param {Object} resultados - Resultados calculados
- * @param {string} tipo - 'fase' ou 'terra'
  */
-function criarGraficoComparativo(resultados, tipo = 'fase') {
-    console.log(`Criando gráfico comparativo - ${tipo}...`);
-    
-    const areaGrafico = document.getElementById(`grafico-21-${tipo}`);
+function criarGraficoFaseTerra(resultados) {
+    const areaGrafico = document.getElementById('grafico-21-fase-terra');
     if (!areaGrafico) return;
     
     const chart = echarts.init(areaGrafico);
@@ -242,78 +248,189 @@ function criarGraficoComparativo(resultados, tipo = 'fase') {
     const cores = ['#e30613', '#0066cc', '#00cc66', '#ff9900', '#9933cc'];
     
     resultados.zonas.forEach((zona, idx) => {
-        const dados = tipo === 'fase' ? zona.fase : zona.terra;
-        
-        if (dados && dados.vertices && dados.vertices.length > 0) {
-            const pontos = dados.vertices.map(v => [v.R, v.X]);
-            if (pontos.length > 0) {
-                pontos.push(pontos[0]); // Fechar polígono
+        if (zona.faseTerra) {
+            // Série para Frente
+            if (zona.faseTerra.frente && zona.faseTerra.frente.vertices.length > 0) {
+                const dadosFrente = zona.faseTerra.frente.vertices.map(v => [v.R, v.X]);
+                dadosFrente.push(dadosFrente[0]); // Fechar polígono
+                
+                series.push({
+                    name: `Z${zona.numero} - Frente (α=${zona.faseTerra.alpha.toFixed(2)}°)`,
+                    type: 'line',
+                    data: dadosFrente,
+                    lineStyle: {
+                        color: cores[idx % cores.length],
+                        width: 2
+                    },
+                    itemStyle: {
+                        color: cores[idx % cores.length]
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    smooth: false,
+                    areaStyle: {
+                        color: cores[idx % cores.length],
+                        opacity: 0.1
+                    }
+                });
             }
             
-            series.push({
-                name: `Zona ${zona.numero}`,
-                type: 'line',
-                data: pontos,
-                lineStyle: {
-                    color: cores[idx % cores.length],
-                    width: 2
-                },
-                itemStyle: {
-                    color: cores[idx % cores.length]
-                },
-                symbol: 'circle',
-                symbolSize: 6,
-                areaStyle: {
-                    color: cores[idx % cores.length],
-                    opacity: 0.15
-                }
-            });
+            // Série para Reverso
+            if (zona.faseTerra.reverso && zona.faseTerra.reverso.vertices.length > 0) {
+                const dadosReverso = zona.faseTerra.reverso.vertices.map(v => [v.R, v.X]);
+                dadosReverso.push(dadosReverso[0]); // Fechar polígono
+                
+                series.push({
+                    name: `Z${zona.numero} - Reverso (α=${zona.faseTerra.alpha.toFixed(2)}°)`,
+                    type: 'line',
+                    data: dadosReverso,
+                    lineStyle: {
+                        color: cores[idx % cores.length],
+                        width: 2,
+                        type: 'dashed'
+                    },
+                    itemStyle: {
+                        color: cores[idx % cores.length]
+                    },
+                    symbol: 'triangle',
+                    symbolSize: 6,
+                    smooth: false,
+                    areaStyle: {
+                        color: cores[idx % cores.length],
+                        opacity: 0.05
+                    }
+                });
+            }
         }
     });
     
     const option = {
         title: {
-            text: `Comparação de Zonas - ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`,
-            left: 'center'
+            text: 'Região de Operação - Faltas Fase-Terra (com Compensação Homopolar)',
+            left: 'center',
+            textStyle: {
+                fontSize: 16,
+                fontWeight: 'bold'
+            }
         },
         tooltip: {
             trigger: 'item',
-            formatter: '{a}<br/>R: {c0} Ω<br/>X: {c1} Ω'
+            formatter: function(params) {
+                if (params.data && params.data.length === 2) {
+                    return `${params.seriesName}<br/>R: ${params.data[0].toFixed(4)} Ω<br/>X: ${params.data[1].toFixed(4)} Ω`;
+                }
+                return params.seriesName;
+            }
         },
         legend: {
             data: series.map(s => s.name),
-            top: 30
+            top: 30,
+            type: 'scroll'
         },
         grid: {
             left: '10%',
             right: '10%',
-            bottom: '10%',
-            top: '15%',
+            bottom: '15%',
+            top: '20%',
             containLabel: true
         },
         xAxis: {
             type: 'value',
-            name: 'R (Ω)',
+            name: 'R (Ω) - Resistência',
             nameLocation: 'middle',
-            nameGap: 30
+            nameGap: 30,
+            nameTextStyle: {
+                fontSize: 14,
+                fontWeight: 'bold'
+            },
+            axisLine: {
+                lineStyle: {
+                    color: '#333'
+                }
+            },
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    type: 'dashed',
+                    color: '#ddd'
+                }
+            }
         },
         yAxis: {
             type: 'value',
-            name: 'X (Ω)',
+            name: 'X (Ω) - Reatância',
             nameLocation: 'middle',
-            nameGap: 40
+            nameGap: 50,
+            nameTextStyle: {
+                fontSize: 14,
+                fontWeight: 'bold'
+            },
+            axisLine: {
+                lineStyle: {
+                    color: '#333'
+                }
+            },
+            splitLine: {
+                show: true,
+                lineStyle: {
+                    type: 'dashed',
+                    color: '#ddd'
+                }
+            }
         },
-        series: series
+        series: series,
+        toolbox: {
+            feature: {
+                saveAsImage: {
+                    title: 'Salvar como imagem',
+                    pixelRatio: 2
+                },
+                dataZoom: {
+                    title: {
+                        zoom: 'Zoom',
+                        back: 'Restaurar'
+                    }
+                },
+                restore: {
+                    title: 'Restaurar'
+                }
+            },
+            right: 20,
+            top: 30
+        },
+        dataZoom: [
+            {
+                type: 'inside',
+                xAxisIndex: 0,
+                filterMode: 'none'
+            },
+            {
+                type: 'inside',
+                yAxisIndex: 0,
+                filterMode: 'none'
+            },
+            {
+                type: 'slider',
+                xAxisIndex: 0,
+                filterMode: 'none',
+                bottom: 10
+            }
+        ]
     };
     
     chart.setOption(option);
     
+    // Responsividade
     window.addEventListener('resize', function() {
         chart.resize();
     });
+    
+    // Armazenar instância do gráfico
+    window.graficoFaseTerraInstance = chart;
 }
 
 // Exportar funções
-window.criarGrafico21 = criarGrafico21;
-window.criarGraficoComparativo = criarGraficoComparativo;
+window.criarGraficosFaseFaseFaseTerra = criarGraficosFaseFaseFaseTerra;
+window.criarGraficoFaseFase = criarGraficoFaseFase;
+window.criarGraficoFaseTerra = criarGraficoFaseTerra;
 

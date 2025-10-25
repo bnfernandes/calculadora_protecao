@@ -30,35 +30,50 @@ function exibirResultados21(dados, resultados) {
     html += '</div>';
     
     // Resultados por zona
-    resultados.zonas.forEach(zona => {
-        if (!zona.fase && !zona.terra) return; // Pular zonas totalmente desabilitadas
+    resultados.zonas.forEach((zona, idx) => {
+        const dadosZona = dados.zonas[idx];
+        
+        if (!zona.faseFase && !zona.faseTerra) return; // Pular zonas totalmente desabilitadas
         
         html += `<div class="resultado-secao mb-4">`;
         html += `<h6 class="resultado-titulo">Zona ${zona.numero} - Direção: ${zona.direcao === 'frente' ? 'Frente' : 'Reverso'}</h6>`;
+        html += `<p><strong>Ângulo Característico:</strong> ${dadosZona.anguloCaracteristico}°</p>`;
         
-        // Resultados Fase
-        if (zona.fase) {
+        // Resultados Fase-Fase
+        if (zona.faseFase) {
             html += '<div class="resultado-subsecao mb-3">';
-            html += '<h6 class="resultado-subtitulo">Fase</h6>';
+            html += '<h6 class="resultado-subtitulo">Faltas Fase-Fase</h6>';
             html += '<div class="resultado-conteudo">';
             
             // Parâmetros
-            html += `<p><strong>Tipo:</strong> ${zona.fase.parametros.tipo}</p>`;
-            html += `<p><strong>Alcance R:</strong> ${zona.fase.parametros.alcanceR.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Alcance X Frente:</strong> ${zona.fase.parametros.alcanceXFrente.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Alcance X Reverso:</strong> ${zona.fase.parametros.alcanceXReverso.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Ângulo Blinder R:</strong> ${zona.fase.parametros.anguloBlinderR.toFixed(2)}°</p>`;
+            html += `<p><strong>Tipo:</strong> Quadrilateral</p>`;
+            html += `<p><strong>Alcance R:</strong> ${dadosZona.fase.alcanceR.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Alcance X Frente:</strong> ${dadosZona.fase.alcanceXFrente.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Alcance X Reverso:</strong> ${dadosZona.fase.alcanceXReverso.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Ângulo Blinder R:</strong> ${dadosZona.fase.anguloBlinderR.toFixed(2)}°</p>`;
             
-            if (zona.numero === 1 && zona.fase.parametros.anguloBasculamento !== undefined) {
-                html += `<p><strong>Ângulo Basculamento:</strong> ${zona.fase.parametros.anguloBasculamento.toFixed(2)}°</p>`;
+            if (zona.numero === 1 && dadosZona.fase.anguloBasculamento !== undefined) {
+                html += `<p><strong>Ângulo Basculamento:</strong> ${dadosZona.fase.anguloBasculamento.toFixed(2)}°</p>`;
             }
             
-            // Vértices do quadrilátero
-            if (zona.fase.vertices && zona.fase.vertices.length > 0) {
+            // Vértices Frente
+            if (zona.faseFase.frente && zona.faseFase.frente.vertices.length > 0) {
                 html += '<div class="mt-3">';
-                html += '<p><strong>Vértices da região de operação (R, X):</strong></p>';
+                html += '<p><strong>Vértices da região Frente (R, X):</strong></p>';
                 html += '<ul>';
-                zona.fase.vertices.forEach((v, idx) => {
+                zona.faseFase.frente.vertices.forEach((v, idx) => {
+                    html += `<li>P${idx + 1}: (${v.R.toFixed(4)}, ${v.X.toFixed(4)}) Ω</li>`;
+                });
+                html += '</ul>';
+                html += '</div>';
+            }
+            
+            // Vértices Reverso
+            if (zona.faseFase.reverso && zona.faseFase.reverso.vertices.length > 0) {
+                html += '<div class="mt-3">';
+                html += '<p><strong>Vértices da região Reverso (R, X):</strong></p>';
+                html += '<ul>';
+                zona.faseFase.reverso.vertices.forEach((v, idx) => {
                     html += `<li>P${idx + 1}: (${v.R.toFixed(4)}, ${v.X.toFixed(4)}) Ω</li>`;
                 });
                 html += '</ul>';
@@ -69,31 +84,44 @@ function exibirResultados21(dados, resultados) {
             html += '</div>';
         }
         
-        // Resultados Terra
-        if (zona.terra) {
+        // Resultados Fase-Terra
+        if (zona.faseTerra) {
             html += '<div class="resultado-subsecao mb-3">';
-            html += '<h6 class="resultado-subtitulo">Terra</h6>';
+            html += '<h6 class="resultado-subtitulo">Faltas Fase-Terra</h6>';
             html += '<div class="resultado-conteudo">';
             
             // Parâmetros
-            html += `<p><strong>Tipo:</strong> ${zona.terra.parametros.tipo}</p>`;
-            html += `<p><strong>Módulo kn:</strong> ${zona.terra.parametros.moduloKn.toFixed(4)}</p>`;
-            html += `<p><strong>Ângulo kn:</strong> ${zona.terra.parametros.anguloKn.toFixed(2)}°</p>`;
-            html += `<p><strong>Alcance R:</strong> ${zona.terra.parametros.alcanceR.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Alcance X Frente:</strong> ${zona.terra.parametros.alcanceXFrente.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Alcance X Reverso:</strong> ${zona.terra.parametros.alcanceXReverso.toFixed(4)} Ω</p>`;
-            html += `<p><strong>Ângulo Blinder R:</strong> ${zona.terra.parametros.anguloBlinderR.toFixed(2)}°</p>`;
+            html += `<p><strong>Tipo:</strong> Quadrilateral</p>`;
+            html += `<p><strong>Módulo kn:</strong> ${dadosZona.terra.moduloKn.toFixed(4)}</p>`;
+            html += `<p><strong>Ângulo kn:</strong> ${dadosZona.terra.anguloKn.toFixed(2)}°</p>`;
+            html += `<p><strong>Compensação Homopolar (α):</strong> ${zona.faseTerra.alpha.toFixed(4)}°</p>`;
+            html += `<p><strong>Alcance R:</strong> ${dadosZona.terra.alcanceR.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Alcance X Frente:</strong> ${dadosZona.terra.alcanceXFrente.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Alcance X Reverso:</strong> ${dadosZona.terra.alcanceXReverso.toFixed(4)} Ω</p>`;
+            html += `<p><strong>Ângulo Blinder R:</strong> ${dadosZona.terra.anguloBlinderR.toFixed(2)}°</p>`;
             
-            if (zona.numero === 1 && zona.terra.parametros.anguloBasculamento !== undefined) {
-                html += `<p><strong>Ângulo Basculamento:</strong> ${zona.terra.parametros.anguloBasculamento.toFixed(2)}°</p>`;
+            if (zona.numero === 1 && dadosZona.terra.anguloBasculamento !== undefined) {
+                html += `<p><strong>Ângulo Basculamento:</strong> ${dadosZona.terra.anguloBasculamento.toFixed(2)}°</p>`;
             }
             
-            // Vértices do quadrilátero
-            if (zona.terra.vertices && zona.terra.vertices.length > 0) {
+            // Vértices Frente
+            if (zona.faseTerra.frente && zona.faseTerra.frente.vertices.length > 0) {
                 html += '<div class="mt-3">';
-                html += '<p><strong>Vértices da região de operação (R, X):</strong></p>';
+                html += '<p><strong>Vértices da região Frente (R, X):</strong></p>';
                 html += '<ul>';
-                zona.terra.vertices.forEach((v, idx) => {
+                zona.faseTerra.frente.vertices.forEach((v, idx) => {
+                    html += `<li>P${idx + 1}: (${v.R.toFixed(4)}, ${v.X.toFixed(4)}) Ω</li>`;
+                });
+                html += '</ul>';
+                html += '</div>';
+            }
+            
+            // Vértices Reverso
+            if (zona.faseTerra.reverso && zona.faseTerra.reverso.vertices.length > 0) {
+                html += '<div class="mt-3">';
+                html += '<p><strong>Vértices da região Reverso (R, X):</strong></p>';
+                html += '<ul>';
+                zona.faseTerra.reverso.vertices.forEach((v, idx) => {
                     html += `<li>P${idx + 1}: (${v.R.toFixed(4)}, ${v.X.toFixed(4)}) Ω</li>`;
                 });
                 html += '</ul>';
@@ -129,13 +157,26 @@ function gerarSecaoEquacoes() {
     html += '<div class="formula-text">';
     html += '<p>A região de operação quadrilateral é delimitada por 6 retas no plano R-X (resistência-reatância):</p>';
     html += '<ol>';
-    html += '<li><strong>R1 - Limite X Frente:</strong> X = X<sub>frente</sub></li>';
-    html += '<li><strong>R2 - Limite X Reverso:</strong> X = -X<sub>reverso</sub></li>';
-    html += '<li><strong>R3 - Limite R:</strong> R = R<sub>alcance</sub></li>';
-    html += '<li><strong>R4 - Blinder R Superior:</strong> X = R × tan(θ<sub>blinder</sub>)</li>';
-    html += '<li><strong>R5 - Blinder R Inferior:</strong> X = -R × tan(θ<sub>blinder</sub>)</li>';
-    html += '<li><strong>R6 - Linha Característica:</strong> Passa pelo ponto (R<sub>alcance</sub>, 0) com inclinação θ<sub>carac</sub> + θ<sub>basc</sub></li>';
+    html += '<li><strong>r1:</strong> Supervisão direcional (limite angular inferior)</li>';
+    html += '<li><strong>r2:</strong> Limite de alcance X (horizontal inferior)</li>';
+    html += '<li><strong>r3:</strong> Limite de alcance R com ângulo blinder</li>';
+    html += '<li><strong>r4:</strong> Linha característica com basculamento (zona 1) ou limite X superior</li>';
+    html += '<li><strong>r5:</strong> Limite de alcance R negativo (vertical)</li>';
+    html += '<li><strong>r6:</strong> Supervisão direcional (limite angular superior)</li>';
     html += '</ol>';
+    html += '<p><strong>Nota:</strong> Para faltas fase-terra, as retas são rotacionadas pelo ângulo de compensação homopolar α = arg(1 + k<sub>n</sub>).</p>';
+    html += '</div>';
+    html += '</div>';
+    
+    html += '<div class="formula mb-4">';
+    html += '<div class="formula-title">Conversão Polar para Cartesiano</div>';
+    html += '<div class="formula-text">';
+    html += '<p>Uma reta passando por (R₀, X₀) com inclinação θ é convertida para a forma a×R + b×X + c = 0:</p>';
+    html += '</div>';
+    html += '<div class="formula-equation">';
+    html += 'a = -sin(θ)<br>';
+    html += 'b = cos(θ)<br>';
+    html += 'c = sin(θ)×R₀ - cos(θ)×X₀';
     html += '</div>';
     html += '</div>';
     
@@ -148,7 +189,7 @@ function gerarSecaoEquacoes() {
     html += '<div class="constants-title">Onde:</div>';
     html += '<div class="constant">R = componente resistiva da impedância (Ω)</div>';
     html += '<div class="constant">X = componente reativa da impedância (Ω)</div>';
-    html += '<div class="constant">a, b, c = coeficientes da reta</div>';
+    html += '<div class="constant">a, b, c = coeficientes normalizados da reta</div>';
     html += '</div>';
     html += '</div>';
     
@@ -166,15 +207,18 @@ function gerarSecaoEquacoes() {
     html += '</div>';
     
     html += '<div class="formula">';
-    html += '<div class="formula-title">Compensação de Terra (kn)</div>';
+    html += '<div class="formula-title">Compensação Homopolar (Faltas Fase-Terra)</div>';
     html += '<div class="formula-equation">';
-    html += 'Z<sub>terra</sub> = Z<sub>fase</sub> + k<sub>n</sub> × Z<sub>0</sub>';
+    html += 'α = arg(1 + k<sub>n</sub>)<br><br>';
+    html += 'k<sub>n</sub> = |k<sub>n</sub>| ∠φ<sub>n</sub><br><br>';
+    html += 'k<sub>n</sub> = (Z<sub>0</sub> - Z<sub>1</sub>) / Z<sub>1</sub>';
     html += '</div>';
     html += '<div class="formula-constants">';
     html += '<div class="constants-title">Onde:</div>';
+    html += '<div class="constant">α = ângulo de compensação homopolar</div>';
     html += '<div class="constant">k<sub>n</sub> = fator de compensação de sequência zero</div>';
-    html += '<div class="constant">k<sub>n</sub> = |k<sub>n</sub>| ∠φ<sub>n</sub></div>';
     html += '<div class="constant">Z<sub>0</sub> = impedância de sequência zero</div>';
+    html += '<div class="constant">Z<sub>1</sub> = impedância de sequência positiva</div>';
     html += '</div>';
     html += '</div>';
     

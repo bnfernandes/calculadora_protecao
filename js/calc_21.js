@@ -237,81 +237,50 @@ function coletarDadosFormulario21() {
     return dados;
 }
 
+// ============================================================================
+// FUNÇÕES AUXILIARES PARA CONVERSÃO E CÁLCULOS
+// ============================================================================
+
 /**
- * Calcula as 6 retas que delimitam a região quadrilateral no plano R-X
- * @param {Object} zona - Dados da zona (fase ou terra)
- * @param {number} anguloCaracteristico - Ângulo característico em graus
- * @param {number} anguloBasculamento - Ângulo de basculamento em graus (opcional, padrão 0)
- * @returns {Array} Array com as 6 retas no formato {a, b, c} onde aR + bX + c = 0
+ * Converte uma reta em formato polar para cartesiano (versão estável)
+ * @param {number} R0 - Coordenada R do ponto por onde a reta passa
+ * @param {number} X0 - Coordenada X do ponto por onde a reta passa
+ * @param {number} thetaGraus - Ângulo de inclinação em graus
+ * @returns {Object} Reta no formato {a, b, c} onde a*R + b*X + c = 0
  */
-function calcularRetasQuadrilateral(zona, anguloCaracteristico, anguloBasculamento = 0) {
-    const retas = [];
+function polarParaCartesianoEstavel(R0, X0, thetaGraus) {
+    const t = (thetaGraus * Math.PI) / 180;
+    const a = -Math.sin(t);
+    const b = Math.cos(t);
+    const c = Math.sin(t) * R0 - Math.cos(t) * X0;
+
+    // Normalizar para evitar números muito grandes/pequenos
+    const norm = Math.hypot(a, b);
+    return norm > 0 ? { a: a / norm, b: b / norm, c: c / norm } : { a, b, c };
+}
+
+/**
+ * Calcula o ângulo de compensação homopolar alpha = arg(1 + kn)
+ * @param {number} moduloKn - Módulo de kn
+ * @param {number} anguloKnGraus - Ângulo de kn em graus
+ * @returns {number} Ângulo alpha em graus
+ */
+function calcularAlpha(moduloKn, anguloKnGraus) {
+    const anguloKnRad = (anguloKnGraus * Math.PI) / 180;
     
-    // Converter ângulos para radianos
-    const thetaCarac = (anguloCaracteristico * Math.PI) / 180;
-    const thetaBlinder = (zona.anguloBlinderR * Math.PI) / 180;
-    const thetaBasc = (anguloBasculamento * Math.PI) / 180;
+    // kn em coordenadas cartesianas
+    const knReal = moduloKn * Math.cos(anguloKnRad);
+    const knImag = moduloKn * Math.sin(anguloKnRad);
     
-    // Reta 1: Limite superior (X = alcanceXFrente)
-    // X - alcanceXFrente = 0
-    retas.push({
-        nome: 'R1 - Limite X Frente',
-        a: 0,
-        b: 1,
-        c: -zona.alcanceXFrente
-    });
+    // 1 + kn
+    const somaReal = 1 + knReal;
+    const somaImag = knImag;
     
-    // Reta 2: Limite inferior (X = -alcanceXReverso)
-    // X + alcanceXReverso = 0
-    retas.push({
-        nome: 'R2 - Limite X Reverso',
-        a: 0,
-        b: 1,
-        c: zona.alcanceXReverso
-    });
+    // arg(1 + kn)
+    const alphaRad = Math.atan2(somaImag, somaReal);
+    const alphaGraus = (alphaRad * 180) / Math.PI;
     
-    // Reta 3: Limite direito (R = alcanceR)
-    // R - alcanceR = 0
-    retas.push({
-        nome: 'R3 - Limite R',
-        a: 1,
-        b: 0,
-        c: -zona.alcanceR
-    });
-    
-    // Reta 4: Blinder R superior (passa pela origem com ângulo blinder)
-    // X - R * tan(thetaBlinder) = 0
-    retas.push({
-        nome: 'R4 - Blinder R Superior',
-        a: -Math.tan(thetaBlinder),
-        b: 1,
-        c: 0
-    });
-    
-    // Reta 5: Blinder R inferior (passa pela origem com ângulo -blinder)
-    // X + R * tan(thetaBlinder) = 0
-    retas.push({
-        nome: 'R5 - Blinder R Inferior',
-        a: Math.tan(thetaBlinder),
-        b: 1,
-        c: 0
-    });
-    
-    // Reta 6: Linha característica (passa pelo ponto alcanceR com ângulo característico + basculamento)
-    // Inclinação: tan(thetaCarac + thetaBasc)
-    // Passa por (alcanceR, 0) após rotação
-    const thetaTotal = thetaCarac + thetaBasc;
-    const m = Math.tan(thetaTotal);
-    // X - m*(R - alcanceR) = 0
-    // X - m*R + m*alcanceR = 0
-    retas.push({
-        nome: 'R6 - Linha Característica',
-        a: -m,
-        b: 1,
-        c: m * zona.alcanceR
-    });
-    
-    return retas;
+    return alphaGraus;
 }
 
 /**
@@ -336,50 +305,380 @@ function calcularInterseccao(reta1, reta2) {
     return {R, X};
 }
 
+// ============================================================================
+// FUNÇÕES DE CÁLCULO DAS RETAS PARA CADA CASO DE FALTA
+// ============================================================================
+
 /**
- * Determina os vértices da região quadrilateral
+ * Calcula as 6 retas para falta fase-fase frente (delante)
+ * @param {Object} params - Parâmetros de entrada
+ * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
+ */
+function calcularRetasFaseFaseFrente(params) {
+    const {
+        anguloFaseFase,
+        amplitudeFaseFase,
+        alcanceXFrente,
+        alcanceR,
+        anguloBlinderR,
+        anguloCaracteristico,
+        anguloBasculamento,
+        temBasculamento
+    } = params;
+    
+    const retas = [];
+    
+    // r1: (0,0) < anguloFaseFase - amplitudeFaseFase/2
+    const theta1 = anguloFaseFase - amplitudeFaseFase / 2;
+    retas.push({
+        nome: 'r1',
+        ...polarParaCartesianoEstavel(0, 0, theta1)
+    });
+    
+    // r2: (0, -alcanceXFrente) < 0
+    retas.push({
+        nome: 'r2',
+        a: 0,
+        b: 1,
+        c: alcanceXFrente
+    });
+    
+    // r3: (alcanceR, 0) < anguloBlinderR
+    retas.push({
+        nome: 'r3',
+        ...polarParaCartesianoEstavel(alcanceR, 0, anguloBlinderR)
+    });
+    
+    // r4: Depende se tem basculamento
+    if (temBasculamento) {
+        const tanBasc = Math.tan((-anguloBasculamento * Math.PI) / 180);
+        const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
+        const X0_r4 = alcanceXFrente * (1 + tanBasc / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento)
+        });
+    } else {
+        retas.push({
+            nome: 'r4',
+            a: 0,
+            b: 1,
+            c: -alcanceXFrente
+        });
+    }
+    
+    // r5: (-alcanceR, 0) < 90
+    retas.push({
+        nome: 'r5',
+        ...polarParaCartesianoEstavel(-alcanceR, 0, 90)
+    });
+    
+    // r6: (0,0) < anguloFaseFase + amplitudeFaseFase/2
+    const theta6 = anguloFaseFase + amplitudeFaseFase / 2;
+    retas.push({
+        nome: 'r6',
+        ...polarParaCartesianoEstavel(0, 0, theta6)
+    });
+    
+    return retas;
+}
+
+/**
+ * Calcula as 6 retas para falta fase-fase reverso (detras)
+ * @param {Object} params - Parâmetros de entrada
+ * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
+ */
+function calcularRetasFaseFaseReverso(params) {
+    const {
+        anguloFaseFase,
+        amplitudeFaseFase,
+        alcanceXReverso,
+        alcanceR,
+        anguloBlinderR,
+        anguloCaracteristico,
+        anguloBasculamento,
+        temBasculamento
+    } = params;
+    
+    const retas = [];
+    
+    // r1: (0,0) < anguloFaseFase - amplitudeFaseFase/2 + 180
+    const theta1 = anguloFaseFase - amplitudeFaseFase / 2 + 180;
+    retas.push({
+        nome: 'r1',
+        ...polarParaCartesianoEstavel(0, 0, theta1)
+    });
+    
+    // r2: (0, alcanceXReverso) < 0
+    retas.push({
+        nome: 'r2',
+        a: 0,
+        b: 1,
+        c: -alcanceXReverso
+    });
+    
+    // r3: (-alcanceR, 0) < anguloBlinderR
+    retas.push({
+        nome: 'r3',
+        ...polarParaCartesianoEstavel(-alcanceR, 0, anguloBlinderR)
+    });
+    
+    // r4: Depende se tem basculamento
+    if (temBasculamento) {
+        const tanBasc = Math.tan((-anguloBasculamento * Math.PI) / 180);
+        const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
+        const X0_r4 = -alcanceXReverso * (1 + tanBasc / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento)
+        });
+    } else {
+        retas.push({
+            nome: 'r4',
+            a: 0,
+            b: 1,
+            c: alcanceXReverso
+        });
+    }
+    
+    // r5: (alcanceR, 0) < 90
+    retas.push({
+        nome: 'r5',
+        ...polarParaCartesianoEstavel(alcanceR, 0, 90)
+    });
+    
+    // r6: (0,0) < anguloFaseFase + amplitudeFaseFase/2 + 180
+    const theta6 = anguloFaseFase + amplitudeFaseFase / 2 + 180;
+    retas.push({
+        nome: 'r6',
+        ...polarParaCartesianoEstavel(0, 0, theta6)
+    });
+    
+    return retas;
+}
+
+/**
+ * Calcula as 6 retas para falta fase-terra frente (delante)
+ * @param {Object} params - Parâmetros de entrada
+ * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
+ */
+function calcularRetasFaseTerraFrente(params) {
+    const {
+        anguloFaseTerra,
+        amplitudeFaseTerra,
+        alcanceXFrente,
+        alcanceR,
+        anguloBlinderR,
+        anguloCaracteristico,
+        anguloBasculamento,
+        temBasculamento,
+        alpha
+    } = params;
+    
+    const retas = [];
+    
+    // r1: (0,0) < anguloFaseTerra - amplitudeFaseTerra/2 - alpha
+    const theta1 = anguloFaseTerra - amplitudeFaseTerra / 2 - alpha;
+    retas.push({
+        nome: 'r1',
+        ...polarParaCartesianoEstavel(0, 0, theta1)
+    });
+    
+    // r2: (0, -alcanceXFrente*(1+tan(alpha)/tan(anguloCaracteristico))) < -alpha
+    const tanAlpha = Math.tan((alpha * Math.PI) / 180);
+    const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
+    const X0_r2 = -alcanceXFrente * (1 + tanAlpha / tanCarac);
+    
+    retas.push({
+        nome: 'r2',
+        ...polarParaCartesianoEstavel(0, X0_r2, -alpha)
+    });
+    
+    // r3: (alcanceR, 0) < anguloBlinderR
+    retas.push({
+        nome: 'r3',
+        ...polarParaCartesianoEstavel(alcanceR, 0, anguloBlinderR)
+    });
+    
+    // r4: Depende se tem basculamento
+    if (temBasculamento) {
+        const tanBasc = Math.tan(((-anguloBasculamento + alpha) * Math.PI) / 180);
+        const X0_r4 = alcanceXFrente * (1 + tanBasc / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento - alpha)
+        });
+    } else {
+        const X0_r4 = alcanceXFrente * (1 + tanAlpha / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, -alpha)
+        });
+    }
+    
+    // r5: (-alcanceR, 0) < 90
+    retas.push({
+        nome: 'r5',
+        ...polarParaCartesianoEstavel(-alcanceR, 0, 90)
+    });
+    
+    // r6: (0,0) < anguloFaseTerra + amplitudeFaseTerra/2 - alpha
+    const theta6 = anguloFaseTerra + amplitudeFaseTerra / 2 - alpha;
+    retas.push({
+        nome: 'r6',
+        ...polarParaCartesianoEstavel(0, 0, theta6)
+    });
+    
+    return retas;
+}
+
+/**
+ * Calcula as 6 retas para falta fase-terra reverso (detras)
+ * @param {Object} params - Parâmetros de entrada
+ * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
+ */
+function calcularRetasFaseTerraReverso(params) {
+    const {
+        anguloFaseTerra,
+        amplitudeFaseTerra,
+        alcanceXReverso,
+        alcanceR,
+        anguloBlinderR,
+        anguloCaracteristico,
+        anguloBasculamento,
+        temBasculamento,
+        alpha
+    } = params;
+    
+    const retas = [];
+    
+    // r1: (0,0) < anguloFaseTerra - amplitudeFaseTerra/2 - alpha + 180
+    const theta1 = anguloFaseTerra - amplitudeFaseTerra / 2 - alpha + 180;
+    retas.push({
+        nome: 'r1',
+        ...polarParaCartesianoEstavel(0, 0, theta1)
+    });
+    
+    // r2: (0, -alcanceXReverso*(1+tan(alpha)/tan(anguloCaracteristico))) < -alpha
+    const tanAlpha = Math.tan((alpha * Math.PI) / 180);
+    const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
+    const X0_r2 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
+    
+    retas.push({
+        nome: 'r2',
+        ...polarParaCartesianoEstavel(0, X0_r2, -alpha)
+    });
+    
+    // r3: (-alcanceR, 0) < anguloBlinderR
+    retas.push({
+        nome: 'r3',
+        ...polarParaCartesianoEstavel(-alcanceR, 0, anguloBlinderR)
+    });
+    
+    // r4: Depende se tem basculamento
+    if (temBasculamento) {
+        const tanBasc = Math.tan(((-anguloBasculamento + alpha) * Math.PI) / 180);
+        const X0_r4 = -alcanceXReverso * (1 + tanBasc / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento - alpha)
+        });
+    } else {
+        const X0_r4 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
+        
+        retas.push({
+            nome: 'r4',
+            ...polarParaCartesianoEstavel(0, X0_r4, -alpha)
+        });
+    }
+    
+    // r5: (alcanceR, 0) < 90
+    retas.push({
+        nome: 'r5',
+        ...polarParaCartesianoEstavel(alcanceR, 0, 90)
+    });
+    
+    // r6: (0,0) < anguloFaseTerra + amplitudeFaseTerra/2 - alpha + 180
+    const theta6 = anguloFaseTerra + amplitudeFaseTerra / 2 - alpha + 180;
+    retas.push({
+        nome: 'r6',
+        ...polarParaCartesianoEstavel(0, 0, theta6)
+    });
+    
+    return retas;
+}
+
+/**
+ * Determina os vértices da região quadrilateral a partir das 6 retas
  * @param {Array} retas - Array com as 6 retas
  * @returns {Array} Array com os vértices ordenados {R, X}
  */
 function determinarVerticesQuadrilateral(retas) {
-    const interseccoes = [];
+    // Pares de retas que formam os vértices
+    const paresRelevantes = [
+        [0, 1], // r1 x r2
+        [0, 2], // r1 x r3
+        [2, 3], // r3 x r4
+        [3, 4], // r4 x r5
+        [4, 5], // r5 x r6
+        [1, 5]  // r2 x r6
+    ];
     
-    // Calcular todas as intersecções possíveis
-    for (let i = 0; i < retas.length; i++) {
-        for (let j = i + 1; j < retas.length; j++) {
-            const ponto = calcularInterseccao(retas[i], retas[j]);
-            if (ponto && ponto.R >= -0.01 && ponto.X >= -1000) { // Filtrar pontos válidos
-                interseccoes.push({
-                    ...ponto,
-                    retas: [i, j]
-                });
-            }
+    const vertices = [];
+    
+    paresRelevantes.forEach(([i, j]) => {
+        const ponto = calcularInterseccao(retas[i], retas[j]);
+        if (ponto) {
+            vertices.push(ponto);
         }
-    }
-    
-    // Ordenar pontos em sentido anti-horário
-    // Simplificação: ordenar por ângulo em relação à origem
-    const pontosOrdenados = interseccoes.sort((a, b) => {
-        const anguloA = Math.atan2(a.X, a.R);
-        const anguloB = Math.atan2(b.X, b.R);
-        return anguloA - anguloB;
     });
     
-    return pontosOrdenados;
+    // Filtrar pontos duplicados
+    const verticesUnicos = [];
+    vertices.forEach(v => {
+        const jaExiste = verticesUnicos.some(vu => 
+            Math.abs(vu.R - v.R) < 1e-6 && Math.abs(vu.X - v.X) < 1e-6
+        );
+        if (!jaExiste) {
+            verticesUnicos.push(v);
+        }
+    });
+    
+    // Ordenar vértices em sentido anti-horário
+    if (verticesUnicos.length > 0) {
+        const centroR = verticesUnicos.reduce((sum, v) => sum + v.R, 0) / verticesUnicos.length;
+        const centroX = verticesUnicos.reduce((sum, v) => sum + v.X, 0) / verticesUnicos.length;
+        
+        verticesUnicos.sort((a, b) => {
+            const anguloA = Math.atan2(a.X - centroX, a.R - centroR);
+            const anguloB = Math.atan2(b.X - centroX, b.R - centroR);
+            return anguloA - anguloB;
+        });
+    }
+    
+    return verticesUnicos;
 }
+
+// ============================================================================
+// FUNÇÃO PRINCIPAL DE CÁLCULO
+// ============================================================================
 
 /**
  * Função principal de cálculo da proteção 21
+ * Calcula as regiões para todos os casos de falta respeitando a direção selecionada
  */
 function calcularProtecao21() {
     console.log('Iniciando cálculo da Função 21...');
     
     try {
-        // Coletar dados do formulário
         const dados = coletarDadosFormulario21();
         console.log('Dados coletados:', dados);
         
-        // Processar cada zona habilitada
         const resultados = {
             zonas: []
         };
@@ -388,40 +687,97 @@ function calcularProtecao21() {
             const resultadoZona = {
                 numero: zona.numero,
                 direcao: zona.direcao,
-                fase: null,
-                terra: null
+                faseFase: null,
+                faseTerra: null
             };
             
-            // Processar fase se habilitada
+            // ========== PROCESSAR FASE-FASE ==========
             if (zona.fase.habilitado) {
-                const retasFase = calcularRetasQuadrilateral(
-                    zona.fase,
-                    zona.anguloCaracteristico,
-                    zona.fase.anguloBasculamento || 0
-                );
-                const verticesFase = determinarVerticesQuadrilateral(retasFase);
-                
-                resultadoZona.fase = {
-                    retas: retasFase,
-                    vertices: verticesFase,
-                    parametros: zona.fase
+                const paramsFase = {
+                    anguloFaseFase: dados.supervisaoDirecional.anguloFaseFase,
+                    amplitudeFaseFase: dados.supervisaoDirecional.amplitudeFaseFase,
+                    alcanceXFrente: zona.fase.alcanceXFrente,
+                    alcanceXReverso: zona.fase.alcanceXReverso,
+                    alcanceR: zona.fase.alcanceR,
+                    anguloBlinderR: zona.fase.anguloBlinderR,
+                    anguloCaracteristico: zona.anguloCaracteristico,
+                    anguloBasculamento: zona.fase.anguloBasculamento || 0,
+                    temBasculamento: zona.numero === 1
                 };
+                
+                resultadoZona.faseFase = {
+                    frente: null,
+                    reverso: null
+                };
+                
+                // Calcular FRENTE se direção for "frente"
+                if (zona.direcao === 'frente') {
+                    const retasFaseFrente = calcularRetasFaseFaseFrente(paramsFase);
+                    const verticesFaseFrente = determinarVerticesQuadrilateral(retasFaseFrente);
+                    
+                    resultadoZona.faseFase.frente = {
+                        retas: retasFaseFrente,
+                        vertices: verticesFaseFrente
+                    };
+                }
+                
+                // Calcular REVERSO se direção for "reverso"
+                if (zona.direcao === 'reverso') {
+                    const retasFaseReverso = calcularRetasFaseFaseReverso(paramsFase);
+                    const verticesFaseReverso = determinarVerticesQuadrilateral(retasFaseReverso);
+                    
+                    resultadoZona.faseFase.reverso = {
+                        retas: retasFaseReverso,
+                        vertices: verticesFaseReverso
+                    };
+                }
             }
             
-            // Processar terra se habilitada
+            // ========== PROCESSAR FASE-TERRA ==========
             if (zona.terra.habilitado) {
-                const retasTerra = calcularRetasQuadrilateral(
-                    zona.terra,
-                    zona.anguloCaracteristico,
-                    zona.terra.anguloBasculamento || 0
-                );
-                const verticesTerra = determinarVerticesQuadrilateral(retasTerra);
+                // Calcular alpha (compensação homopolar)
+                const alpha = calcularAlpha(zona.terra.moduloKn, zona.terra.anguloKn);
                 
-                resultadoZona.terra = {
-                    retas: retasTerra,
-                    vertices: verticesTerra,
-                    parametros: zona.terra
+                const paramsTerra = {
+                    anguloFaseTerra: dados.supervisaoDirecional.anguloFaseTerra,
+                    amplitudeFaseTerra: dados.supervisaoDirecional.amplitudeFaseTerra,
+                    alcanceXFrente: zona.terra.alcanceXFrente,
+                    alcanceXReverso: zona.terra.alcanceXReverso,
+                    alcanceR: zona.terra.alcanceR,
+                    anguloBlinderR: zona.terra.anguloBlinderR,
+                    anguloCaracteristico: zona.anguloCaracteristico,
+                    anguloBasculamento: zona.terra.anguloBasculamento || 0,
+                    temBasculamento: zona.numero === 1,
+                    alpha: alpha
                 };
+                
+                resultadoZona.faseTerra = {
+                    alpha: alpha,
+                    frente: null,
+                    reverso: null
+                };
+                
+                // Calcular FRENTE se direção for "frente"
+                if (zona.direcao === 'frente') {
+                    const retasTerraFrente = calcularRetasFaseTerraFrente(paramsTerra);
+                    const verticesTerraFrente = determinarVerticesQuadrilateral(retasTerraFrente);
+                    
+                    resultadoZona.faseTerra.frente = {
+                        retas: retasTerraFrente,
+                        vertices: verticesTerraFrente
+                    };
+                }
+                
+                // Calcular REVERSO se direção for "reverso"
+                if (zona.direcao === 'reverso') {
+                    const retasTerraReverso = calcularRetasFaseTerraReverso(paramsTerra);
+                    const verticesTerraReverso = determinarVerticesQuadrilateral(retasTerraReverso);
+                    
+                    resultadoZona.faseTerra.reverso = {
+                        retas: retasTerraReverso,
+                        vertices: verticesTerraReverso
+                    };
+                }
             }
             
             resultados.zonas.push(resultadoZona);
@@ -429,25 +785,64 @@ function calcularProtecao21() {
         
         console.log('Resultados calculados:', resultados);
         
-        // Exibir resultados e equações
-        if (typeof exibirResultados21 === 'function') {
-            exibirResultados21(dados, resultados);
-        }
+        // Exibir resultados
+        exibirResultados21(dados, resultados);
         
-        // Criar gráficos
-        if (typeof criarGrafico21 === 'function') {
-            criarGrafico21(resultados);
-        }
+        // Criar gráficos separados
+        criarGraficosFaseFaseFaseTerra(resultados);
         
     } catch (erro) {
         console.error('Erro no cálculo:', erro);
-        alert('Erro ao realizar o cálculo. Verifique os dados inseridos.');
+        alert('Erro ao calcular: ' + erro.message);
     }
 }
 
-// Exportar funções para uso global
-window.calcularProtecao21 = calcularProtecao21;
-window.coletarDadosFormulario21 = coletarDadosFormulario21;
-window.calcularRetasQuadrilateral = calcularRetasQuadrilateral;
-window.determinarVerticesQuadrilateral = determinarVerticesQuadrilateral;
+// ============================================================================
+// FUNÇÃO DE EXIBIÇÃO DE RESULTADOS
+// ============================================================================
+
+/**
+ * Exibe os resultados calculados na interface
+ * @param {Object} resultados - Resultados calculados
+ */
+function exibirResultados21(resultados) {
+    const areaResultados = document.getElementById('resultados');
+    if (!areaResultados) return;
+    
+    let html = '<div class="resultado-secao">';
+    html += '<h6 class="resultado-titulo">Resultados do Cálculo</h6>';
+    
+    resultados.zonas.forEach(zona => {
+        if (zona.faseFase || zona.faseTerra) {
+            html += `<div class="resultado-zona mb-3">`;
+            html += `<h6 class="text-primary">Zona ${zona.numero} - Direção: ${zona.direcao}</h6>`;
+            
+            // Resultados Fase-Fase
+            if (zona.faseFase) {
+                if (zona.faseFase.frente) {
+                    html += `<p><strong>Fase-Fase Frente:</strong> ${zona.faseFase.frente.vertices.length} vértices calculados</p>`;
+                }
+                if (zona.faseFase.reverso) {
+                    html += `<p><strong>Fase-Fase Reverso:</strong> ${zona.faseFase.reverso.vertices.length} vértices calculados</p>`;
+                }
+            }
+            
+            // Resultados Fase-Terra
+            if (zona.faseTerra) {
+                html += `<p><strong>Compensação Homopolar (α):</strong> ${zona.faseTerra.alpha.toFixed(4)}°</p>`;
+                if (zona.faseTerra.frente) {
+                    html += `<p><strong>Fase-Terra Frente:</strong> ${zona.faseTerra.frente.vertices.length} vértices calculados</p>`;
+                }
+                if (zona.faseTerra.reverso) {
+                    html += `<p><strong>Fase-Terra Reverso:</strong> ${zona.faseTerra.reverso.vertices.length} vértices calculados</p>`;
+                }
+            }
+            
+            html += `</div>`;
+        }
+    });
+    
+    html += '</div>';
+    areaResultados.innerHTML = html;
+}
 
