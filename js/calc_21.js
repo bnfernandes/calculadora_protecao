@@ -788,6 +788,11 @@ function calcularProtecao21() {
         // Exibir resultados
         exibirResultados21(dados, resultados);
         
+        // Exibir debug das retas (se função existir)
+        if (typeof exibirDebugRetas === 'function') {
+            exibirDebugRetas(dados, resultados);
+        }
+        
         // Criar gráficos separados
         criarGraficosFaseFaseFaseTerra(resultados);
         
