@@ -248,16 +248,6 @@ function coletarDadosFormulario21() {
  * @param {number} thetaGraus - Ângulo de inclinação em graus
  * @returns {Object} Reta no formato {a, b, c} onde a*R + b*X + c = 0
  */
-function polarParaCartesianoEstavel(R0, X0, thetaGraus) {
-    const t = (thetaGraus * Math.PI) / 180;
-    const a = -Math.sin(t);
-    const b = Math.cos(t);
-    const c = Math.sin(t) * R0 - Math.cos(t) * X0;
-
-    // Normalizar para evitar números muito grandes/pequenos
-    const norm = Math.hypot(a, b);
-    return norm > 0 ? { a: a / norm, b: b / norm, c: c / norm } : { a, b, c };
-}
 
 /**
  * Calcula o ângulo de compensação homopolar alpha = arg(1 + kn)
@@ -314,355 +304,6 @@ function calcularInterseccao(reta1, reta2) {
  * @param {Object} params - Parâmetros de entrada
  * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
  */
-function calcularRetasFaseFaseFrente(params) {
-    const {
-        anguloFaseFase,
-        amplitudeFaseFase,
-        alcanceXFrente,
-        alcanceR,
-        anguloBlinderR,
-        anguloCaracteristico,
-        anguloBasculamento,
-        temBasculamento
-    } = params;
-    
-    const retas = [];
-    
-    // r1: (0,0) < anguloFaseFase - amplitudeFaseFase/2
-    const theta1 = anguloFaseFase - amplitudeFaseFase / 2;
-    retas.push({
-        nome: 'r1',
-        ...polarParaCartesianoEstavel(0, 0, theta1)
-    });
-    
-    // r2: (0, -alcanceXFrente) < 0
-    retas.push({
-        nome: 'r2',
-        a: 0,
-        b: 1,
-        c: alcanceXFrente
-    });
-    
-    // r3: (alcanceR, 0) < anguloBlinderR
-    retas.push({
-        nome: 'r3',
-        ...polarParaCartesianoEstavel(alcanceR, 0, anguloBlinderR)
-    });
-    
-    // r4: Depende se tem basculamento
-    if (temBasculamento) {
-        const tanBasc = Math.tan((-anguloBasculamento * Math.PI) / 180);
-        const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-        const X0_r4 = alcanceXFrente * (1 + tanBasc / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento)
-        });
-    } else {
-        retas.push({
-            nome: 'r4',
-            a: 0,
-            b: 1,
-            c: -alcanceXFrente
-        });
-    }
-    
-    // r5: (-alcanceR, 0) < 90
-    retas.push({
-        nome: 'r5',
-        ...polarParaCartesianoEstavel(-alcanceR, 0, 90)
-    });
-    
-    // r6: (0,0) < anguloFaseFase + amplitudeFaseFase/2
-    const theta6 = anguloFaseFase + amplitudeFaseFase / 2;
-    retas.push({
-        nome: 'r6',
-        ...polarParaCartesianoEstavel(0, 0, theta6)
-    });
-    
-    return retas;
-}
-
-/**
- * Calcula as 6 retas para falta fase-fase reverso (detras)
- * @param {Object} params - Parâmetros de entrada
- * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
- */
-function calcularRetasFaseFaseReverso(params) {
-    const {
-        anguloFaseFase,
-        amplitudeFaseFase,
-        alcanceXReverso,
-        alcanceR,
-        anguloBlinderR,
-        anguloCaracteristico,
-        anguloBasculamento,
-        temBasculamento
-    } = params;
-    
-    const retas = [];
-    
-    // r1: (0,0) < anguloFaseFase - amplitudeFaseFase/2 + 180
-    const theta1 = anguloFaseFase - amplitudeFaseFase / 2 + 180;
-    retas.push({
-        nome: 'r1',
-        ...polarParaCartesianoEstavel(0, 0, theta1)
-    });
-    
-    // r2: (0, alcanceXReverso) < 0
-    retas.push({
-        nome: 'r2',
-        a: 0,
-        b: 1,
-        c: -alcanceXReverso
-    });
-    
-    // r3: (-alcanceR, 0) < anguloBlinderR
-    retas.push({
-        nome: 'r3',
-        ...polarParaCartesianoEstavel(-alcanceR, 0, anguloBlinderR)
-    });
-    
-    // r4: Depende se tem basculamento
-    if (temBasculamento) {
-        const tanBasc = Math.tan((-anguloBasculamento * Math.PI) / 180);
-        const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-        const X0_r4 = -alcanceXReverso * (1 + tanBasc / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento)
-        });
-    } else {
-        retas.push({
-            nome: 'r4',
-            a: 0,
-            b: 1,
-            c: alcanceXReverso
-        });
-    }
-    
-    // r5: (alcanceR, 0) < 90
-    retas.push({
-        nome: 'r5',
-        ...polarParaCartesianoEstavel(alcanceR, 0, 90)
-    });
-    
-    // r6: (0,0) < anguloFaseFase + amplitudeFaseFase/2 + 180
-    const theta6 = anguloFaseFase + amplitudeFaseFase / 2 + 180;
-    retas.push({
-        nome: 'r6',
-        ...polarParaCartesianoEstavel(0, 0, theta6)
-    });
-    
-    return retas;
-}
-
-/**
- * Calcula as 6 retas para falta fase-terra frente (delante)
- * @param {Object} params - Parâmetros de entrada
- * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
- */
-function calcularRetasFaseTerraFrente(params) {
-    const {
-        anguloFaseTerra,
-        amplitudeFaseTerra,
-        alcanceXFrente,
-        alcanceR,
-        anguloBlinderR,
-        anguloCaracteristico,
-        anguloBasculamento,
-        temBasculamento,
-        alpha
-    } = params;
-    
-    const retas = [];
-    
-    // r1: (0,0) < anguloFaseTerra - amplitudeFaseTerra/2 - alpha
-    const theta1 = anguloFaseTerra - amplitudeFaseTerra / 2 - alpha;
-    retas.push({
-        nome: 'r1',
-        ...polarParaCartesianoEstavel(0, 0, theta1)
-    });
-    
-    // r2: (0, -alcanceXFrente*(1+tan(alpha)/tan(anguloCaracteristico))) < -alpha
-    const tanAlpha = Math.tan((alpha * Math.PI) / 180);
-    const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-    const X0_r2 = -alcanceXFrente * (1 + tanAlpha / tanCarac);
-    
-    retas.push({
-        nome: 'r2',
-        ...polarParaCartesianoEstavel(0, X0_r2, -alpha)
-    });
-    
-    // r3: (alcanceR, 0) < anguloBlinderR
-    retas.push({
-        nome: 'r3',
-        ...polarParaCartesianoEstavel(alcanceR, 0, anguloBlinderR)
-    });
-    
-    // r4: Depende se tem basculamento
-    if (temBasculamento) {
-        const tanBasc = Math.tan(((-anguloBasculamento + alpha) * Math.PI) / 180);
-        const X0_r4 = alcanceXFrente * (1 + tanBasc / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento - alpha)
-        });
-    } else {
-        const X0_r4 = alcanceXFrente * (1 + tanAlpha / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, -alpha)
-        });
-    }
-    
-    // r5: (-alcanceR, 0) < 90
-    retas.push({
-        nome: 'r5',
-        ...polarParaCartesianoEstavel(-alcanceR, 0, 90)
-    });
-    
-    // r6: (0,0) < anguloFaseTerra + amplitudeFaseTerra/2 - alpha
-    const theta6 = anguloFaseTerra + amplitudeFaseTerra / 2 - alpha;
-    retas.push({
-        nome: 'r6',
-        ...polarParaCartesianoEstavel(0, 0, theta6)
-    });
-    
-    return retas;
-}
-
-/**
- * Calcula as 6 retas para falta fase-terra reverso (detras)
- * @param {Object} params - Parâmetros de entrada
- * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
- */
-function calcularRetasFaseTerraReverso(params) {
-    const {
-        anguloFaseTerra,
-        amplitudeFaseTerra,
-        alcanceXReverso,
-        alcanceR,
-        anguloBlinderR,
-        anguloCaracteristico,
-        anguloBasculamento,
-        temBasculamento,
-        alpha
-    } = params;
-    
-    const retas = [];
-    
-    // r1: (0,0) < anguloFaseTerra - amplitudeFaseTerra/2 - alpha + 180
-    const theta1 = anguloFaseTerra - amplitudeFaseTerra / 2 - alpha + 180;
-    retas.push({
-        nome: 'r1',
-        ...polarParaCartesianoEstavel(0, 0, theta1)
-    });
-    
-    // r2: (0, -alcanceXReverso*(1+tan(alpha)/tan(anguloCaracteristico))) < -alpha
-    const tanAlpha = Math.tan((alpha * Math.PI) / 180);
-    const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-    const X0_r2 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
-    
-    retas.push({
-        nome: 'r2',
-        ...polarParaCartesianoEstavel(0, X0_r2, -alpha)
-    });
-    
-    // r3: (-alcanceR, 0) < anguloBlinderR
-    retas.push({
-        nome: 'r3',
-        ...polarParaCartesianoEstavel(-alcanceR, 0, anguloBlinderR)
-    });
-    
-    // r4: Depende se tem basculamento
-    if (temBasculamento) {
-        const tanBasc = Math.tan(((-anguloBasculamento + alpha) * Math.PI) / 180);
-        const X0_r4 = -alcanceXReverso * (1 + tanBasc / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, anguloBasculamento - alpha)
-        });
-    } else {
-        const X0_r4 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
-        
-        retas.push({
-            nome: 'r4',
-            ...polarParaCartesianoEstavel(0, X0_r4, -alpha)
-        });
-    }
-    
-    // r5: (alcanceR, 0) < 90
-    retas.push({
-        nome: 'r5',
-        ...polarParaCartesianoEstavel(alcanceR, 0, 90)
-    });
-    
-    // r6: (0,0) < anguloFaseTerra + amplitudeFaseTerra/2 - alpha + 180
-    const theta6 = anguloFaseTerra + amplitudeFaseTerra / 2 - alpha + 180;
-    retas.push({
-        nome: 'r6',
-        ...polarParaCartesianoEstavel(0, 0, theta6)
-    });
-    
-    return retas;
-}
-
-/**
- * Determina os vértices da região quadrilateral a partir das 6 retas
- * @param {Array} retas - Array com as 6 retas
- * @returns {Array} Array com os vértices ordenados {R, X}
- */
-function determinarVerticesQuadrilateral(retas) {
-    // Pares de retas que formam os vértices
-    const paresRelevantes = [
-        [0, 1], // r1 x r2
-        [0, 2], // r1 x r3
-        [2, 3], // r3 x r4
-        [3, 4], // r4 x r5
-        [4, 5], // r5 x r6
-        [1, 5]  // r2 x r6
-    ];
-    
-    const vertices = [];
-    
-    paresRelevantes.forEach(([i, j]) => {
-        const ponto = calcularInterseccao(retas[i], retas[j]);
-        if (ponto) {
-            vertices.push(ponto);
-        }
-    });
-    
-    // Filtrar pontos duplicados
-    const verticesUnicos = [];
-    vertices.forEach(v => {
-        const jaExiste = verticesUnicos.some(vu => 
-            Math.abs(vu.R - v.R) < 1e-6 && Math.abs(vu.X - v.X) < 1e-6
-        );
-        if (!jaExiste) {
-            verticesUnicos.push(v);
-        }
-    });
-    
-    // Ordenar vértices em sentido anti-horário
-    if (verticesUnicos.length > 0) {
-        const centroR = verticesUnicos.reduce((sum, v) => sum + v.R, 0) / verticesUnicos.length;
-        const centroX = verticesUnicos.reduce((sum, v) => sum + v.X, 0) / verticesUnicos.length;
-        
-        verticesUnicos.sort((a, b) => {
-            const anguloA = Math.atan2(a.X - centroX, a.R - centroR);
-            const anguloB = Math.atan2(b.X - centroX, b.R - centroR);
-            return anguloA - anguloB;
-        });
-    }
-    
-    return verticesUnicos;
-}
 
 // ============================================================================
 // FUNÇÃO PRINCIPAL DE CÁLCULO
@@ -712,23 +353,41 @@ function calcularProtecao21() {
                 
                 // Calcular FRENTE se direção for "frente"
                 if (zona.direcao === 'frente') {
-                    const retasFaseFrente = calcularRetasFaseFaseFrente(paramsFase);
-                    const verticesFaseFrente = determinarVerticesQuadrilateral(retasFaseFrente);
+                    const linesPolar = prepararRetasFaseFaseFrente(paramsFase);
+                    const theta1 = paramsFase.anguloFaseFase - paramsFase.amplitudeFaseFase / 2;
+                    const theta6 = paramsFase.anguloFaseFase + paramsFase.amplitudeFaseFase / 2;
+                    const bounds = calcularBounds(paramsFase);
+                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
+                    
+                    // Converter retas polares para cartesianas (para debug)
+                    const retas = linesPolar.map(lp => ({
+                        nome: lp.nome,
+                        ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
+                    }));
                     
                     resultadoZona.faseFase.frente = {
-                        retas: retasFaseFrente,
-                        vertices: verticesFaseFrente
+                        retas: retas,
+                        vertices: vertices
                     };
                 }
                 
                 // Calcular REVERSO se direção for "reverso"
                 if (zona.direcao === 'reverso') {
-                    const retasFaseReverso = calcularRetasFaseFaseReverso(paramsFase);
-                    const verticesFaseReverso = determinarVerticesQuadrilateral(retasFaseReverso);
+                    const linesPolar = prepararRetasFaseFaseReverso(paramsFase);
+                    const theta1 = paramsFase.anguloFaseFase - paramsFase.amplitudeFaseFase / 2 + 180;
+                    const theta6 = paramsFase.anguloFaseFase + paramsFase.amplitudeFaseFase / 2 + 180;
+                    const bounds = calcularBounds(paramsFase);
+                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
+                    
+                    // Converter retas polares para cartesianas (para debug)
+                    const retas = linesPolar.map(lp => ({
+                        nome: lp.nome,
+                        ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
+                    }));
                     
                     resultadoZona.faseFase.reverso = {
-                        retas: retasFaseReverso,
-                        vertices: verticesFaseReverso
+                        retas: retas,
+                        vertices: vertices
                     };
                 }
             }
@@ -759,23 +418,41 @@ function calcularProtecao21() {
                 
                 // Calcular FRENTE se direção for "frente"
                 if (zona.direcao === 'frente') {
-                    const retasTerraFrente = calcularRetasFaseTerraFrente(paramsTerra);
-                    const verticesTerraFrente = determinarVerticesQuadrilateral(retasTerraFrente);
+                    const linesPolar = prepararRetasFaseTerraFrente(paramsTerra);
+                    const theta1 = paramsTerra.anguloFaseTerra - paramsTerra.amplitudeFaseTerra / 2 - alpha;
+                    const theta6 = paramsTerra.anguloFaseTerra + paramsTerra.amplitudeFaseTerra / 2 - alpha;
+                    const bounds = calcularBounds(paramsTerra);
+                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
+                    
+                    // Converter retas polares para cartesianas (para debug)
+                    const retas = linesPolar.map(lp => ({
+                        nome: lp.nome,
+                        ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
+                    }));
                     
                     resultadoZona.faseTerra.frente = {
-                        retas: retasTerraFrente,
-                        vertices: verticesTerraFrente
+                        retas: retas,
+                        vertices: vertices
                     };
                 }
                 
                 // Calcular REVERSO se direção for "reverso"
                 if (zona.direcao === 'reverso') {
-                    const retasTerraReverso = calcularRetasFaseTerraReverso(paramsTerra);
-                    const verticesTerraReverso = determinarVerticesQuadrilateral(retasTerraReverso);
+                    const linesPolar = prepararRetasFaseTerraReverso(paramsTerra);
+                    const theta1 = paramsTerra.anguloFaseTerra - paramsTerra.amplitudeFaseTerra / 2 - alpha + 180;
+                    const theta6 = paramsTerra.anguloFaseTerra + paramsTerra.amplitudeFaseTerra / 2 - alpha + 180;
+                    const bounds = calcularBounds(paramsTerra);
+                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
+                    
+                    // Converter retas polares para cartesianas (para debug)
+                    const retas = linesPolar.map(lp => ({
+                        nome: lp.nome,
+                        ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
+                    }));
                     
                     resultadoZona.faseTerra.reverso = {
-                        retas: retasTerraReverso,
-                        vertices: verticesTerraReverso
+                        retas: retas,
+                        vertices: vertices
                     };
                 }
             }
