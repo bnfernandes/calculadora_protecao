@@ -1,5 +1,31 @@
 // calc_87_grafico.js - Geração de Gráfico (Função 87)
 
+// Ponto de operação de uma fase: triângulo vermelho maior quando atua (dispara),
+// círculo na cor da fase quando não atua — mesma lógica de destaque da planilha Excel
+function criarSerieFase(letraFase, ponto, atua, cor) {
+    return {
+        name: `Fase ${letraFase}`,
+        type: 'scatter',
+        data: [ponto],
+        symbol: atua ? 'triangle' : 'circle',
+        symbolSize: atua ? 16 : 12,
+        itemStyle: {
+            color: atua ? '#cc0000' : cor,
+            borderColor: atua ? '#7a0000' : cor,
+            borderWidth: atua ? 2 : 0
+        },
+        z: 3,
+        label: {
+            show: true,
+            formatter: letraFase,
+            position: 'top',
+            fontSize: 12,
+            fontWeight: 'bold',
+            color: atua ? '#cc0000' : cor
+        }
+    };
+}
+
 function criarGraficoDiferencial(resultados, config) {
     const container = document.getElementById('grafico-diferencial');
     if (!container) return;
@@ -15,28 +41,16 @@ function criarGraficoDiferencial(resultados, config) {
     const maxIfren = Math.max(resultados.faseA.ifren, resultados.faseB.ifren, resultados.faseC.ifren, 10);
     const maxIdif = Math.max(resultados.faseA.idif, resultados.faseB.idif, resultados.faseC.idif, 5);
 
-    // Parâmetros da curva (do formulário)
+    // Parâmetros da curva (do formulário) — mesma função usada para decidir se a fase atua
     const pickupMin = config.sensibilidade; // Sensibilidade (xTAP)
-    const slope1 = config.inclinacao1 / 100; // Inclinação 1 (convertida para decimal)
-    const slope2 = config.inclinacao2 / 100; // Inclinação 2 (convertida para decimal)
     const pontoInflexao1 = config.pontoInflexao1; // Ponto de inflexão 1 (xTAP)
     const pontoInflexao2 = config.pontoInflexao2; // Ponto de inflexão 2 (xTAP)
-
-    const curvaCaracteristica = [];
-    
-    // Região 1: Pickup mínimo (horizontal)
-    curvaCaracteristica.push([0, pickupMin]);
-    curvaCaracteristica.push([pontoInflexao1, pickupMin]);
-    
-    // Região 2: Slope 1
-    const idif_inflexao1 = pickupMin;
-    const idif_inflexao2 = idif_inflexao1 + slope1 * (pontoInflexao2 - pontoInflexao1);
-    curvaCaracteristica.push([pontoInflexao2, idif_inflexao2]);
-    
-    // Região 3: Slope 2
     const ifren_final = maxIfren * 1.2;
-    const idif_final = idif_inflexao2 + slope2 * (ifren_final - pontoInflexao2);
-    curvaCaracteristica.push([ifren_final, idif_final]);
+
+    const curvaCaracteristica = [0, pontoInflexao1, pontoInflexao2, ifren_final]
+        .map(ifren => [ifren, curvaOperacaoY(ifren, config)]);
+    const idif_inflexao2 = curvaCaracteristica[2][1];
+    const idif_final = curvaCaracteristica[3][1];
 
     // Área de operação (acima da curva)
     const areaOperacao = [
@@ -63,7 +77,9 @@ function criarGraficoDiferencial(resultados, config) {
             trigger: 'item',
             formatter: function(params) {
                 if (params.seriesName.includes('Fase')) {
-                    return `${params.seriesName}<br/>I<sub>fren</sub>: ${params.value[0].toFixed(3)} A<br/>I<sub>dif</sub>: ${params.value[1].toFixed(3)} A`;
+                    const fase = resultados[`fase${params.seriesName.slice(-1)}`];
+                    const status = fase.atua ? 'ATUA' : 'NÃO ATUA';
+                    return `${params.seriesName} — ${status}<br/>I<sub>fren</sub>: ${params.value[0].toFixed(3)} A<br/>I<sub>dif</sub>: ${params.value[1].toFixed(3)} A`;
                 }
                 return params.seriesName;
             }
@@ -148,60 +164,9 @@ function criarGraficoDiferencial(resultados, config) {
                 smooth: false,
                 z: 2
             },
-            {
-                name: 'Fase A',
-                type: 'scatter',
-                data: [pontoFaseA],
-                symbolSize: 12,
-                itemStyle: {
-                    color: '#0066cc'
-                },
-                z: 3,
-                label: {
-                    show: true,
-                    formatter: 'A',
-                    position: 'top',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                    color: '#0066cc'
-                }
-            },
-            {
-                name: 'Fase B',
-                type: 'scatter',
-                data: [pontoFaseB],
-                symbolSize: 12,
-                itemStyle: {
-                    color: '#000000'
-                },
-                z: 3,
-                label: {
-                    show: true,
-                    formatter: 'B',
-                    position: 'top',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                    color: '#000000'
-                }
-            },
-            {
-                name: 'Fase C',
-                type: 'scatter',
-                data: [pontoFaseC],
-                symbolSize: 12,
-                itemStyle: {
-                    color: '#cc0000'
-                },
-                z: 3,
-                label: {
-                    show: true,
-                    formatter: 'C',
-                    position: 'top',
-                    fontSize: 12,
-                    fontWeight: 'bold',
-                    color: '#cc0000'
-                }
-            }
+            criarSerieFase('A', pontoFaseA, resultados.faseA.atua, '#0066cc'),
+            criarSerieFase('B', pontoFaseB, resultados.faseB.atua, '#000000'),
+            criarSerieFase('C', pontoFaseC, resultados.faseC.atua, '#cc0000')
         ]
     };
 

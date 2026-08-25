@@ -71,6 +71,33 @@
     font-size: 0.9em;
 }
 
+/* Barras de valor absoluto |...| que esticam até a altura total do conteúdo
+   (fração incluída), como o \left| ... \right| do LaTeX */
+.abs {
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+}
+
+.abs-barra {
+    border-left: 1.5px solid #212529;
+    margin: 0 4px;
+}
+
+.abs-conteudo {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Nota pequena ao lado de uma linha de equação (ex: aviso de compensação
+   por código horário) */
+.formula-nota {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.6em;
+    color: #6c757d;
+    font-style: italic;
+}
+
 /* Estilos para sobrescritos e subscritos */
 sup {
     font-size: 0.8em;
@@ -90,16 +117,36 @@ sub {
         padding: 15px;
         margin: 10px 0;
     }
-    
+
     .formula-equation {
         font-size: 1.1em;
     }
-    
+
     .formula-constants {
         padding: 10px;
     }
-    
+
     .constant {
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 480px) {
+    .formula {
+        padding: 12px;
+    }
+
+    .formula-equation {
+        font-size: 0.95em;
+        line-height: 1.9;
+    }
+
+    .fraction {
+        margin: 0 3px;
+    }
+
+    .numerator,
+    .denominator {
         font-size: 0.85em;
     }
 }

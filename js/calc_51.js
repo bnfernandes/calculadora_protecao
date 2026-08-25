@@ -55,6 +55,20 @@ function calcularTempoAtuacao(tipoCurva, multiplicador, I, I0, tempoMinimo = 0) 
     return Math.max(tempo, tempoMinimo / 1000);
 }
 
+// Pontos de I/I0 espaçados igualmente em escala log entre min e max (não em
+// escala linear), para a curva ficar suave também perto do início (onde a
+// característica é mais íngreme). O cálculo é uma fórmula fechada por ponto,
+// então gerar dezenas de pontos em vez de poucos não pesa nada.
+function gerarRazoesCorrente(min = 1.05, max = 40, quantidade = 80) {
+    const logMin = Math.log10(min);
+    const logMax = Math.log10(max);
+    const razoes = [];
+    for (let i = 0; i < quantidade; i++) {
+        razoes.push(Math.pow(10, logMin + (i / (quantidade - 1)) * (logMax - logMin)));
+    }
+    return razoes;
+}
+
 // Função para gerar pontos da curva
 function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0) {
     const correntes = [];
@@ -63,8 +77,7 @@ function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0) {
     const constants = CURVE_CONSTANTS[tipoCurva];
     const padrao = constants ? constants.padrao : null;
 
-    // Lista fixa de razões de corrente
-    const razoesCorrente = [1.05, 1.1, 1.2, 1.3, 1.5, 2, 2.5, 3, 5, 10, 20, 40];
+    const razoesCorrente = gerarRazoesCorrente();
 
     for (const razaoCorrente of razoesCorrente) {
         // Se for ANSI, garantir que a razão mínima respeita C+0.1
@@ -118,176 +131,269 @@ function calcularFuncao51(parametros) {
     };
 }
 
-// Função para formatar equação em HTML puro
+// Função para formatar equação em HTML puro (divisões sempre como frações em
+// duas linhas — ver js/formula-html.js, mesmo padrão usado nas Funções 67 e 87)
 function formatarEquacaoHTML(tipoCurva, multiplicador) {
     if (tipoCurva === 'TEMPO-FIXO') {
         return `<div class="formula">t = ${multiplicador} ms</div>`;
     }
-    
+
     const constants = CURVE_CONSTANTS[tipoCurva];
     if (!constants) return '';
-    
-    const { padrao } = constants;
-    let equacao = '';
-    
-    if (padrao === 'IEC') {
+
+    const comuns = [
+        'T = tempo de disparo (seg)',
+        `M = ${multiplicador} (multiplicador)`,
+        'I = intensidade medida',
+        'I<sub>0</sub> = ajuste de intensidade de arranque'
+    ];
+
+    let titulo, equacao, extras;
+
+    if (constants.padrao === 'IEC') {
         const { K, a } = constants;
-        equacao = `
-            <div class="formula">
-                <div class="formula-title">Fórmula IEC:</div>
-                <div class="formula-equation">
-                    T = M × <span class="fraction">
-                        <span class="numerator">K</span>
-                        <span class="denominator">(I/I<sub>0</sub>)<sup>a</sup> - 1</span>
-                    </span>
-                </div>
-                <div class="formula-constants">
-                    <div class="constants-title">Onde:</div>
-                    <div class="constant">T = tempo de disparo (seg)</div>
-                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
-                    <div class="constant">I = intensidade medida</div>
-                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
-                    <div class="constant">K = ${K}</div>
-                    <div class="constant">a = ${a}</div>
-                </div>
-            </div>
-        `;
-    } else if (padrao === 'ANSI') {
+        titulo = 'Fórmula IEC:';
+        equacao = `T = M × ${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')}`;
+        extras = [`K = ${K}`, `a = ${a}`];
+    } else if (constants.padrao === 'ANSI') {
         const { A, B, C, D, E } = constants;
-        equacao = `
-            <div class="formula">
-                <div class="formula-title">Fórmula ANSI:</div>
-                <div class="formula-equation">
-                    T = M × (A + <span class="fraction">
-                        <span class="numerator">B</span>
-                        <span class="denominator">I/I<sub>0</sub> - C</span>
-                    </span> + <span class="fraction">
-                        <span class="numerator">D</span>
-                        <span class="denominator">(I/I<sub>0</sub> - C)<sup>2</sup></span>
-                    </span> + <span class="fraction">
-                        <span class="numerator">E</span>
-                        <span class="denominator">(I/I<sub>0</sub> - C)<sup>3</sup></span>
-                    </span>)
-                </div>
-                <div class="formula-constants">
-                    <div class="constants-title">Onde:</div>
-                    <div class="constant">T = tempo de disparo (seg)</div>
-                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
-                    <div class="constant">I = intensidade medida</div>
-                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
-                    <div class="constant">A = ${A}</div>
-                    <div class="constant">B = ${B}</div>
-                    <div class="constant">C = ${C}</div>
-                    <div class="constant">D = ${D}</div>
-                    <div class="constant">E = ${E}</div>
-                </div>
-            </div>
-        `;
-    } else if (padrao === 'IEEE') {
+        titulo = 'Fórmula ANSI:';
+        equacao = `T = M × (A + ${fracaoHTML('B', 'I/I<sub>0</sub> - C')} + ${fracaoHTML('D', '(I/I<sub>0</sub> - C)<sup>2</sup>')} + ${fracaoHTML('E', '(I/I<sub>0</sub> - C)<sup>3</sup>')})`;
+        extras = [`A = ${A}`, `B = ${B}`, `C = ${C}`, `D = ${D}`, `E = ${E}`];
+    } else if (constants.padrao === 'IEEE') {
         const { K, a, c } = constants;
-        equacao = `
-            <div class="formula">
-                <div class="formula-title">Fórmula IEEE:</div>
-                <div class="formula-equation">
-                    T = M × (<span class="fraction">
-                        <span class="numerator">K</span>
-                        <span class="denominator">(I/I<sub>0</sub>)<sup>a</sup> - 1</span>
-                    </span> + c)
-                </div>
-                <div class="formula-constants">
-                    <div class="constants-title">Onde:</div>
-                    <div class="constant">T = tempo de disparo (seg)</div>
-                    <div class="constant">M = ${multiplicador} (multiplicador)</div>
-                    <div class="constant">I = intensidade medida</div>
-                    <div class="constant">I<sub>0</sub> = ajuste de intensidade de arranque</div>
-                    <div class="constant">K = ${K}</div>
-                    <div class="constant">a = ${a}</div>
-                    <div class="constant">c = ${c}</div>
-                </div>
-            </div>
-        `;
+        titulo = 'Fórmula IEEE:';
+        equacao = `T = M × (${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')} + c)`;
+        extras = [`K = ${K}`, `a = ${a}`, `c = ${c}`];
+    } else {
+        return '';
     }
-    
-    return equacao;
+
+    const constantesHTML = [...comuns, ...extras].map(c => `<div class="constant">${c}</div>`).join('');
+
+    return `<div class="formula">` +
+        `<div class="formula-title">${titulo}</div>` +
+        linhaEquacaoHTML(equacao) +
+        `<div class="formula-constants"><div class="constants-title">Onde:</div>${constantesHTML}</div>` +
+        `</div>`;
 }
 
-// Função para criar gráfico
-function criarGrafico(canvasId, pontosCurva, pontoAtuacao = null) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    
-    const dadosValidos = pontosCurva.correntes.map((corrente, i) => ({
-        x: pontoAtuacao ? corrente / pontoAtuacao.parametrosUsados.correntePartida : corrente,
-        y: pontosCurva.tempos[i]
-    })).filter(ponto => ponto.y !== null && ponto.y > 0 && ponto.y !== Infinity);
-    
-    const datasets = [{
-        label: 'Curva de Proteção',
+// Formata uma potência de dez (expoente inteiro) como número comum: -2 -> "0.01", 2 -> "100"
+// Posições (em log10) das marcações "menores" de um eixo log clássico —
+// 2, 3, 4...9 dentro de cada década entre min e max — usadas para desenhar
+// grades bem fracas nesses valores. Não são igualmente espaçadas em log10
+// (por isso não dá pra usar um "interval" fixo: log10(2)=0.301, log10(3)=
+// 0.477 etc), então cada posição é calculada explicitamente.
+function gerarTicksMenores(min, max) {
+    const ticks = [];
+    for (let decada = Math.floor(min); decada < Math.ceil(max); decada++) {
+        for (let m = 2; m <= 9; m++) {
+            const v = decada + Math.log10(m);
+            if (v > min && v < max) ticks.push(v);
+        }
+    }
+    return ticks;
+}
+
+// Posições das potências de dez (1, 10, 100...) dentro de min e max — ficam
+// de fora de gerarTicksMenores (que só cobre 2..9), mas sem elas não sobra
+// nenhuma linha exatamente sobre os valores rotulados (1, 10, 100...) para
+// conferir visualmente se um ponto calculado bate com o eixo
+function gerarTicksDecada(min, max) {
+    const ticks = [];
+    for (let decada = Math.ceil(min); decada <= Math.floor(max); decada++) {
+        ticks.push(decada);
+    }
+    return ticks;
+}
+
+function formatarPotenciaDez(expoente) {
+    const exp = Math.round(expoente);
+    // Ao dar zoom o ECharts força um tick extra exatamente no limite visível,
+    // que raramente cai numa potência de dez "redonda". Sem essa checagem,
+    // arredondar esse valor mostraria um rótulo enganoso (ex: "1000" grudado
+    // na borda, perto da grade real de 1000) — em vez disso, não rotula.
+    if (Math.abs(expoente - exp) > 1e-6) return '';
+    return exp >= 0 ? String(10 ** exp) : (10 ** exp).toFixed(-exp);
+}
+
+// Função para criar gráfico (ECharts, com scroll/zoom nos eixos como na Função 21)
+//
+// Os eixos são log-log, mas o dataZoom do ECharts sempre mapeia a % da barra
+// linearmente sobre o valor bruto do eixo — mesmo em eixo type:'log' (é uma
+// limitação da biblioteca). Isso fazia a barra "acelerar" perto do início e
+// "andar devagar" perto do fim. Para corrigir, os dados são pré-convertidos
+// para log10 e plotados num eixo type:'value' comum (onde % da barra já
+// corresponde a uma distância uniforme); os rótulos e o tooltip convertem de
+// volta (10^valor) para mostrar os números reais.
+function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const dadosValidos = pontosCurva.correntes.map((corrente, i) => [
+        Math.log10(pontoAtuacao ? corrente / pontoAtuacao.parametrosUsados.correntePartida : corrente),
+        Math.log10(pontosCurva.tempos[i])
+    ]).filter(([, logTempo]) => Number.isFinite(logTempo));
+
+    // Grades bem fracas em 2,3,4...9 de cada década (x: 1-100, y: 0.01-10000),
+    // imitando as marcações menores de um eixo log clássico. As da própria
+    // década (1, 10, 100...) ficam um pouco mais visíveis que as demais —
+    // são a única linha exatamente sobre um valor rotulado, útil para
+    // conferir visualmente se um ponto calculado bate com o eixo
+    const estiloDecada = { color: '#ccc' };
+    const gradesMenores = [
+        ...gerarTicksMenores(-0.2, 2).map(v => ({ xAxis: v })),
+        ...gerarTicksMenores(-2, 4).map(v => ({ yAxis: v })),
+        ...gerarTicksDecada(-0.2, 2).map(v => ({ xAxis: v, lineStyle: estiloDecada })),
+        ...gerarTicksDecada(-2, 4).map(v => ({ yAxis: v, lineStyle: estiloDecada }))
+    ];
+
+    // Série "vazia" só para carregar o markLine. markLine sempre desenha por
+    // cima de tudo na mesma zlevel, cortando a linha vermelha — por isso essa
+    // série fica numa zlevel própria, abaixo (zlevel menor = camada de baixo)
+    const series = [{
+        name: 'GradeMenor',
+        type: 'line',
+        data: [],
+        silent: true,
+        zlevel: 0,
+        markLine: {
+            silent: true,
+            // Com ~70 linhas individuais (menores + década), a animação ao
+            // dar zoom faz cada uma interpolar da posição antiga até a nova —
+            // no meio do caminho elas ficam temporariamente na diagonal
+            // (e some coisa junto, como o nome do eixo). Sem animação, a
+            // grade pula direto para a posição certa.
+            animation: false,
+            symbol: 'none',
+            label: { show: false },
+            tooltip: { show: false },
+            lineStyle: { color: '#eee', type: 'solid', width: 1 },
+            data: gradesMenores
+        }
+    }, {
+        name: 'Curva de Proteção',
+        type: 'line',
         data: dadosValidos,
-        borderColor: '#e30613',
-        backgroundColor: 'rgba(227, 6, 19, 0.1)',
-        borderWidth: 2,
-        fill: false,
-        pointRadius: 0,
-        pointHoverRadius: 5
+        lineStyle: { color: '#e30613', width: 2 },
+        itemStyle: { color: '#e30613' },
+        symbol: 'none',
+        smooth: false,
+        zlevel: 1
     }];
-    
+
     if (pontoAtuacao) {
-        datasets.push({
-            label: 'Ponto de Atuação',
-            data: [{
-                x: pontoAtuacao.fatorCalculado,
-                y: pontoAtuacao.tempoAtuacao
-            }],
-            backgroundColor: '#ff6b35',
-            borderColor: '#ff6b35',
-            pointRadius: 8,
-            pointHoverRadius: 10,
-            showLine: false
+        series.push({
+            name: 'Ponto de Atuação',
+            type: 'scatter',
+            zlevel: 1,
+            data: [[Math.log10(pontoAtuacao.fatorCalculado), Math.log10(pontoAtuacao.tempoAtuacao)]],
+            symbolSize: 12,
+            itemStyle: { color: '#ff6b35' }
         });
     }
-    
-    // Destruir gráfico antigo se existir
-    if (window.myChart) {
-        window.myChart.destroy();
-    }
 
-    window.myChart = new Chart(ctx, {
-        type: 'line',
-        data: { datasets },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'logarithmic',
-                    title: {
-                        display: true,
-                        text: 'Fator (I/Ipartida)'
-                    },
-                    min: 1,
-                    max: 100
-                },
-                y: {
-                    type: 'logarithmic',
-                    title: {
-                        display: true,
-                        text: 'Tempo (s)'
-                    },
-                    min: 0.01,
-                    max: 10000
-                }
+    // Reaproveita a instância existente no container, se houver
+    const chart = echarts.getInstanceByDom(container) || echarts.init(container);
+
+    chart.setOption({
+        title: {
+            text: 'Curva Característica de Proteção',
+            top: 8,
+            left: 'center',
+            textStyle: { fontSize: 16, fontWeight: 'bold' }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: params => `${params.seriesName}<br/>I/I<sub>0</sub>: ${(10 ** params.value[0]).toFixed(3)}<br/>Tempo: ${(10 ** params.value[1]).toFixed(3)} s`
+        },
+        // Título, legenda e toolbox cada um em sua própria linha, para nunca
+        // sobrepor uns aos outros em telas estreitas
+        legend: {
+            type: 'scroll',
+            data: series.filter(s => s.name !== 'GradeMenor').map(s => s.name),
+            top: 36,
+            left: 'center'
+        },
+        // Margens em pixels (não %) para a área do gráfico ficar de fato mais
+        // alta que larga — em % elas cresceriam junto com a altura do
+        // container e a área plotada continuaria quase quadrada
+        grid: {
+            left: 60,
+            right: 90,
+            top: 95,
+            bottom: 90,
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            name: 'Fator (I/Ipartida)',
+            nameLocation: 'middle',
+            nameGap: 30,
+            nameTextStyle: { fontSize: 14, fontWeight: 'bold' },
+            // Começa um pouco antes de 1 (10^-0.2 ≈ 0.63), só para dar um
+            // respiro antes da curva. Sem "interval" fixo aqui de propósito:
+            // com esse mínimo fora de uma potência de dez, um interval fixo
+            // desalinharia todos os ticks das potências de dez (1, 10, 100).
+            // Deixando automático, o ECharts sempre inclui 0/1/2 no conjunto
+            // de ticks, e o formatador oculta os ticks "extras" que sobram.
+            min: -0.2,
+            max: 2,
+            // Sem isso, o eixo tipo 'value' gruda a linha do eixo X onde Y=0
+            // (Tempo=1s) em vez de na base do gráfico, destacando essa grade
+            axisLine: { onZero: false },
+            // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
+            // limite do zoom que não cai numa potência de dez — como as
+            // grades menores já marcam a régua toda, essas ficam desativadas
+            axisTick: { show: false },
+            axisLabel: { formatter: formatarPotenciaDez },
+            // Grade tracejada nativa desativada a pedido — só ficam as
+            // grades menores (markLine da série "GradeMenor")
+            splitLine: { show: false }
+        },
+        yAxis: {
+            type: 'value',
+            name: 'Tempo (s)',
+            nameLocation: 'middle',
+            nameGap: 50,
+            nameTextStyle: { fontSize: 14, fontWeight: 'bold' },
+            // Sem "interval" fixo aqui de propósito (mesmo caso do eixo X):
+            // ao dar zoom, o ECharts recalcula os ticks a partir do novo
+            // limite visível (raramente redondo) e soma o interval dali —
+            // nenhum bate mais numa potência de dez, e o formatador esconde
+            // todos. Automático, o ECharts sempre inclui os valores inteiros
+            // no conjunto de ticks disponíveis, mesmo com zoom aplicado.
+            min: -2,
+            max: 4,
+            axisLine: { onZero: false },
+            // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
+            // limite do zoom que não cai numa potência de dez — como as
+            // grades menores já marcam a régua toda, essas ficam desativadas
+            axisTick: { show: false },
+            axisLabel: { formatter: formatarPotenciaDez },
+            // Grade tracejada nativa desativada a pedido — só ficam as
+            // grades menores (markLine da série "GradeMenor")
+            splitLine: { show: false }
+        },
+        series,
+        toolbox: {
+            feature: {
+                saveAsImage: { title: 'Salvar como imagem', pixelRatio: 2 },
+                dataZoom: { title: { zoom: 'Zoom', back: 'Restaurar' } },
+                restore: { title: 'Restaurar' }
             },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                title: {
-                    display: true,
-                    text: 'Curva Característica de Proteção'
-                }
-            }
-        }
-    });
+            right: 10,
+            top: 64
+        },
+        dataZoom: [
+            { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
+            { type: 'inside', yAxisIndex: 0, filterMode: 'none' },
+            { type: 'slider', xAxisIndex: 0, filterMode: 'none', bottom: 10 },
+            { type: 'slider', yAxisIndex: 0, filterMode: 'none', right: 10 }
+        ]
+    }, true);
+
+    window.addEventListener('resize', () => chart.resize());
 }
 
 // Exporta as funções para uso global

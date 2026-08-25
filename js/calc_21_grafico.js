@@ -135,7 +135,7 @@ function criarGraficoFaseFase(resultados) {
         },
         grid: {
             left: '10%',
-            right: '10%',
+            right: '13%',
             bottom: '15%',
             top: '20%',
             containLabel: true
@@ -220,6 +220,12 @@ function criarGraficoFaseFase(resultados) {
                 xAxisIndex: 0,
                 filterMode: 'none',
                 bottom: 10
+            },
+            {
+                type: 'slider',
+                yAxisIndex: 0,
+                filterMode: 'none',
+                right: 10
             }
         ]
     };
@@ -329,7 +335,7 @@ function criarGraficoFaseTerra(resultados) {
         },
         grid: {
             left: '10%',
-            right: '10%',
+            right: '13%',
             bottom: '15%',
             top: '20%',
             containLabel: true
@@ -414,6 +420,12 @@ function criarGraficoFaseTerra(resultados) {
                 xAxisIndex: 0,
                 filterMode: 'none',
                 bottom: 10
+            },
+            {
+                type: 'slider',
+                yAxisIndex: 0,
+                filterMode: 'none',
+                right: 10
             }
         ]
     };

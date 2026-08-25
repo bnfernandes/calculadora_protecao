@@ -157,13 +157,14 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     const { parametrosUsados } = resultados;
 
     // Obter dados da fase específica
-    let Vpol, anguloMin, anguloMax, corrente;
+    let Vpol, anguloMin, anguloMax, anguloMaxTorque, corrente;
     let corFase, corFaseBorda, corFasorCorrente, nomeFase, nomeCorrenteFase;
 
     if (fase === 'Ia') {
         Vpol = resultados.VpolIa.fasor;
         anguloMin = resultados.regiaoDisparoIa.min;
         anguloMax = resultados.regiaoDisparoIa.max;
+        anguloMaxTorque = resultados.anguloMaxTorqueIa;
         corrente = Complexo.fromPolar(parametrosUsados.ia.magnitude, parametrosUsados.ia.angulo);
         corFase = 'rgba(0, 0, 255, 0.18)'; // Azul transparente
         corFaseBorda = 'rgba(0, 0, 255, 0.6)';
@@ -174,6 +175,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
         Vpol = resultados.VpolIb.fasor;
         anguloMin = resultados.regiaoDisparoIb.min;
         anguloMax = resultados.regiaoDisparoIb.max;
+        anguloMaxTorque = resultados.anguloMaxTorqueIb;
         corrente = Complexo.fromPolar(parametrosUsados.ib.magnitude, parametrosUsados.ib.angulo);
         corFase = 'rgba(0, 0, 0, 0.18)'; // Preto transparente
         corFaseBorda = 'rgba(0, 0, 0, 0.6)';
@@ -184,6 +186,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
         Vpol = resultados.VpolIc.fasor;
         anguloMin = resultados.regiaoDisparoIc.min;
         anguloMax = resultados.regiaoDisparoIc.max;
+        anguloMaxTorque = resultados.anguloMaxTorqueIc;
         corrente = Complexo.fromPolar(parametrosUsados.ic.magnitude, parametrosUsados.ic.angulo);
         corFase = 'rgba(255, 0, 0, 0.18)'; // Vermelho transparente
         corFaseBorda = 'rgba(255, 0, 0, 0.6)';
@@ -203,6 +206,17 @@ function criarGraficoFasorial(containerId, fase, resultados) {
 
     // Normalizar corrente para 0.7
     const escalaCorrente = 0.7 / corrente.magnitude();
+
+    // Vpol usa a MESMA escala das tensões de fase (é uma tensão de linha),
+    // não uma escala própria — senão a magnitude exibida fica incorreta em
+    // relação a Va/Vb/Vc. Pode ultrapassar a região visível do gráfico, o
+    // que é esperado (fica ocultada/cortada pela borda do grid).
+    const nomeVpol = `Vpol: ${Vpol.magnitude().toFixed(1)}∠${Vpol.angulo().toFixed(0)}°`;
+
+    // Linha do ângulo de máximo torque: direção de referência (não uma
+    // grandeza medida), por isso sem ponta de flecha e desenhada além da
+    // borda do círculo (o grid corta o que ultrapassar a área visível)
+    const nomeMaxTorque = `Âng. Máx. Torque: ${anguloMaxTorque.toFixed(0)}°`;
 
     // Série custom para desenhar o setor preenchido (região de operação)
     const sectorSeries = {
@@ -229,17 +243,18 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     // Imagem de fundo removida - será adicionada via graphic
 
     // Função para criar fasor (seta)
-    function phasor(fasor, escala, color, label, lineStyle = 'solid') {
+    function phasor(fasor, escala, color, label, lineStyle = 'solid', comSeta = true) {
         const magnitude = fasor.magnitude() * escala;
         const angulo = fasor.angulo();
         const [x, y] = toXY(angulo, magnitude);
-        
+
         const style = {
             type: 'lines',
             name: label,
             coordinateSystem: 'cartesian2d',
+            clip: true,
             z: 5,
-            symbol: ['none', 'arrow'],
+            symbol: ['none', comSeta ? 'arrow' : 'none'],
             symbolSize: 12,
             lineStyle: { 
                 width: 3, 
@@ -255,9 +270,11 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     }
 
     // Calcular dimensões para garantir área plotável quadrada
+    // (sem título interno do gráfico — o texto já aparece no cabeçalho HTML acima
+    // dele — e legenda do tipo "scroll", que não sobrepõe o gráfico em telas estreitas)
     const containerWidth = container.offsetWidth;
-    const titleHeight = 60;  // Espaço para título
-    const legendHeight = 60; // Espaço para legenda
+    const titleHeight = 15;  // Pequena margem superior
+    const legendHeight = 50; // Espaço para legenda (rolável, não quebra linha)
     const verticalMargin = titleHeight + legendHeight;
     
     // Área plotável deve ser quadrada
@@ -303,15 +320,6 @@ function criarGraficoFasorial(containerId, fase, resultados) {
             height: plotSize,
             containLabel: false
         },
-        title: {
-            text: `Diagrama Fasorial - Fase ${nomeFase}`,
-            left: 'center',
-            top: 10,
-            textStyle: {
-                fontSize: 16,
-                fontWeight: 'bold'
-            }
-        },
         xAxis: {
             min: -1.1, 
             max: 1.1,
@@ -331,21 +339,27 @@ function criarGraficoFasorial(containerId, fase, resultados) {
             splitLine: { show: false }
         },
         legend: {
+            type: 'scroll',
             bottom: 5,
             left: 'center',
             orient: 'horizontal',
-            itemWidth: 25,
+            itemWidth: 20,
             itemHeight: 12,
-            itemGap: 15,
+            itemGap: 12,
             textStyle: { fontSize: 10 },
-            padding: [5, 10]
+            pageIconSize: 10,
+            padding: [5, 10],
+            // Vpol começa desmarcado — só aparece se o usuário clicar nele
+            selected: { [nomeVpol]: false }
         },
         series: [
             sectorSeries,
             phasor(Va, escala, '#1976d2', `Va: ${Va.magnitude().toFixed(1)}∠${Va.angulo().toFixed(0)}°`, 'solid'),
             phasor(Vb, escala, '#000000', `Vb: ${Vb.magnitude().toFixed(1)}∠${Vb.angulo().toFixed(0)}°`, 'solid'),
             phasor(Vc, escala, '#d32f2f', `Vc: ${Vc.magnitude().toFixed(1)}∠${Vc.angulo().toFixed(0)}°`, 'solid'),
-            phasor(corrente, escalaCorrente, corFasorCorrente, nomeCorrenteFase, 'dashed')
+            phasor(corrente, escalaCorrente, corFasorCorrente, nomeCorrenteFase, 'dashed'),
+            phasor(Complexo.fromPolar(2, anguloMaxTorque), 1, corFasorCorrente, nomeMaxTorque, 'dotted', false),
+            phasor(Vpol, escala, '#8e24aa', nomeVpol, 'dashed')
         ]
     };
 
@@ -356,106 +370,55 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     window.addEventListener('resize', () => chart.resize());
 }
 
+// Monta a seção de resultados de uma fase (Vpol, ângulo de máximo torque,
+// ângulo de disparo e gráfico fasorial) — reaproveitada para Ia, Ib e Ic.
+function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, parametrosUsados, graficoId) {
+    const nomeI = `I${letraFase}`; // Ia, Ib, Ic
+    let conteudo = formulaBoxHTML({
+        titulo: `Tensão de Polarização (V<sub>pol ${nomeI}</sub>)`,
+        linhas: [linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = ${vpol.formula}`)],
+        resultado: `${vpol.fasor.magnitude().toFixed(2)} ∠ ${vpol.fasor.angulo().toFixed(2)}°`
+    });
+
+    conteudo += formulaBoxHTML({
+        titulo: 'Ângulo de Máximo Torque',
+        linhas: [
+            linhaEquacaoHTML(`θ<sub>max torque</sub> = arg(V<sub>pol ${nomeI}</sub>) + 90° - ${parametrosUsados.angulo}°`),
+            linhaEquacaoHTML(`θ<sub>max torque</sub> = ${vpol.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°`)
+        ],
+        resultado: `${anguloMaxTorque.toFixed(2)}°`
+    });
+
+    // O ° precisa ficar junto do numerador (amplitude), não solto depois da
+    // fração inteira — senão fica alinhado ao meio do bloco de duas linhas,
+    // mais baixo que o número da amplitude.
+    const metade = fracaoHTML(`${parametrosUsados.amplitude}°`, 2);
+    conteudo += formulaBoxHTML({
+        titulo: 'Ângulo de Disparo',
+        linhas: [
+            linhaEquacaoHTML(`θ<sub>min</sub> = θ<sub>max torque</sub> - ${metade} = ${anguloMaxTorque.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°`),
+            linhaEquacaoHTML(`θ<sub>max</sub> = θ<sub>max torque</sub> + ${metade} = ${anguloMaxTorque.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°`)
+        ],
+        resultado: `${regiaoDisparo.min.toFixed(2)}° &lt; θ<sub>${letraFase}</sub> &lt; ${regiaoDisparo.max.toFixed(2)}°`
+    });
+
+    conteudo += boxResultadoHTML(
+        `<p><strong>Gráfico Fasorial — Fase ${nomeI}</strong></p>` +
+        `<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">` +
+        `<div id="${graficoId}" style="width: 100%; max-width: 600px;"></div></div>`
+    );
+
+    return secaoResultadoHTML(`Região de Disparo ${nomeI}`, conteudo);
+}
+
 // Função para formatar resultados em HTML
 function formatarResultadosHTML(resultados) {
     const { parametrosUsados } = resultados;
     let html = '<div class="resultados-67">';
 
-    // Região de disparo Ia
-    html += '<div class="fase-resultado mb-5">';
-    html += '<h5 class="mb-3" style="color: #e30613; border-bottom: 2px solid #e30613; padding-bottom: 10px;">Região de Disparo Ia</h5>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Tensão de Polarização (V<sub>pol Ia</sub>):</h6>';
-    html += `<p class="formula-display">V<sub>pol Ia</sub> = ${resultados.VpolIa.formula}</p>`;
-    html += `<p class="resultado-destaque">${resultados.VpolIa.fasor.magnitude().toFixed(2)} ∠ ${resultados.VpolIa.fasor.angulo().toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Máximo Torque:</h6>';
-    html += `<p class="formula-display">θ<sub>max torque</sub> = arg(V<sub>pol Ia</sub>) + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="formula-display">θ<sub>max torque</sub> = ${resultados.VpolIa.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.anguloMaxTorqueIa.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Disparo:</h6>';
-    html += `<p class="formula-display">θ<sub>min</sub> = θ<sub>max torque</sub> - ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIa.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIa.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.regiaoDisparoIa.min.toFixed(2)}° < θ<sub>a</sub> < ${resultados.regiaoDisparoIa.max.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Gráfico Fasorial:</h6>';
-    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
-    html += '<div id="grafico-ia" style="width: 100%; max-width: 600px;"></div>';
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-
-    // Região de disparo Ib
-    html += '<div class="fase-resultado mb-5">';
-    html += '<h5 class="mb-3" style="color: #e30613; border-bottom: 2px solid #e30613; padding-bottom: 10px;">Região de Disparo Ib</h5>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Tensão de Polarização (V<sub>pol Ib</sub>):</h6>';
-    html += `<p class="formula-display">V<sub>pol Ib</sub> = ${resultados.VpolIb.formula}</p>`;
-    html += `<p class="resultado-destaque">${resultados.VpolIb.fasor.magnitude().toFixed(2)} ∠ ${resultados.VpolIb.fasor.angulo().toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Máximo Torque:</h6>';
-    html += `<p class="formula-display">θ<sub>max torque</sub> = arg(V<sub>pol Ib</sub>) + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="formula-display">θ<sub>max torque</sub> = ${resultados.VpolIb.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.anguloMaxTorqueIb.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Disparo:</h6>';
-    html += `<p class="formula-display">θ<sub>min</sub> = θ<sub>max torque</sub> - ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIb.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIb.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.regiaoDisparoIb.min.toFixed(2)}° < θ<sub>b</sub> < ${resultados.regiaoDisparoIb.max.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Gráfico Fasorial:</h6>';
-    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
-    html += '<div id="grafico-ib" style="width: 100%; max-width: 600px;"></div>'
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-
-    // Região de disparo Ic
-    html += '<div class="fase-resultado mb-5">';
-    html += '<h5 class="mb-3" style="color: #e30613; border-bottom: 2px solid #e30613; padding-bottom: 10px;">Região de Disparo Ic</h5>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Tensão de Polarização (V<sub>pol Ic</sub>):</h6>';
-    html += `<p class="formula-display">V<sub>pol Ic</sub> = ${resultados.VpolIc.formula}</p>`;
-    html += `<p class="resultado-destaque">${resultados.VpolIc.fasor.magnitude().toFixed(2)} ∠ ${resultados.VpolIc.fasor.angulo().toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Máximo Torque:</h6>';
-    html += `<p class="formula-display">θ<sub>max torque</sub> = arg(V<sub>pol Ic</sub>) + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="formula-display">θ<sub>max torque</sub> = ${resultados.VpolIc.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.anguloMaxTorqueIc.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Ângulo de Disparo:</h6>';
-    html += `<p class="formula-display">θ<sub>min</sub> = θ<sub>max torque</sub> - ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIc.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="formula-display">θ<sub>max</sub> = θ<sub>max torque</sub> + ${parametrosUsados.amplitude}°/2 = ${resultados.anguloMaxTorqueIc.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°</p>`;
-    html += `<p class="resultado-destaque">${resultados.regiaoDisparoIc.min.toFixed(2)}° < θ<sub>c</sub> < ${resultados.regiaoDisparoIc.max.toFixed(2)}°</p>`;
-    html += '</div>';
-    
-    html += '<div class="calculo-item mb-3">';
-    html += '<h6>Gráfico Fasorial:</h6>';
-    html += '<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
-    html += '<div id="grafico-ic" style="width: 100%; max-width: 600px;"></div>'
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
+    html += construirSecaoFase('a', resultados.VpolIa, resultados.anguloMaxTorqueIa, resultados.regiaoDisparoIa, parametrosUsados, 'grafico-ia');
+    html += construirSecaoFase('b', resultados.VpolIb, resultados.anguloMaxTorqueIb, resultados.regiaoDisparoIb, parametrosUsados, 'grafico-ib');
+    html += construirSecaoFase('c', resultados.VpolIc, resultados.anguloMaxTorqueIc, resultados.regiaoDisparoIc, parametrosUsados, 'grafico-ic');
 
     html += '</div>';
 
@@ -465,10 +428,13 @@ function formatarResultadosHTML(resultados) {
 // Event listener para o formulário
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('form-67');
-    
+
     if (form) {
+        ativarSanitizacaoFormulario(form);
+
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            sanitizarTodosCampos(form);
 
             try {
                 // Coletar dados do formulário

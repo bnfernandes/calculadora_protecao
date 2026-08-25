@@ -1,3 +1,11 @@
+/* Reset: box-sizing:border-box em tudo, para que padding e largura do grid
+   (.row/.col-*) sejam consistentes e não estourem a tela em telas estreitas */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* Estilos gerais */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -560,6 +568,50 @@ body {
   .protection-card {
     max-width: 100%;
   }
+
+  .card-body {
+    padding: 15px;
+  }
+
+  .resultado-box,
+  .fase-box {
+    padding: 12px 14px;
+  }
+}
+
+/* Telas de celular estreitas: reduzir ainda mais o preenchimento acumulado
+   nas caixas aninhadas (card > results-area > resultado-secao > resultado-box)
+   para sobrar mais espaço útil para gráficos e fórmulas */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 20px 0;
+  }
+
+  .container {
+    padding: 0 10px;
+  }
+
+  .card-body {
+    padding: 12px;
+  }
+
+  .results-area {
+    padding: 10px;
+  }
+
+  .resultado-box,
+  .fase-box {
+    padding: 10px 12px;
+  }
+
+  .resultado-secao {
+    margin-bottom: 20px;
+  }
+
+  .resumo-idif-ifren {
+    gap: 12px;
+    font-size: 1em;
+  }
 }
 
 /* Estilos para o gráfico */
@@ -580,52 +632,6 @@ input[readonly] {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.fase-resultado {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 25px;
-  border-left: 4px solid #e30613;
-}
-
-.calculo-item {
-  background-color: #ffffff;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.calculo-item h6 {
-  color: #495057;
-  font-weight: 600;
-  margin-bottom: 10px;
-  font-size: 1em;
-}
-
-.formula-display {
-  font-family: 'Times New Roman', serif;
-  font-size: 1.1em;
-  color: #212529;
-  margin: 8px 0;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  border-left: 3px solid #007bff;
-}
-
-.resultado-destaque {
-  font-size: 1.3em;
-  font-weight: 600;
-  color: #e30613;
-  margin: 10px 0;
-  padding: 12px;
-  background-color: #fff3cd;
-  border-radius: 6px;
-  text-align: center;
-  border: 2px solid #ffc107;
-}
-
 .alert-danger {
   color: #721c24;
   background-color: #f8d7da;
@@ -633,5 +639,105 @@ input[readonly] {
   padding: 15px;
   border-radius: 4px;
   margin: 15px 0;
+}
+
+/* Estilos específicos para Função 87 */
+.resultados-87 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.resultado-secao {
+  margin-bottom: 30px;
+}
+
+.resultado-titulo {
+  color: #e30613;
+  font-weight: 600;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #eee;
+}
+
+.resultado-box {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 15px;
+}
+
+.fase-box {
+  border-left: 4px solid #e30613;
+}
+
+.fase-box h6 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+.resumo-idif-ifren {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  font-size: 1.1em;
+  margin: 10px 0 15px;
+}
+
+.badge-atuacao {
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.badge-atua {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.badge-nao-atua {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.resultado-valor {
+  font-weight: 600;
+  color: #e30613;
+  font-size: 1.05em;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.tabela-pontos-teste {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.tabela-pontos-teste th,
+.tabela-pontos-teste td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.tabela-pontos-teste thead th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabela-pontos-teste tbody tr:hover {
+  background-color: #f8f9fa;
 }
 

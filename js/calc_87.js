@@ -26,8 +26,9 @@ class Complexo {
     }
 }
 
-// Função principal de cálculo
-function calcularDiferencial87() {
+// Lê os campos comuns do formulário (config + enrolamentos), usados tanto pelo
+// cálculo a partir das correntes de falta quanto pelo gerador de pontos de teste
+function lerFormulario87() {
     const config = {
         modeloRele: parseInt(document.getElementById('modeloRele').value),
         numEnrolamentos: parseInt(document.getElementById('numEnrolamentos').value),
@@ -100,6 +101,13 @@ function calcularDiferencial87() {
         ];
     }
 
+    return { config, enrolamentos };
+}
+
+// Função principal de cálculo
+function calcularDiferencial87() {
+    const { config, enrolamentos } = lerFormulario87();
+
     // CORREÇÃO CRÍTICA: Usar indexação [Fase][Dev] como no VBA
     // VBA: Dim I_a(3, 3) '(Fase, Dev)
     
@@ -156,19 +164,14 @@ function calcularDiferencial87() {
     const Im_jb = Ih_jb.map(fase => [...fase]);
 
     // Passo 4: Calcular TAP (TD_Tap do VBA)
-    const taps = enrolamentos.map(enrol => {
-        if (config.potencia === 0) {
-            return enrol.eTap;
-        } else {
-            return (config.potencia * 1000) / (enrol.rtc * enrol.kv * Math.sqrt(3));
-        }
-    });
+    const taps = calcularTaps(enrolamentos, config);
 
     // Passo 5: Calcular constante C (TD_C do VBA)
-    const constantesC = calcularConstantesC_VBA(enrolamentos, config);
+    const constantesC = calcularConstantesC(enrolamentos, config);
 
     // Passo 6: Calcular códigos horários relativos
     const codigos = calcularCodigosHorarios(enrolamentos, config);
+    const cod = codigosPorDev(codigos, config);
 
     // Passo 7: Aplicar giro para IDIF (Giro do VBA)
     const If_a_dif = [[], [], []];   // [Fase][Dev]
@@ -176,7 +179,7 @@ function calcularDiferencial87() {
     aplicarGiro_VBA(Im_a, Im_jb, If_a_dif, If_jb_dif, codigos, config);
 
     // Passo 8: Calcular corrente diferencial
-    const resultadosDif = calcularDiferencial_VBA(If_a_dif, If_jb_dif, taps, constantesC, enrolamentos, config);
+    const resultadosDif = calcularDiferencial_VBA(If_a_dif, If_jb_dif, taps, constantesC, enrolamentos, config, Im_a, Im_jb, cod);
 
     // Passo 9: Recalcular sem filtro para Ifren (Mod_Im do VBA)
     const Im_a_SF = I_a.map(fase => [...fase]);
@@ -188,14 +191,17 @@ function calcularDiferencial87() {
     aplicarGiro_VBA(Im_a_SF, Im_jb_SF, If_a_fren, If_jb_fren, codigos, config);
 
     // Passo 11: Calcular corrente de frenagem
-    const resultadosFren = calcularFrenagem_VBA(If_a_fren, If_jb_fren, taps, constantesC, enrolamentos, config);
+    const resultadosFren = calcularFrenagem_VBA(If_a_fren, If_jb_fren, taps, constantesC, enrolamentos, config, Im_a_SF, Im_jb_SF, cod);
 
-    // Combinar resultados
+    // Combinar resultados e indicar atuação por fase (Indica_Falta do VBA)
     const resultados = {
-        faseA: { idif: resultadosDif.faseA, ifren: resultadosFren.faseA },
-        faseB: { idif: resultadosDif.faseB, ifren: resultadosFren.faseB },
-        faseC: { idif: resultadosDif.faseC, ifren: resultadosFren.faseC }
+        faseA: { idif: resultadosDif.faseA.valor, ifren: resultadosFren.faseA.valor, dif: resultadosDif.faseA, fren: resultadosFren.faseA },
+        faseB: { idif: resultadosDif.faseB.valor, ifren: resultadosFren.faseB.valor, dif: resultadosDif.faseB, fren: resultadosFren.faseB },
+        faseC: { idif: resultadosDif.faseC.valor, ifren: resultadosFren.faseC.valor, dif: resultadosDif.faseC, fren: resultadosFren.faseC }
     };
+    for (const fase of Object.values(resultados)) {
+        fase.atua = fase.idif >= curvaOperacaoY(fase.ifren, config);
+    }
 
     // Exibir resultados (função em calc_87_eq.js)
     exibirResultados(config, enrolamentos, taps, constantesC, resultados);
@@ -204,133 +210,45 @@ function calcularDiferencial87() {
     criarGraficoDiferencial(resultados, config);
 }
 
-// Função para calcular as constantes C (completa do VBA)
-function calcularConstantesC_VBA(enrolamentos, config) {
-    const C = [1, 1, 1];
-    
-    // Mapear conexões: Y=1, D=2, Z=3
-    const conexoes = enrolamentos.map(e => {
-        if (e.conexao === 'Y') return 1;
-        if (e.conexao === 'D') return 2;
-        if (e.conexao === 'Z') return 3;
-        return 1;
-    });
+// Calcula o TAP de cada enrolamento (TD_Tap do VBA)
+function calcularTaps(enrolamentos, config) {
+    return enrolamentos.map(enrol => config.potencia === 0
+        ? enrol.eTap
+        : (config.potencia * 1000) / (enrol.rtc * enrol.kv * Math.sqrt(3)));
+}
 
-    const c1 = conexoes[0];
-    const c2 = conexoes[1];
-    const c3 = conexoes[2];
-    const devRef = config.enrolRef;
+// Altura (Idif) da curva característica em um dado Ifren (Indica_Falta do VBA)
+// Três trechos: patamar de sensibilidade, inclinação 1, inclinação 2
+function curvaOperacaoY(ifren, config) {
+    const sens = config.sensibilidade;
+    const p1 = config.pontoInflexao1;
+    const p2 = config.pontoInflexao2;
+    const alfa1 = config.inclinacao1 / 100;
+    const alfa2 = config.inclinacao2 / 100;
+
+    if (ifren <= p1) return sens;
+    if (ifren <= p2) return sens + alfa1 * (ifren - p1);
+    return sens + alfa1 * (p2 - p1) + alfa2 * (ifren - p2);
+}
+
+// Função para calcular as constantes C
+// A tabela exaustiva do VBA (todas as combinações Y/D/Z x enrolamento de referência)
+// se reduz a uma regra única: o fator 1/√3 aparece exatamente quando a conexão do
+// enrolamento e a do enrolamento de referência diferem em relação à conexão Y
+// (uma delas é Y e a outra não) — Z se comporta como D para esse propósito.
+// Regra validada linha a linha contra as ~150 combinações da planilha VBA.
+function calcularConstantesC(enrolamentos, config) {
+    const numEnrol = config.numEnrolamentos;
+    const ref = config.enrolRef - 1;
     const sqrt3 = Math.sqrt(3);
+    const conexaoRef = enrolamentos[ref].conexao;
 
-    // Para 2 enrolamentos
-    if (config.numEnrolamentos === 2) {
-        if (devRef === 1) { // Primário como referência
-            C[0] = 1;
-            
-            // Yy
-            if (c1 === 1 && c2 === 1) C[1] = 1;
-            // Yd
-            else if (c1 === 1 && c2 === 2) C[1] = 1 / sqrt3;
-            // Yz
-            else if (c1 === 1 && c2 === 3) C[1] = 1 / sqrt3;
-            // Dy
-            else if (c1 === 2 && c2 === 1) C[1] = 1 / sqrt3;
-            // Dd
-            else if (c1 === 2 && c2 === 2) C[1] = 1;
-            // Dz
-            else if (c1 === 2 && c2 === 3) C[1] = 1;
-            // Zy
-            else if (c1 === 3 && c2 === 1) C[1] = 1 / sqrt3;
-            // Zd
-            else if (c1 === 3 && c2 === 2) C[1] = 1;
-            // Zz
-            else if (c1 === 3 && c2 === 3) C[1] = 1;
-            
-        } else if (devRef === 2) { // Secundário como referência
-            C[1] = 1;
-            
-            // Yy
-            if (c1 === 1 && c2 === 1) C[0] = 1;
-            // Yd
-            else if (c1 === 1 && c2 === 2) C[0] = 1 / sqrt3;
-            // Yz
-            else if (c1 === 1 && c2 === 3) C[0] = 1 / sqrt3;
-            // Dy
-            else if (c1 === 2 && c2 === 1) C[0] = 1 / sqrt3;
-            // Dd
-            else if (c1 === 2 && c2 === 2) C[0] = 1;
-            // Dz
-            else if (c1 === 2 && c2 === 3) C[0] = 1;
-            // Zy
-            else if (c1 === 3 && c2 === 1) C[0] = 1 / sqrt3;
-            // Zd
-            else if (c1 === 3 && c2 === 2) C[0] = 1;
-            // Zz
-            else if (c1 === 3 && c2 === 3) C[0] = 1;
-        }
+    const C = [1, 1, 1];
+    for (let dev = 0; dev < numEnrol; dev++) {
+        if (dev === ref) continue;
+        const mesmoGrupo = (enrolamentos[dev].conexao === 'Y') === (conexaoRef === 'Y');
+        C[dev] = mesmoGrupo ? 1 : 1 / sqrt3;
     }
-
-    // Para 3 enrolamentos
-    if (config.numEnrolamentos === 3) {
-        if (devRef === 1) { // Primário como referência
-            C[0] = 1;
-            
-            // Yyy
-            if (c1 === 1 && c2 === 1 && c3 === 1) { C[1] = 1; C[2] = 1; }
-            // Yyd
-            else if (c1 === 1 && c2 === 1 && c3 === 2) { C[1] = 1; C[2] = 1 / sqrt3; }
-            // Ydy
-            else if (c1 === 1 && c2 === 2 && c3 === 1) { C[1] = 1 / sqrt3; C[2] = 1; }
-            // Ydd
-            else if (c1 === 1 && c2 === 2 && c3 === 2) { C[1] = 1 / sqrt3; C[2] = 1 / sqrt3; }
-            // Dyy
-            else if (c1 === 2 && c2 === 1 && c3 === 1) { C[1] = 1 / sqrt3; C[2] = 1 / sqrt3; }
-            // Dyd
-            else if (c1 === 2 && c2 === 1 && c3 === 2) { C[1] = 1 / sqrt3; C[2] = 1; }
-            // Ddy
-            else if (c1 === 2 && c2 === 2 && c3 === 1) { C[1] = 1; C[2] = 1 / sqrt3; }
-            // Ddd
-            else if (c1 === 2 && c2 === 2 && c3 === 2) { C[1] = 1; C[2] = 1; }
-            // Casos com Z
-            else if (c1 === 3 || c2 === 3 || c3 === 3) {
-                if (c2 === 1) C[1] = 1 / sqrt3; else C[1] = 1;
-                if (c3 === 1) C[2] = 1 / sqrt3; else C[2] = 1;
-            }
-            
-        } else if (devRef === 2) { // Secundário como referência
-            C[1] = 1;
-            
-            if (c1 === 1 && c2 === 1 && c3 === 1) { C[0] = 1; C[2] = 1; }
-            else if (c1 === 1 && c2 === 1 && c3 === 2) { C[0] = 1; C[2] = 1 / sqrt3; }
-            else if (c1 === 1 && c2 === 2 && c3 === 1) { C[0] = 1 / sqrt3; C[2] = 1 / sqrt3; }
-            else if (c1 === 1 && c2 === 2 && c3 === 2) { C[0] = 1 / sqrt3; C[2] = 1; }
-            else if (c1 === 2 && c2 === 1 && c3 === 1) { C[0] = 1 / sqrt3; C[2] = 1; }
-            else if (c1 === 2 && c2 === 1 && c3 === 2) { C[0] = 1 / sqrt3; C[2] = 1 / sqrt3; }
-            else if (c1 === 2 && c2 === 2 && c3 === 1) { C[0] = 1; C[2] = 1 / sqrt3; }
-            else if (c1 === 2 && c2 === 2 && c3 === 2) { C[0] = 1; C[2] = 1; }
-            else if (c1 === 3 || c2 === 3 || c3 === 3) {
-                if (c1 === 1) C[0] = 1 / sqrt3; else C[0] = 1;
-                if (c3 === 1) C[2] = 1 / sqrt3; else C[2] = 1;
-            }
-            
-        } else if (devRef === 3) { // Terciário como referência
-            C[2] = 1;
-            
-            if (c1 === 1 && c2 === 1 && c3 === 1) { C[0] = 1; C[1] = 1; }
-            else if (c1 === 1 && c2 === 1 && c3 === 2) { C[0] = 1 / sqrt3; C[1] = 1 / sqrt3; }
-            else if (c1 === 1 && c2 === 2 && c3 === 1) { C[0] = 1; C[1] = 1 / sqrt3; }
-            else if (c1 === 1 && c2 === 2 && c3 === 2) { C[0] = 1 / sqrt3; C[1] = 1; }
-            else if (c1 === 2 && c2 === 1 && c3 === 1) { C[0] = 1 / sqrt3; C[1] = 1; }
-            else if (c1 === 2 && c2 === 1 && c3 === 2) { C[0] = 1; C[1] = 1 / sqrt3; }
-            else if (c1 === 2 && c2 === 2 && c3 === 1) { C[0] = 1 / sqrt3; C[1] = 1 / sqrt3; }
-            else if (c1 === 2 && c2 === 2 && c3 === 2) { C[0] = 1; C[1] = 1; }
-            else if (c1 === 3 || c2 === 3 || c3 === 3) {
-                if (c1 === 1) C[0] = 1 / sqrt3; else C[0] = 1;
-                if (c2 === 1) C[1] = 1 / sqrt3; else C[1] = 1;
-            }
-        }
-    }
-
     return C;
 }
 
@@ -364,47 +282,85 @@ function calcularCodigosHorarios(enrolamentos, config) {
     return codigos;
 }
 
-// Função para aplicar giro (Giro + Modif do VBA)
-function aplicarGiro_VBA(Im_a, Im_jb, If_a, If_jb, codigos, config) {
+// Código horário aplicado a cada enrolamento (0 = mantém, sem giro) — depende
+// só de numEnrolamentos/enrolRef, então é a mesma tabela usada pelo Giro do VBA
+// (Mantem(dev) é idêntico a Modif(dev, 0), por isso não precisa de função própria)
+function codigosPorDev(codigos, config) {
     const numEnrol = config.numEnrolamentos;
     const devRef = config.enrolRef;
+    const cod = [0, 0, 0];
 
     if (numEnrol === 2) {
-        if (devRef === 1) {
-            // Mantem(1)
-            mantem(Im_a, Im_jb, If_a, If_jb, 0);
-            // Modif(2, Codigo(2))
-            modif(Im_a, Im_jb, If_a, If_jb, 1, codigos.codigo2);
-        } else if (devRef === 2) {
-            // Modif(1, 12 - Codigo(2))
-            modif(Im_a, Im_jb, If_a, If_jb, 0, codigos.codigo12);
-            // Mantem(2)
-            mantem(Im_a, Im_jb, If_a, If_jb, 1);
-        }
+        if (devRef === 1) cod[1] = codigos.codigo2;
+        else if (devRef === 2) cod[0] = codigos.codigo12;
     } else if (numEnrol === 3) {
         if (devRef === 1) {
-            mantem(Im_a, Im_jb, If_a, If_jb, 0);
-            modif(Im_a, Im_jb, If_a, If_jb, 1, codigos.codigo2);
-            modif(Im_a, Im_jb, If_a, If_jb, 2, codigos.codigo3);
+            cod[1] = codigos.codigo2;
+            cod[2] = codigos.codigo3;
         } else if (devRef === 2) {
-            modif(Im_a, Im_jb, If_a, If_jb, 0, codigos.codigo12);
-            mantem(Im_a, Im_jb, If_a, If_jb, 1);
-            modif(Im_a, Im_jb, If_a, If_jb, 2, codigos.codigo32);
+            cod[0] = codigos.codigo12;
+            cod[2] = codigos.codigo32;
         } else if (devRef === 3) {
-            modif(Im_a, Im_jb, If_a, If_jb, 0, codigos.codigo13);
-            modif(Im_a, Im_jb, If_a, If_jb, 1, codigos.codigo23);
-            mantem(Im_a, Im_jb, If_a, If_jb, 2);
+            cod[0] = codigos.codigo13;
+            cod[1] = codigos.codigo23;
         }
+    }
+    return cod;
+}
+
+// Função para aplicar giro (Giro + Modif do VBA)
+function aplicarGiro_VBA(Im_a, Im_jb, If_a, If_jb, codigos, config) {
+    const cod = codigosPorDev(codigos, config);
+    for (let dev = 0; dev < config.numEnrolamentos; dev++) {
+        modif(Im_a, Im_jb, If_a, If_jb, dev, cod[dev]);
     }
 }
 
-// Função Mantem (do VBA)
-// Indexação: [Fase][Dev]
-function mantem(Im_a, Im_jb, If_a, If_jb, dev) {
-    for (let fase = 0; fase < 3; fase++) {
-        If_a[fase][dev] = Im_a[fase][dev];
-        If_jb[fase][dev] = Im_jb[fase][dev];
+// Para uma fase-alvo (0=A,1=B,2=C) e um código horário, indica como a corrente
+// usada nas fórmulas de Idif/Ifren se relaciona com as 3 fases originais do
+// enrolamento: é a própria fase (identity), a negativa de outra fase (neg), ou
+// a diferença entre duas outras fases (diff) — essa última é a "compensação
+// angular" citada no VBA (Modif), equivalente à soma de uma fase com a
+// negativa de outra.
+function giroInfo(codigo, faseAlvo) {
+    codigo = codigo % 12;
+    const prox = (faseAlvo + 1) % 3;
+    const ant = (faseAlvo + 2) % 3;
+
+    switch (codigo) {
+        case 0: case 12: return { tipo: 'identity', src1: faseAlvo };
+        case 1: return { tipo: 'diff', src1: faseAlvo, src2: prox };
+        case 2: return { tipo: 'neg', src1: prox };
+        case 3: return { tipo: 'diff', src1: ant, src2: prox };
+        case 4: return { tipo: 'identity', src1: ant };
+        case 5: return { tipo: 'diff', src1: ant, src2: faseAlvo };
+        case 6: return { tipo: 'neg', src1: faseAlvo };
+        case 7: return { tipo: 'diff', src1: prox, src2: faseAlvo };
+        case 8: return { tipo: 'identity', src1: prox };
+        case 9: return { tipo: 'diff', src1: prox, src2: ant };
+        case 10: return { tipo: 'neg', src1: ant };
+        case 11: return { tipo: 'diff', src1: faseAlvo, src2: ant };
     }
+}
+
+// Monta a descrição da compensação por código horário para um termo (dev,
+// fase-alvo), com magnitude/ângulo das fases originais já substituídos —
+// null quando não há compensação (código 0, corrente própria da fase)
+function descreverGiro(Im_a, Im_jb, dev, codigo, faseAlvo) {
+    const info = giroInfo(codigo, faseAlvo);
+    if (info.tipo === 'identity') return null;
+
+    const letras = ['a', 'b', 'c'];
+    function fasor(idxFase) {
+        const a = Im_a[idxFase][dev];
+        const b = Im_jb[idxFase][dev];
+        return { letra: letras[idxFase], mag: Math.sqrt(a * a + b * b), ang: Math.atan2(b, a) * 180 / Math.PI };
+    }
+
+    if (info.tipo === 'neg') {
+        return { tipo: 'neg', fonte1: fasor(info.src1) };
+    }
+    return { tipo: 'diff', fonte1: fasor(info.src1), fonte2: fasor(info.src2) };
 }
 
 // Função Modif (do VBA) - Implementação completa dos 12 códigos horários
@@ -536,45 +492,52 @@ function modif(Im_a, Im_jb, If_a, If_jb, dev, codigo) {
 // Função para calcular corrente diferencial (baseada no VBA)
 // VBA: I_dif_a = (If_a(fase, 1) * C(1) / Tap(1)) + (If_a(fase, 2) * C(2) / Tap(2)) + ...
 // Indexação: If_a[Fase][Dev]
-function calcularDiferencial_VBA(If_a, If_jb, taps, C, enrolamentos, config) {
-    const resultados = {
-        faseA: 0,
-        faseB: 0,
-        faseC: 0
-    };
-
+// Cada fase retorna também "termos" (um por enrolamento) para permitir exibir a
+// equação com os valores numéricos substituídos, além do resultado final.
+// Im_a/Im_jb (correntes antes do giro) e cod (código horário por enrolamento)
+// permitem descrever a compensação angular de cada termo, quando houver.
+function calcularDiferencial_VBA(If_a, If_jb, taps, C, enrolamentos, config, Im_a, Im_jb, cod) {
+    const resultados = { faseA: null, faseB: null, faseC: null };
     const numEnrol = config.numEnrolamentos;
+    const rtc = enrolamentos.map(e => e.rtc);
+    const eTap1 = enrolamentos[0].eTap;
 
     for (let fase = 0; fase < 3; fase++) {
         let idif_a = 0;
         let idif_jb = 0;
+        const termos = [];
 
-        if (config.modeloRele === 1) { // TD
-            // VBA: I_dif_a = (If_a(fase, 1) * C(1) / Tap(1)) + ...
-            for (let dev = 0; dev < numEnrol; dev++) {
-                idif_a += (If_a[fase][dev] * C[dev]) / taps[dev];
-                idif_jb += (If_jb[fase][dev] * C[dev]) / taps[dev];
+        for (let dev = 0; dev < numEnrol; dev++) {
+            const mag = Math.sqrt(If_a[fase][dev] ** 2 + If_jb[fase][dev] ** 2);
+            const ang = Math.atan2(If_jb[fase][dev], If_a[fase][dev]) * 180 / Math.PI;
+            const rtcFactor = rtc[dev] / rtc[0];
+
+            let contrib_a, contrib_jb;
+            if (config.modeloRele === 1) { // TD: (I × C) / TAP
+                contrib_a = (If_a[fase][dev] * C[dev]) / taps[dev];
+                contrib_jb = (If_jb[fase][dev] * C[dev]) / taps[dev];
+            } else { // LD: I × C × (RTCdev/RTC1), soma dividida por εTAP1 no final
+                contrib_a = If_a[fase][dev] * C[dev] * rtcFactor;
+                contrib_jb = If_jb[fase][dev] * C[dev] * rtcFactor;
             }
-        } else { // LD
-            // VBA: I_dif_a = (If_a(fase, 1) * C(1)) + (RTC(2)/RTC(1)) * (If_a(fase, 2) * C(2)) + ...
-            const rtc = enrolamentos.map(e => e.rtc);
-            const eTap1 = enrolamentos[0].eTap;
+            idif_a += contrib_a;
+            idif_jb += contrib_jb;
 
-            for (let dev = 0; dev < numEnrol; dev++) {
-                const fatorRTC = rtc[dev] / rtc[0];
-                idif_a += If_a[fase][dev] * C[dev] * fatorRTC;
-                idif_jb += If_jb[fase][dev] * C[dev] * fatorRTC;
-            }
+            const giro = descreverGiro(Im_a, Im_jb, dev, cod[dev], fase);
+            termos.push({ dev, mag, ang, C: C[dev], tap: taps[dev], rtcFactor, giro });
+        }
 
+        if (config.modeloRele === 2) { // LD
             idif_a /= eTap1;
             idif_jb /= eTap1;
         }
 
         const idif = Math.sqrt(idif_a * idif_a + idif_jb * idif_jb);
-        
-        if (fase === 0) resultados.faseA = idif;
-        else if (fase === 1) resultados.faseB = idif;
-        else if (fase === 2) resultados.faseC = idif;
+        const resultado = { valor: idif, termos, eTap1 };
+
+        if (fase === 0) resultados.faseA = resultado;
+        else if (fase === 1) resultados.faseB = resultado;
+        else if (fase === 2) resultados.faseC = resultado;
     }
 
     return resultados;
@@ -583,46 +546,35 @@ function calcularDiferencial_VBA(If_a, If_jb, taps, C, enrolamentos, config) {
 // Função para calcular corrente de frenagem (baseada no VBA)
 // VBA: I_fren(fase) = (Abs(If_mod(fase, 1) * C(1) / Tap(1)) + ...) / 2
 // Indexação: If_a[Fase][Dev]
-function calcularFrenagem_VBA(If_a, If_jb, taps, C, enrolamentos, config) {
-    const resultados = {
-        faseA: 0,
-        faseB: 0,
-        faseC: 0
-    };
-
+function calcularFrenagem_VBA(If_a, If_jb, taps, C, enrolamentos, config, Im_a, Im_jb, cod) {
+    const resultados = { faseA: null, faseB: null, faseC: null };
     const numEnrol = config.numEnrolamentos;
+    const rtc = enrolamentos.map(e => e.rtc);
+    const eTap1 = enrolamentos[0].eTap;
 
     for (let fase = 0; fase < 3; fase++) {
         let ifren = 0;
+        const termos = [];
 
-        if (config.modeloRele === 1) { // TD
-            // VBA: I_fren(fase) = (Abs(If_mod(fase, 1) * C(1) / Tap(1)) + ...) / 2
-            for (let dev = 0; dev < numEnrol; dev++) {
-                const a = If_a[fase][dev];
-                const b = If_jb[fase][dev];
-                const modulo = Math.sqrt(a * a + b * b);
-                ifren += Math.abs((modulo * C[dev]) / taps[dev]);
-            }
-            ifren /= 2;
-            
-        } else { // LD
-            // VBA: I_fren(fase) = (Abs(If_mod(fase, 1) * C(1)) + (RTC(2)/RTC(1)) * Abs(If_mod(fase, 2) * C(2)) + ...) / (2 * eTap(1))
-            const rtc = enrolamentos.map(e => e.rtc);
-            const eTap1 = enrolamentos[0].eTap;
+        for (let dev = 0; dev < numEnrol; dev++) {
+            const modulo = Math.sqrt(If_a[fase][dev] ** 2 + If_jb[fase][dev] ** 2);
+            const rtcFactor = rtc[dev] / rtc[0];
 
-            for (let dev = 0; dev < numEnrol; dev++) {
-                const a = If_a[fase][dev];
-                const b = If_jb[fase][dev];
-                const modulo = Math.sqrt(a * a + b * b);
-                const fatorRTC = rtc[dev] / rtc[0];
-                ifren += Math.abs(modulo * C[dev] * fatorRTC);
-            }
-            ifren /= (2 * eTap1);
+            const contrib = config.modeloRele === 1 // TD: |I × C / TAP|
+                ? Math.abs((modulo * C[dev]) / taps[dev])
+                : Math.abs(modulo * C[dev] * rtcFactor); // LD: soma dividida por (2×εTAP1) no final
+            ifren += contrib;
+
+            const giro = descreverGiro(Im_a, Im_jb, dev, cod[dev], fase);
+            termos.push({ dev, mod: modulo, C: C[dev], tap: taps[dev], rtcFactor, contrib, giro });
         }
 
-        if (fase === 0) resultados.faseA = ifren;
-        else if (fase === 1) resultados.faseB = ifren;
-        else if (fase === 2) resultados.faseC = ifren;
+        ifren = config.modeloRele === 1 ? ifren / 2 : ifren / (2 * eTap1);
+
+        const resultado = { valor: ifren, termos, eTap1 };
+        if (fase === 0) resultados.faseA = resultado;
+        else if (fase === 1) resultados.faseB = resultado;
+        else if (fase === 2) resultados.faseC = resultado;
     }
 
     return resultados;
@@ -631,6 +583,7 @@ function calcularFrenagem_VBA(If_a, If_jb, taps, C, enrolamentos, config) {
 // Event listeners
 document.getElementById('form-87').addEventListener('submit', function(e) {
     e.preventDefault();
+    sanitizarTodosCampos('#form-87');
     calcularDiferencial87();
 });
 

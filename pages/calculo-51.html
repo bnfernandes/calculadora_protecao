@@ -162,9 +162,7 @@
                     <!-- Área para gráfico -->
                     <div id="grafico-container" style="display: none;">
                         <h6 class="mt-4">Curva Característica:</h6>
-                        <div style="position: relative; height: 600px; width: 100%; margin: 20px 0;">
-                            <canvas id="grafico-curva"></canvas>
-                        </div>
+                        <div id="grafico-curva" style="width: 100%; max-width: 550px; height: 800px; margin: 20px auto;"></div>
                     </div>
                 </div>
             </div>
@@ -184,6 +182,8 @@
         
         // Interação entre os campos de corrente de falta e fator
         document.addEventListener('DOMContentLoaded', function() {
+            ativarSanitizacaoFormulario('#form-51');
+
             const correntePartida = document.getElementById('correntePartida');
             const correnteFalta = document.getElementById('correnteFalta');
             const fator = document.getElementById('fator');
@@ -220,7 +220,8 @@
             // Formulário de cálculo
             document.getElementById('form-51').addEventListener('submit', function(e) {
                 e.preventDefault();
-                
+                sanitizarTodosCampos('#form-51');
+
                 try {
                     // Coleta os dados do formulário
                     const parametros = {
@@ -253,31 +254,24 @@
                     const resultado = calcularFuncao51(parametros);
                     
                     // Exibe os resultados
-                    let html = '<div class="row">';
-                    html += '<div class="col-6">';
-                    html += '<h6>Parâmetros Calculados:</h6>';
-                    html += `<p><strong>Tempo de Atuação:</strong> ${resultado.tempoAtuacao.toFixed(3)} s</p>`;
-                    html += `<p><strong>Corrente de Partida:</strong> ${parametros.correntePartida} A</p>`;
-                    
+                    let parametrosCalculados = `<p><strong>Corrente de Partida:</strong> ${parametros.correntePartida} A</p>`;
                     if (parametros.correnteFalta) {
-                        html += `<p><strong>Corrente de Falta:</strong> ${parametros.correnteFalta} A</p>`;
+                        parametrosCalculados += `<p><strong>Corrente de Falta:</strong> ${parametros.correnteFalta} A</p>`;
                     }
-                    
-					html += `<p><strong>I/I<sub>0</sub>:</strong> ${resultado.fatorCalculado.toFixed(3)}</p>`;
-                    
-                    html += '</div>';
-                    html += '<div class="col-6">';
-                    html += '<h6>Configuração da Proteção:</h6>';
-                    html += `<p><strong>Tipo de Curva:</strong> ${parametros.tipoCurva}</p>`;
-                    html += `<p><strong>Multiplicador:</strong> ${parametros.indiceTempo}</p>`;
-                    
+                    parametrosCalculados += `<p><strong>I/I<sub>0</sub>:</strong> ${resultado.fatorCalculado.toFixed(3)}</p>`;
+
+                    let configProtecao = `<p><strong>Tipo de Curva:</strong> ${parametros.tipoCurva}</p>`;
+                    configProtecao += `<p><strong>Multiplicador:</strong> ${parametros.indiceTempo}</p>`;
                     if (parametros.tempoFixoMinimo > 0) {
-                        html += `<p><strong>Tempo Mínimo:</strong> ${parametros.tempoFixoMinimo} ms</p>`;
+                        configProtecao += `<p><strong>Tempo Mínimo:</strong> ${parametros.tempoFixoMinimo} ms</p>`;
                     }
-                    
+
+                    let html = boxResultadoHTML(`<p class="resultado-valor">Tempo de Atuação = ${resultado.tempoAtuacao.toFixed(3)} s</p>`);
+                    html += '<div class="row">';
+                    html += `<div class="col-6">${boxResultadoHTML('<p><strong>Parâmetros Calculados</strong></p>' + parametrosCalculados)}</div>`;
+                    html += `<div class="col-6">${boxResultadoHTML('<p><strong>Configuração da Proteção</strong></p>' + configProtecao)}</div>`;
                     html += '</div>';
-                    html += '</div>';
-                    
+
                     document.getElementById('resultados').innerHTML = html;
                     
                     // Rolagem suave para a seção de resultados
@@ -292,16 +286,7 @@
                     
                     // Cria o gráfico
                     document.getElementById('grafico-container').style.display = 'block';
-                    
-                    // Destroi gráfico anterior se existir
-                    const canvasElement = document.getElementById('grafico-curva');
-                    const existingChart = Chart.getChart(canvasElement);
-                    if (existingChart) {
-                        existingChart.destroy();
-                    }
-                    
-                    // Cria novo gráfico
-                    criarGrafico('grafico-curva', resultado.pontosCurva, resultado);             
+                    criarGrafico('grafico-curva', resultado.pontosCurva, resultado);
                 } catch (error) {
                     document.getElementById('resultados').innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}</div>`;
                     document.getElementById('equacoes').style.display = 'none';
@@ -310,7 +295,9 @@
             });
         });
     </script>
-    <script src="../js/lib/chart.min.js"></script>
+    <script src="../js/lib/echarts.min.js"></script>
+    <script src="../js/formula-html.js"></script>
+    <script src="../js/form-sanitize.js"></script>
     <script src="../js/calc_51.js"></script>
     <script src="../js/main.js"></script>
 </body>
