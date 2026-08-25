@@ -134,7 +134,13 @@ function calcularDiferencial87() {
     // Passo 2: Filtro homopolar (Filtro_Homopolar do VBA)
     const Ih_a = [[], [], []];   // [Fase][Dev]
     const Ih_jb = [[], [], []];  // [Fase][Dev]
-    
+
+    // Registra, por enrolamento com filtro ativo, a sequência zero calculada e o
+    // antes/depois de cada fase — só assim dá pra explicar na tela por que, com
+    // as 3 correntes em fase (sequência zero pura), o filtro zera tudo: a
+    // corrente "antes" some no cálculo se só o resultado final for mostrado.
+    const filtroHomopolarInfo = [];
+
     for (let devIdx = 0; devIdx < 3; devIdx++) {
         if (enrolamentos[devIdx].filtro === 'Ativo') {
             // Calcular componente de sequência zero
@@ -144,12 +150,30 @@ function calcularDiferencial87() {
                 somaReal += I_a[faseIdx][devIdx];
                 somaImag += I_jb[faseIdx][devIdx];
             }
-            
+            const i0Real = somaReal / 3;
+            const i0Imag = somaImag / 3;
+
             // Subtrair sequência zero de cada fase
+            const fases = [];
             for (let faseIdx = 0; faseIdx < 3; faseIdx++) {
-                Ih_a[faseIdx][devIdx] = I_a[faseIdx][devIdx] - somaReal / 3;
-                Ih_jb[faseIdx][devIdx] = I_jb[faseIdx][devIdx] - somaImag / 3;
+                Ih_a[faseIdx][devIdx] = I_a[faseIdx][devIdx] - i0Real;
+                Ih_jb[faseIdx][devIdx] = I_jb[faseIdx][devIdx] - i0Imag;
+
+                fases.push({
+                    letra: ['a', 'b', 'c'][faseIdx],
+                    antesMag: Math.sqrt(I_a[faseIdx][devIdx] ** 2 + I_jb[faseIdx][devIdx] ** 2),
+                    antesAng: Math.atan2(I_jb[faseIdx][devIdx], I_a[faseIdx][devIdx]) * 180 / Math.PI,
+                    depoisMag: Math.sqrt(Ih_a[faseIdx][devIdx] ** 2 + Ih_jb[faseIdx][devIdx] ** 2),
+                    depoisAng: Math.atan2(Ih_jb[faseIdx][devIdx], Ih_a[faseIdx][devIdx]) * 180 / Math.PI
+                });
             }
+
+            filtroHomopolarInfo.push({
+                dev: devIdx,
+                i0Mag: Math.sqrt(i0Real ** 2 + i0Imag ** 2),
+                i0Ang: Math.atan2(i0Imag, i0Real) * 180 / Math.PI,
+                fases
+            });
         } else {
             // Sem filtro, copiar valores originais
             for (let faseIdx = 0; faseIdx < 3; faseIdx++) {
@@ -204,7 +228,7 @@ function calcularDiferencial87() {
     }
 
     // Exibir resultados (função em calc_87_eq.js)
-    exibirResultados(config, enrolamentos, taps, constantesC, resultados);
+    exibirResultados(config, enrolamentos, taps, constantesC, resultados, filtroHomopolarInfo);
 
     // Criar gráfico (função em calc_87_grafico.js)
     criarGraficoDiferencial(resultados, config);

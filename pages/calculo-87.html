@@ -586,52 +586,42 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text">
-                        Gera pontos ao longo da curva característica (equivalente às células W4/W5/W6/W9 da planilha)
-                        e, para relé de 2 enrolamentos, as correntes trifásicas a injetar em cada enrolamento para
-                        levar o relé até cada ponto.
+                        Informe um ponto de I<sub>fren</sub> e um fator sobre a curva característica (1 = exatamente
+                        sobre a fronteira de disparo, &gt;1 = região de disparo, &lt;1 = região de restrição). O site
+                        calcula o I<sub>dif</sub> correspondente e, para relé de 2 enrolamentos, as correntes
+                        trifásicas a injetar em cada enrolamento para levar o relé até esse ponto. Use os botões
+                        Avançar/Recuar para deslocar o ponto ao longo do eixo I<sub>fren</sub> pelo passo informado.
                     </p>
 
                     <div class="row">
-                        <div class="col-3">
+                        <div class="col-4">
                             <div class="form-group">
-                                <label for="qtdTrecho1" class="form-label">Pontos no Trecho 1 (antes do 1º joelho)</label>
-                                <input type="number" class="form-control" id="qtdTrecho1" min="0" step="1" value="0">
+                                <label for="ifrenTeste" class="form-label">I<sub>fren</sub> (xTAP)</label>
+                                <input type="number" class="form-control" id="ifrenTeste" min="0" step="0.1" value="0.5">
                             </div>
                         </div>
-                        <div class="col-3">
-                            <div class="form-group">
-                                <label for="qtdTrecho2" class="form-label">Pontos no Trecho 2 (entre os joelhos)</label>
-                                <input type="number" class="form-control" id="qtdTrecho2" min="0" step="1" value="0">
-                            </div>
-                        </div>
-                        <div class="col-3">
-                            <div class="form-group">
-                                <label for="qtdTrecho3" class="form-label">Pontos no Trecho 3 (depois do 2º joelho)</label>
-                                <input type="number" class="form-control" id="qtdTrecho3" min="0" step="1" value="0">
-                            </div>
-                        </div>
-                        <div class="col-3">
+                        <div class="col-4">
                             <div class="form-group">
                                 <label for="fatorTeste" class="form-label">Fator de I<sub>dif</sub> (&gt;1 dispara / &lt;1 restringe)</label>
-                                <input type="number" class="form-control" id="fatorTeste" step="0.01" value="1.1">
+                                <input type="number" class="form-control" id="fatorTeste" step="0.01" value="1">
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-6">
+                        <div class="col-4">
                             <div class="form-group">
-                                <label for="ifrenFinalD" class="form-label">I<sub>fren</sub> Final (Ponto D) [xTAP]</label>
-                                <input type="number" class="form-control" id="ifrenFinalD" step="0.1" placeholder="Padrão: 2x Ponto de Inflexão 2, se vazio">
+                                <label for="passoIfren" class="form-label">Passo do Avanço/Recuo (xTAP)</label>
+                                <input type="number" class="form-control" id="passoIfren" min="0" step="0.1" value="0.5">
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-primary" id="btnGerarPontos">Gerar Pontos de Teste</button>
+                        <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnRecuarIfren">◀ Recuar</button>
+                        <button type="button" class="btn btn-primary" style="margin-right: 10px;" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
+                        <button type="button" class="btn btn-secondary" id="btnAvancarIfren">Avançar ▶</button>
                     </div>
 
                     <div id="pontosTesteResultado" class="results-area mt-4"></div>
+                    <div id="grafico-ponto-teste" style="width: 100%; height: 400px; margin-top: 20px;"></div>
                 </div>
             </div>
         </div>

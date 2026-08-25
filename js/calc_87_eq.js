@@ -118,9 +118,28 @@ function ifrenSubstituidaHTML(config, termos, enrolamentos, eTap1) {
     return `I<sub>fren</sub> = ${fracaoHTML(somaHTML(partes), `2 × ${fmt(eTap1)}`)}`;
 }
 
+// Explica o filtro homopolar de um enrolamento: I0 = (Ia+Ib+Ic)/3 e, para cada
+// fase, I' = I - I0. Mostrado só quando o filtro está ativo — é o que deixa
+// claro por que, com as 3 correntes em fase (sequência zero pura), o termo
+// vira "0∠0 - 0∠0" na explicação de compensação por código horário (a corrente
+// usada ali já é a pós-filtro, que zerou antes de chegar no giro).
+function filtroHomopolarHTML(info, nomeEnrol) {
+    const i0 = fmtPolar(info.i0Mag, info.i0Ang);
+    const linhas = [
+        linhaEquacaoHTML(`I<sub>0</sub> = ${fracaoHTML('I<sub>a</sub> + I<sub>b</sub> + I<sub>c</sub>', '3')} = ${i0}`)
+    ];
+    info.fases.forEach(f => {
+        linhas.push(linhaEquacaoHTML(
+            `I<sub>${f.letra}</sub>′ = I<sub>${f.letra}</sub> - I<sub>0</sub> = ` +
+            `(${fmtPolar(f.antesMag, f.antesAng)}) - (${i0}) = ${fmtPolar(f.depoisMag, f.depoisAng)}`
+        ));
+    });
+    return formulaBoxHTML({ titulo: `Filtro Homopolar — ${nomeEnrol}`, linhas });
+}
+
 // --- Montagem dos resultados ---------------------------------------------
 
-function exibirResultados(config, enrolamentos, taps, C, resultados) {
+function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomopolarInfo = []) {
     let html = '<div class="resultados-87">';
 
     // Seção de TAPs calculados
@@ -139,6 +158,15 @@ function exibirResultados(config, enrolamentos, taps, C, resultados) {
         tapSecao += boxResultadoHTML(conteudo);
     }
     html += secaoResultadoHTML('Cálculo dos TAPs', tapSecao);
+
+    // Seção de Filtro Homopolar (só enrolamentos com o filtro ativo)
+    if (filtroHomopolarInfo.length > 0) {
+        let filtroSecao = '';
+        filtroHomopolarInfo.forEach(info => {
+            filtroSecao += boxResultadoHTML(filtroHomopolarHTML(info, enrolamentos[info.dev].nome));
+        });
+        html += secaoResultadoHTML('Filtro Homopolar', filtroSecao);
+    }
 
     // Seção de Constantes C
     html += '<div class="resultado-secao">';
