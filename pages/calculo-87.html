@@ -38,7 +38,10 @@
     <!-- Conteúdo principal -->
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Função 87 - Proteção Diferencial de Transformador</h1>
+            <div class="d-flex justify-content-between align-items-center" style="flex-wrap: wrap; gap: 10px;">
+                <h1 class="page-title">Função 87 - Proteção Diferencial de Transformador</h1>
+                <button type="button" class="btn btn-secondary" id="btnGerarPdf">🖨️ Gerar PDF</button>
+            </div>
             
             <div class="card mb-4">
                 <div class="card-body">
@@ -642,6 +645,7 @@
     <script src="../js/calc_87_eq.js"></script>
     <script src="../js/calc_87_grafico.js"></script>
     <script src="../js/calc_87_pontos_teste.js"></script>
+    <script src="../js/main.js"></script>
     <script>
         // Controlar visibilidade do enrolamento 3
         document.getElementById('numEnrolamentos').addEventListener('change', function() {

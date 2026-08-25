@@ -151,6 +151,49 @@ sub {
     }
 }
 
+/* Impressão: mantém as equações (não vira texto simples), só reduz fonte e
+   espaçamento — o objetivo é caber mais conteúdo por página, mantendo legível */
+@media print {
+    .formula {
+        padding: 6px 10px;
+        margin: 6px 0;
+        box-shadow: none;
+    }
+
+    .formula-title {
+        font-size: 0.9em;
+        margin-bottom: 3px;
+    }
+
+    .formula-equation {
+        font-size: 0.8em;
+        line-height: 1.3;
+        margin: 4px 0;
+    }
+
+    .fraction {
+        margin: 0 3px;
+    }
+
+    .numerator,
+    .denominator {
+        font-size: 0.85em;
+        padding-bottom: 1px;
+        padding-top: 1px;
+        margin-bottom: 1px;
+    }
+
+    .formula-constants {
+        padding: 6px 8px;
+        margin-top: 6px;
+    }
+
+    .constant {
+        font-size: 0.8em;
+        margin: 1px 0;
+    }
+}
+
 /* Melhorias visuais adicionais */
 .formula:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);

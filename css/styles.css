@@ -741,3 +741,117 @@ input[readonly] {
   background-color: #f8f9fa;
 }
 
+/* Tabela de parâmetros para impressão: só existe na página impressa, gerada
+   dinamicamente em main.js a partir do .calc-form no momento do print. Precisa
+   vir ANTES do bloco @media print abaixo — mesma especificidade, então a regra
+   que aparece depois no arquivo é que vale, e display:table do @media print
+   precisa ser essa. */
+.tabela-parametros-print {
+  display: none;
+}
+
+/* Impressão / Gerar PDF (via window.print(), botão injetado em main.js) ------
+   Objetivo: um PDF compacto. O formulário interativo (.calc-form) some e dá
+   lugar à tabela .tabela-parametros-print (gerada em main.js a partir dos
+   campos visíveis do formulário, no momento do print); os resultados/equações
+   continuam aparecendo, só que com fonte e espaçamento reduzidos. */
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body {
+    background: #fff;
+    font-size: 12px;
+  }
+
+  .navbar,
+  .footer,
+  .btn,
+  .calc-form {
+    display: none !important;
+  }
+
+  .main-content {
+    padding: 0;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+  }
+
+  .card-body {
+    padding: 10px 14px;
+  }
+
+  .formula,
+  .resultado-box,
+  .fase-box,
+  .form-section,
+  .form-subsection {
+    break-inside: avoid;
+  }
+
+  .resultado-secao {
+    margin-bottom: 12px;
+  }
+
+  .resultado-titulo {
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+  }
+
+  .resultado-box,
+  .fase-box {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+  }
+
+  .resumo-idif-ifren {
+    font-size: 1em;
+    gap: 15px;
+    margin: 6px 0 8px;
+  }
+
+  /* Garante que o preenchimento colorido dos badges e da área de operação do
+     gráfico saia na impressão mesmo com "imprimir imagens de fundo" ambíguo */
+  .badge-atuacao,
+  .resultado-box {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Tabela "Parâmetros" que substitui o formulário na impressão (gerada em
+     main.js) — mesma identidade visual das outras tabelas do site
+     (.tabela-pontos-teste), mas compacta */
+  .tabela-parametros-print {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+
+  .tabela-parametros-print th,
+  .tabela-parametros-print td {
+    padding: 3px 8px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tabela-parametros-print thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+  }
+
+  .tabela-parametros-print .tp-subtitulo td {
+    background-color: #f8f9fa;
+    color: #e30613;
+    font-weight: 600;
+    padding-top: 6px;
+  }
+}
+
