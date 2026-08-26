@@ -616,3 +616,60 @@ document.getElementById('btnLimpar').addEventListener('click', function() {
     document.getElementById('resultados').innerHTML = '<p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>';
 });
 
+// Botões "E" (Equilibrar): a partir da fase clicada de um enrolamento,
+// aplica a mesma magnitude e reproduz o espaçamento de 120° nas outras duas
+// fases do MESMO enrolamento, na direção definida pela Sequência de Fases —
+// a fase clicada não muda, serve de referência. Funciona igual para cada um
+// dos até 3 enrolamentos, já que os ids dos campos seguem o mesmo padrão
+// (ia1Mag/ia1Ang, ia2Mag/ia2Ang, ia3Mag/ia3Ang...).
+function equilibrarFaseEnrolamento(enrolamento, faseClicada) {
+    const fases = ['ia', 'ib', 'ic'];
+    const idx = fases.indexOf(faseClicada);
+    if (idx === -1) return;
+
+    const campo = (fase, sufixo) => document.getElementById(`${fase}${enrolamento}${sufixo}`);
+
+    const magnitudePivo = parseFloat(campo(faseClicada, 'Mag').value) || 0;
+    const anguloPivo = parseFloat(campo(faseClicada, 'Ang').value) || 0;
+
+    const sequencia = document.getElementById('sequenciaFases').value;
+    const delta = sequencia === 'ABC' ? -120 : 120;
+
+    const faseSeguinte = fases[(idx + 1) % 3];
+    const faseAnterior = fases[(idx + 2) % 3];
+
+    campo(faseSeguinte, 'Mag').value = magnitudePivo;
+    campo(faseSeguinte, 'Ang').value = normalizarAngulo(anguloPivo + delta);
+
+    campo(faseAnterior, 'Mag').value = magnitudePivo;
+    campo(faseAnterior, 'Ang').value = normalizarAngulo(anguloPivo - delta);
+}
+
+document.querySelectorAll('.btn-equilibrar').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        equilibrarFaseEnrolamento(btn.dataset.enrolamento, btn.dataset.fase);
+    });
+});
+
+// Preenche TAP1/TAP2/TAP3 automaticamente a partir da Potência do
+// Transformador, com a mesma fórmula de calcularTaps (TAP = Potência×1000 /
+// (RTC × kV × √3)) — só para enrolamentos com kV e RTC já preenchidos (sem
+// isso não dá pra calcular) e só quando a potência não é 0 (0 significa
+// "usar o TAP inserido manualmente", conforme o rótulo do campo).
+function autoPreencherTaps() {
+    const potencia = parseFloat(document.getElementById('potencia').value) || 0;
+    if (potencia <= 0) return;
+
+    const numEnrolamentos = parseInt(document.getElementById('numEnrolamentos').value) || 2;
+    for (let i = 1; i <= numEnrolamentos; i++) {
+        const kv = parseFloat(document.getElementById(`kv${i}`).value);
+        const rtc = parseFloat(document.getElementById(`rtc${i}`).value);
+        if (!kv || !rtc) continue;
+
+        const tap = (potencia * 1000) / (rtc * kv * Math.sqrt(3));
+        document.getElementById(`tap${i}`).value = tap.toFixed(3);
+    }
+}
+
+document.getElementById('potencia').addEventListener('input', autoPreencherTaps);
+
