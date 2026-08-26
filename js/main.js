@@ -39,7 +39,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnPdf = document.getElementById('btnGerarPdf');
     if (btnPdf) {
         btnPdf.addEventListener('click', function() {
-            window.print();
+            // Esconde as barras de zoom ANTES do print (nunca durante o
+            // beforeprint — ver nota logo abaixo) e dá tempo do gráfico
+            // redesenhar sem elas antes de abrir o diálogo de impressão
+            alternarBarrasZoomImpressao(false);
+            setTimeout(function() { window.print(); }, 250);
         });
     }
 });
@@ -121,3 +125,28 @@ function atualizarTabelasParametrosImpressao() {
 }
 
 window.addEventListener('beforeprint', atualizarTabelasParametrosImpressao);
+
+// Barras de zoom (dataZoom tipo 'slider') na impressão -------------------
+// No papel elas não servem pra nada (não dá pra arrastar), só ocupam espaço
+// e confundem. Como fazem parte do canvas do ECharts, não dá pra esconder por
+// CSS — precisa de um chart.setOption(). MAS: igual ao chart.resize(), fazer
+// isso durante o 'beforeprint' quebra o snapshot de impressão (testado: o
+// gráfico perde eixo, grade e título no PDF). Por isso só é chamado a partir
+// do clique no botão "Gerar PDF" (com um pequeno atraso antes do print, pra
+// dar tempo do redesenho terminar), nunca no evento beforeprint. No Ctrl+P
+// manual (sem passar pelo botão) as barras continuam aparecendo — limitação
+// aceitável frente ao risco de quebrar o PDF gerado pelo botão.
+function alternarBarrasZoomImpressao(mostrar) {
+    if (typeof echarts === 'undefined') return;
+    document.querySelectorAll('[id]').forEach(function(el) {
+        const chart = echarts.getInstanceByDom(el);
+        if (!chart) return;
+        const dataZoom = chart.getOption().dataZoom;
+        if (!dataZoom || !dataZoom.some(function(dz) { return dz.type === 'slider'; })) return;
+        chart.setOption({
+            dataZoom: dataZoom.map(function(dz) { return dz.type === 'slider' ? { show: mostrar } : {}; })
+        });
+    });
+}
+
+window.addEventListener('afterprint', function() { alternarBarrasZoomImpressao(true); });

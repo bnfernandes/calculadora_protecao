@@ -230,6 +230,12 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    // Limites dos eixos (em log10) — usados tanto na config dos eixos quanto
+    // nas linhas-guia do ponto de atuação, que precisam terminar exatamente
+    // na borda do gráfico
+    const xMin = -0.2, xMax = 2;
+    const yMin = -2, yMax = 4;
+
     const dadosValidos = pontosCurva.correntes.map((corrente, i) => [
         Math.log10(pontoAtuacao ? corrente / pontoAtuacao.parametrosUsados.correntePartida : corrente),
         Math.log10(pontosCurva.tempos[i])
@@ -242,10 +248,10 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     // conferir visualmente se um ponto calculado bate com o eixo
     const estiloDecada = { color: '#ccc' };
     const gradesMenores = [
-        ...gerarTicksMenores(-0.2, 2).map(v => ({ xAxis: v })),
-        ...gerarTicksMenores(-2, 4).map(v => ({ yAxis: v })),
-        ...gerarTicksDecada(-0.2, 2).map(v => ({ xAxis: v, lineStyle: estiloDecada })),
-        ...gerarTicksDecada(-2, 4).map(v => ({ yAxis: v, lineStyle: estiloDecada }))
+        ...gerarTicksMenores(xMin, xMax).map(v => ({ xAxis: v })),
+        ...gerarTicksMenores(yMin, yMax).map(v => ({ yAxis: v })),
+        ...gerarTicksDecada(xMin, xMax).map(v => ({ xAxis: v, lineStyle: estiloDecada })),
+        ...gerarTicksDecada(yMin, yMax).map(v => ({ yAxis: v, lineStyle: estiloDecada }))
     ];
 
     // Série "vazia" só para carregar o markLine. markLine sempre desenha por
@@ -283,13 +289,40 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     }];
 
     if (pontoAtuacao) {
+        const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
+        const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
+        const corPonto = '#ff6b35';
+        const corLinha = '#495057'; // cinza escuro — só as linhas-guia e o rótulo, não o marcador
+
         series.push({
             name: 'Ponto de Atuação',
             type: 'scatter',
             zlevel: 1,
-            data: [[Math.log10(pontoAtuacao.fatorCalculado), Math.log10(pontoAtuacao.tempoAtuacao)]],
+            data: [[xPonto, yPonto]],
             symbolSize: 12,
-            itemStyle: { color: '#ff6b35' }
+            itemStyle: { color: corPonto }
+        });
+
+        // Linhas-guia numa série própria, separada do marcador acima — assim
+        // dá pra ocultar só a projeção (clicando nela na legenda) sem
+        // esconder o ponto em si
+        series.push({
+            name: 'Projeção do Ponto',
+            type: 'scatter',
+            zlevel: 1,
+            data: [[xPonto, yPonto]],
+            symbol: 'none',
+            markLine: {
+                silent: true,
+                animation: false,
+                symbol: 'none',
+                lineStyle: { color: corLinha, type: 'dashed', width: 1.5 },
+                label: { show: false },
+                data: [
+                    [{ coord: [xPonto, yPonto] }, { coord: [xPonto, yMin] }],
+                    [{ coord: [xPonto, yPonto] }, { coord: [xMin, yPonto] }]
+                ]
+            }
         });
     }
 
@@ -327,7 +360,7 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         },
         xAxis: {
             type: 'value',
-            name: 'Fator (I/Ipartida)',
+            name: 'I/I₀',
             nameLocation: 'middle',
             nameGap: 30,
             nameTextStyle: { fontSize: 14, fontWeight: 'bold' },
@@ -337,8 +370,8 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             // desalinharia todos os ticks das potências de dez (1, 10, 100).
             // Deixando automático, o ECharts sempre inclui 0/1/2 no conjunto
             // de ticks, e o formatador oculta os ticks "extras" que sobram.
-            min: -0.2,
-            max: 2,
+            min: xMin,
+            max: xMax,
             // Sem isso, o eixo tipo 'value' gruda a linha do eixo X onde Y=0
             // (Tempo=1s) em vez de na base do gráfico, destacando essa grade
             axisLine: { onZero: false },
@@ -363,8 +396,8 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             // nenhum bate mais numa potência de dez, e o formatador esconde
             // todos. Automático, o ECharts sempre inclui os valores inteiros
             // no conjunto de ticks disponíveis, mesmo com zoom aplicado.
-            min: -2,
-            max: 4,
+            min: yMin,
+            max: yMax,
             axisLine: { onZero: false },
             // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
             // limite do zoom que não cai numa potência de dez — como as
@@ -392,6 +425,39 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             { type: 'slider', yAxisIndex: 0, filterMode: 'none', right: 10 }
         ]
     }, true);
+
+    // As linhas-guia terminam nas bordas do eixo (xMin/yMin) — mas isso é a
+    // borda do eixo INTEIRO, não da área visível depois de um zoom. Se o
+    // usuário der zoom e cortar fora a ponta onde a linha termina, ela some
+    // (o ECharts não desenha um markLine cujo ponto final ficou fora do
+    // range atualmente visível). Por isso, a cada zoom/pan, recalcula os
+    // pontos finais para a borda VISÍVEL no momento, lendo o start/end (%)
+    // dos componentes dataZoom e convertendo de volta pra valor no eixo.
+    if (pontoAtuacao) {
+        const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
+        const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
+
+        const atualizarLinhasGuia = () => {
+            const dz = chart.getOption().dataZoom;
+            const visivelXMin = xMin + (xMax - xMin) * dz[0].start / 100;
+            const visivelYMin = yMin + (yMax - yMin) * dz[1].start / 100;
+
+            chart.setOption({
+                series: [{
+                    name: 'Projeção do Ponto',
+                    markLine: {
+                        data: [
+                            [{ coord: [xPonto, yPonto] }, { coord: [xPonto, Math.min(visivelYMin, yPonto)] }],
+                            [{ coord: [xPonto, yPonto] }, { coord: [Math.min(visivelXMin, xPonto), yPonto] }]
+                        ]
+                    }
+                }]
+            });
+        };
+
+        chart.off('datazoom');
+        chart.on('datazoom', atualizarLinhasGuia);
+    }
 
     window.addEventListener('resize', () => chart.resize());
 }
