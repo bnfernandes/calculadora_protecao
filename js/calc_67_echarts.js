@@ -55,21 +55,28 @@ function calcularFuncao67(parametros) {
     const Vb = Complexo.fromPolar(vb.magnitude, vb.angulo);
     const Vc = Complexo.fromPolar(vc.magnitude, vc.angulo);
 
-    // Calcular Vpol para cada fase
-    let VpolIa, VpolIb, VpolIc;
-
+    // Pares (fonte1 - fonte2) usados para calcular o Vpol de cada fase — além
+    // do fasor em si, guarda-se os dois fasores de origem (com a letra da
+    // fase) pra poder montar a equação com os valores substituídos, exibida
+    // na tela antes do resultado final
+    let parIa, parIb, parIc;
     if (sequencia === 'ABC') {
-        VpolIa = Vb.subtrair(Vc); // Vbc
-        VpolIb = Vc.subtrair(Va); // Vca
-        VpolIc = Va.subtrair(Vb); // Vab
+        parIa = { f1: { letra: 'b', fasor: Vb }, f2: { letra: 'c', fasor: Vc } }; // Vbc
+        parIb = { f1: { letra: 'c', fasor: Vc }, f2: { letra: 'a', fasor: Va } }; // Vca
+        parIc = { f1: { letra: 'a', fasor: Va }, f2: { letra: 'b', fasor: Vb } }; // Vab
     } else { // ACB
-        VpolIa = Vc.subtrair(Vb); // Vcb
-        VpolIb = Va.subtrair(Vc); // Vac
-        VpolIc = Vb.subtrair(Va); // Vba
+        parIa = { f1: { letra: 'c', fasor: Vc }, f2: { letra: 'b', fasor: Vb } }; // Vcb
+        parIb = { f1: { letra: 'a', fasor: Va }, f2: { letra: 'c', fasor: Vc } }; // Vac
+        parIc = { f1: { letra: 'b', fasor: Vb }, f2: { letra: 'a', fasor: Va } }; // Vba
     }
 
+    let VpolIa = parIa.f1.fasor.subtrair(parIa.f2.fasor);
+    let VpolIb = parIb.f1.fasor.subtrair(parIb.f2.fasor);
+    let VpolIc = parIc.f1.fasor.subtrair(parIc.f2.fasor);
+
     // Ajustar para direção (Frente ou Reverso)
-    if (direcional === 'Reverso') {
+    const reverso = direcional === 'Reverso';
+    if (reverso) {
         VpolIa = VpolIa.adicionarAngulo(180);
         VpolIb = VpolIb.adicionarAngulo(180);
         VpolIc = VpolIc.adicionarAngulo(180);
@@ -97,9 +104,9 @@ function calcularFuncao67(parametros) {
     };
 
     return {
-        VpolIa: { fasor: VpolIa, formula: sequencia === 'ABC' ? 'Vbc = Vb - Vc' : 'Vcb = Vc - Vb' },
-        VpolIb: { fasor: VpolIb, formula: sequencia === 'ABC' ? 'Vca = Vc - Va' : 'Vac = Va - Vc' },
-        VpolIc: { fasor: VpolIc, formula: sequencia === 'ABC' ? 'Vab = Va - Vb' : 'Vba = Vb - Va' },
+        VpolIa: { fasor: VpolIa, formula: sequencia === 'ABC' ? 'Vbc = Vb - Vc' : 'Vcb = Vc - Vb', par: parIa, reverso },
+        VpolIb: { fasor: VpolIb, formula: sequencia === 'ABC' ? 'Vca = Vc - Va' : 'Vac = Va - Vc', par: parIb, reverso },
+        VpolIc: { fasor: VpolIc, formula: sequencia === 'ABC' ? 'Vab = Va - Vb' : 'Vba = Vb - Va', par: parIc, reverso },
         anguloMaxTorqueIa,
         anguloMaxTorqueIb,
         anguloMaxTorqueIc,
@@ -374,9 +381,24 @@ function criarGraficoFasorial(containerId, fase, resultados) {
 // ângulo de disparo e gráfico fasorial) — reaproveitada para Ia, Ib e Ic.
 function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, parametrosUsados, graficoId) {
     const nomeI = `I${letraFase}`; // Ia, Ib, Ic
+
+    // Linha com os valores substituídos, antes do resultado final — mostra a
+    // subtração dos dois fasores de tensão de fase que formam o Vpol
+    const { f1, f2 } = vpol.par;
+    const semDirecao = f1.fasor.subtrair(f2.fasor);
+    const linhasVpol = [
+        linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = ${vpol.formula}`),
+        linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = (${f1.fasor}) - (${f2.fasor}) = ${semDirecao}`)
+    ];
+    // Direção "Reverso" soma 180° depois da subtração — sem essa linha, o
+    // resultado final pareceria não bater com a subtração mostrada acima
+    if (vpol.reverso) {
+        linhasVpol.push(linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> (Reverso) = ${semDirecao} + 180° = ${vpol.fasor}`));
+    }
+
     let conteudo = formulaBoxHTML({
         titulo: `Tensão de Polarização (V<sub>pol ${nomeI}</sub>)`,
-        linhas: [linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = ${vpol.formula}`)],
+        linhas: linhasVpol,
         resultado: `${vpol.fasor.magnitude().toFixed(2)} ∠ ${vpol.fasor.angulo().toFixed(2)}°`
     });
 
