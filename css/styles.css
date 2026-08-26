@@ -324,6 +324,42 @@ body {
   padding-left: 15px;
 }
 
+/* Botão "Equilibrar" (E) — fica colado ao campo de ângulo (não solto na
+   extremidade direita da linha, onde passaria batido). .campo-com-equilibrar
+   é um flex simples, então acompanha o campo de ângulo tanto lado a lado
+   (desktop) quanto empilhado (celular, onde .col-3 vira 100%). */
+.campo-com-equilibrar {
+  gap: 6px;
+}
+
+.campo-com-equilibrar .input-group {
+  flex: 1;
+}
+
+.btn-equilibrar {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  color: #495057;
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-equilibrar:hover {
+  background-color: #e30613;
+  border-color: #e30613;
+  color: #fff;
+}
+
 /* Utilitários */
 .text-center {
   text-align: center;

@@ -525,7 +525,44 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Botões "E" (Equilibrar): a partir da fase clicada, aplica a mesma
+    // magnitude e reproduz o espaçamento de 120° nas outras duas fases do
+    // mesmo grupo (corrente ou tensão), na direção definida pela Sequência de
+    // Fases — a fase clicada não muda, serve de referência
+    document.querySelectorAll('.btn-equilibrar').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            equilibrarFase(btn.dataset.grupo, btn.dataset.fase);
+        });
+    });
 });
+
+const GRUPOS_FASE_EQUILIBRAR = {
+    corrente: ['ia', 'ib', 'ic'],
+    tensao: ['va', 'vb', 'vc']
+};
+
+function equilibrarFase(grupo, faseClicada) {
+    const fases = GRUPOS_FASE_EQUILIBRAR[grupo];
+    const idx = fases.indexOf(faseClicada);
+    if (idx === -1) return;
+
+    const magnitudePivo = parseFloat(document.getElementById(`${faseClicada}Magnitude`).value) || 0;
+    const anguloPivo = parseFloat(document.getElementById(`${faseClicada}Angulo`).value) || 0;
+
+    // ABC: a fase seguinte (a->b->c) atrasa 120° da anterior. ACB: adianta.
+    const sequencia = document.getElementById('sequenciaFases').value;
+    const delta = sequencia === 'ABC' ? -120 : 120;
+
+    const faseSeguinte = fases[(idx + 1) % 3];
+    const faseAnterior = fases[(idx + 2) % 3];
+
+    document.getElementById(`${faseSeguinte}Magnitude`).value = magnitudePivo;
+    document.getElementById(`${faseSeguinte}Angulo`).value = normalizarAngulo(anguloPivo + delta);
+
+    document.getElementById(`${faseAnterior}Magnitude`).value = magnitudePivo;
+    document.getElementById(`${faseAnterior}Angulo`).value = normalizarAngulo(anguloPivo - delta);
+}
 
 // Exportar funções para uso global
 window.calcularFuncao67 = calcularFuncao67;
