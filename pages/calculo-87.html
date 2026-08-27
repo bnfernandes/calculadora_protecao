@@ -387,6 +387,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="1" data-fase="ia" title="Equilibrar as 3 fases do Enrolamento 1 a partir da fase A">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="1" data-fase="ia" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -411,6 +412,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="1" data-fase="ib" title="Equilibrar as 3 fases do Enrolamento 1 a partir da fase B">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="1" data-fase="ib" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -435,6 +437,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="1" data-fase="ic" title="Equilibrar as 3 fases do Enrolamento 1 a partir da fase C">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="1" data-fase="ic" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -460,6 +463,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="2" data-fase="ia" title="Equilibrar as 3 fases do Enrolamento 2 a partir da fase A">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="2" data-fase="ia" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -484,6 +488,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="2" data-fase="ib" title="Equilibrar as 3 fases do Enrolamento 2 a partir da fase B">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="2" data-fase="ib" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -508,6 +513,7 @@
                                             <span class="input-group-text">º</span>
                                         </div>
                                         <button type="button" class="btn-equilibrar" data-enrolamento="2" data-fase="ic" title="Equilibrar as 3 fases do Enrolamento 2 a partir da fase C">E</button>
+                                        <button type="button" class="btn-nominal" data-enrolamento="2" data-fase="ic" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                     </div>
                                 </div>
                             </div>
@@ -534,6 +540,7 @@
                                                 <span class="input-group-text">º</span>
                                             </div>
                                             <button type="button" class="btn-equilibrar" data-enrolamento="3" data-fase="ia" title="Equilibrar as 3 fases do Enrolamento 3 a partir da fase A">E</button>
+                                            <button type="button" class="btn-nominal" data-enrolamento="3" data-fase="ia" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                         </div>
                                     </div>
                                 </div>
@@ -558,6 +565,7 @@
                                                 <span class="input-group-text">º</span>
                                             </div>
                                             <button type="button" class="btn-equilibrar" data-enrolamento="3" data-fase="ib" title="Equilibrar as 3 fases do Enrolamento 3 a partir da fase B">E</button>
+                                            <button type="button" class="btn-nominal" data-enrolamento="3" data-fase="ib" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                         </div>
                                     </div>
                                 </div>
@@ -582,6 +590,7 @@
                                                 <span class="input-group-text">º</span>
                                             </div>
                                             <button type="button" class="btn-equilibrar" data-enrolamento="3" data-fase="ic" title="Equilibrar as 3 fases do Enrolamento 3 a partir da fase C">E</button>
+                                            <button type="button" class="btn-nominal" data-enrolamento="3" data-fase="ic" title="Restaurar valores nominais desta fase (magnitude = TAP, ângulo padrão)">N</button>
                                         </div>
                                     </div>
                                 </div>
@@ -620,38 +629,86 @@
                         sobre a fronteira de disparo, &gt;1 = região de disparo, &lt;1 = região de restrição). O site
                         calcula o I<sub>dif</sub> correspondente e, para relé de 2 enrolamentos, as correntes
                         trifásicas a injetar em cada enrolamento para levar o relé até esse ponto. Use os botões
-                        Avançar/Recuar para deslocar o ponto ao longo do eixo I<sub>fren</sub> pelo passo informado.
+                        Avançar/Recuar para deslocar o ponto ao longo do eixo I<sub>fren</sub> pelo passo informado,
+                        ou marque a opção abaixo para gerar de uma vez uma lista de pontos ao longo da curva,
+                        útil para uma versão impressa/PDF a ser usada no comissionamento em campo.
                     </p>
 
+                    <div class="form-group form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="modoListaPontos">
+                        <label class="form-check-label" for="modoListaPontos">Gerar lista de pontos ao longo da curva (para impressão)</label>
+                    </div>
+
                     <div class="row">
-                        <div class="col-4">
-                            <div class="form-group">
-                                <label for="ifrenTeste" class="form-label">I<sub>fren</sub> (xTAP)</label>
-                                <input type="number" class="form-control" id="ifrenTeste" min="0" step="0.1" value="0.5">
-                            </div>
-                        </div>
                         <div class="col-4">
                             <div class="form-group">
                                 <label for="fatorTeste" class="form-label">Fator de I<sub>dif</sub> (&gt;1 dispara / &lt;1 restringe)</label>
                                 <input type="number" class="form-control" id="fatorTeste" step="0.01" value="1">
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="form-group">
-                                <label for="passoIfren" class="form-label">Passo do Avanço/Recuo (xTAP)</label>
-                                <input type="number" class="form-control" id="passoIfren" min="0" step="0.1" value="0.5">
-                            </div>
-                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnRecuarIfren">◀ Recuar</button>
-                        <button type="button" class="btn btn-primary" style="margin-right: 10px;" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
-                        <button type="button" class="btn btn-secondary" id="btnAvancarIfren">Avançar ▶</button>
+                    <div id="secaoPontoUnico">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="ifrenTeste" class="form-label">I<sub>fren</sub> (xTAP)</label>
+                                    <input type="number" class="form-control" id="ifrenTeste" min="0" step="0.1" value="0.5">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="passoIfren" class="form-label">Passo do Avanço/Recuo (xTAP)</label>
+                                    <input type="number" class="form-control" id="passoIfren" min="0" step="0.1" value="0.5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnRecuarIfren">◀ Recuar</button>
+                            <button type="button" class="btn btn-primary" style="margin-right: 10px;" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
+                            <button type="button" class="btn btn-secondary" id="btnAvancarIfren">Avançar ▶</button>
+                        </div>
+
+                        <div id="grafico-ponto-teste" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+                    </div>
+
+                    <div id="secaoListaPontos" style="display: none;">
+                        <div class="row row-labels-alinhadas">
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="qtdTrecho1" class="form-label">Pontos no Trecho 1 (antes do 1º joelho)</label>
+                                    <input type="number" class="form-control" id="qtdTrecho1" min="0" step="1" value="2">
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="qtdTrecho2" class="form-label">Pontos no Trecho 2 (entre os joelhos)</label>
+                                    <input type="number" class="form-control" id="qtdTrecho2" min="0" step="1" value="2">
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="qtdTrecho3" class="form-label">Pontos no Trecho 3 (depois do 2º joelho)</label>
+                                    <input type="number" class="form-control" id="qtdTrecho3" min="0" step="1" value="2">
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="form-group">
+                                    <label for="ifrenFinalD" class="form-label">I<sub>fren</sub> Final (Ponto D) [xTAP]</label>
+                                    <input type="number" class="form-control" id="ifrenFinalD" step="0.1" placeholder="Padrão: 2x Ponto de Inflexão 2, se vazio">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-primary" id="btnGerarLista">Gerar Lista de Pontos de Teste</button>
+                        </div>
+
+                        <div id="grafico-lista-pontos" style="width: 100%; height: 400px; margin-top: 20px;"></div>
                     </div>
 
                     <div id="pontosTesteResultado" class="results-area mt-4"></div>
-                    <div id="grafico-ponto-teste" style="width: 100%; height: 400px; margin-top: 20px;"></div>
                 </div>
             </div>
         </div>
@@ -693,6 +750,10 @@
             // preenchidos antes de mudar para 3 enrolamentos, preenche o
             // TAP3 na hora em vez de esperar o usuário mexer na potência
             autoPreencherTaps();
+
+            // O mesmo para os ângulos do 3º enrolamento (Sequência de Fases,
+            // polaridade e código horário já configurados antes da troca)
+            if (mostrar) autoPreencherAngulosEnrolamento(3);
         });
 
         // Inicializar com 2 enrolamentos (ocultar enrolamento 3)
@@ -700,6 +761,15 @@
             const event = new Event('change');
             document.getElementById('numEnrolamentos').dispatchEvent(event);
             ativarSanitizacaoFormulario('#form-87');
+        });
+
+        // Alterna entre o ponto único (interativo, com gráfico) e a lista de
+        // pontos ao longo da curva (pensada para uma versão impressa/PDF)
+        document.getElementById('modoListaPontos').addEventListener('change', function() {
+            const lista = this.checked;
+            document.getElementById('secaoPontoUnico').style.display = lista ? 'none' : '';
+            document.getElementById('secaoListaPontos').style.display = lista ? '' : 'none';
+            document.getElementById('pontosTesteResultado').innerHTML = '';
         });
     </script>
 </body>

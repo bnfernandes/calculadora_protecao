@@ -651,11 +651,33 @@ document.querySelectorAll('.btn-equilibrar').forEach(function(btn) {
     });
 });
 
-// Preenche TAP1/TAP2/TAP3 automaticamente a partir da Potência do
-// Transformador, com a mesma fórmula de calcularTaps (TAP = Potência×1000 /
-// (RTC × kV × √3)) — só para enrolamentos com kV e RTC já preenchidos (sem
-// isso não dá pra calcular) e só quando a potência não é 0 (0 significa
-// "usar o TAP inserido manualmente", conforme o rótulo do campo).
+// Preenche um campo automaticamente, mas só se ele estiver vazio ou ainda
+// tiver exatamente o último valor que UM AUTO-PREENCHIMENTO colocou ali —
+// ou seja, nunca sobrescreve um valor que o usuário digitou (ou aplicou via
+// botão "Equilibrar") por conta própria.
+const ultimoAutoPreenchido = {};
+
+function autoPreencherCampo(id, novoValor) {
+    const campo = document.getElementById(id);
+    if (!campo) return;
+
+    const atual = campo.value;
+    if (atual === '' || atual === ultimoAutoPreenchido[id]) {
+        campo.value = novoValor;
+        ultimoAutoPreenchido[id] = novoValor;
+    }
+}
+
+// Preenche TAP1/TAP2/TAP3 (e as magnitudes de corrente do enrolamento
+// correspondente, com o próprio valor de TAP — carga nominal equilibrada
+// como ponto de partida) a partir da Potência do Transformador, com a mesma
+// fórmula de calcularTaps (TAP = Potência×1000 / (RTC × kV × √3)) — só para
+// enrolamentos com kV e RTC já preenchidos (sem isso não dá pra calcular) e
+// só quando a potência não é 0 (0 significa "usar o TAP inserido
+// manualmente", conforme o rótulo do campo). O TAP em si é sempre
+// recalculado (não é usado pelo cálculo quando a potência é diferente de 0,
+// então não há valor "do usuário" para preservar ali); só as magnitudes de
+// corrente passam pela proteção de autoPreencherCampo.
 function autoPreencherTaps() {
     const potencia = parseFloat(document.getElementById('potencia').value) || 0;
     if (potencia <= 0) return;
@@ -667,9 +689,104 @@ function autoPreencherTaps() {
         if (!kv || !rtc) continue;
 
         const tap = (potencia * 1000) / (rtc * kv * Math.sqrt(3));
-        document.getElementById(`tap${i}`).value = tap.toFixed(3);
+        const tapFormatado = tap.toFixed(3);
+        document.getElementById(`tap${i}`).value = tapFormatado;
+
+        ['ia', 'ib', 'ic'].forEach(fase => autoPreencherCampo(`${fase}${i}Mag`, tapFormatado));
     }
 }
 
-document.getElementById('potencia').addEventListener('input', autoPreencherTaps);
+['potencia', 'kv1', 'kv2', 'kv3', 'rtc1', 'rtc2', 'rtc3'].forEach(id => {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', autoPreencherTaps);
+});
+
+// Ângulo padrão (sem falta, carga equilibrada) de uma fase de um enrolamento
+// — mesma convenção já usada na sugestão de correntes de injeção
+// (anguloTesteBase em calc_87_pontos_teste.js): o Enrolamento 1 segue a
+// Sequência de Fases; os demais seguem o código horário RELATIVO ao
+// Enrolamento 1 (convenção usual de placa de transformador, ex: Dyn11), com
+// os 180° de defasagem esperados entre entrada e saída num transformador
+// saudável. Todos consideram a polaridade do TC (Entrante/Saliente).
+function anguloPadraoCorrente(enrolamento, faseIdx, sequencia, polaridade, codHor) {
+    const baseFase = [0, 240, 120][faseIdx];
+    const msf = sequencia === 'ACB' ? 1 : 0;
+    const msfAdd = baseFase * msf;
+    const mp = polaridade === 'Saliente' ? 1 : 0;
+
+    if (enrolamento === 1) return normalizarAngulo(baseFase + mp * 180 + msfAdd);
+    return normalizarAngulo(baseFase + 180 + mp * 180 + msfAdd - codHor * 30);
+}
+
+function autoPreencherAngulosEnrolamento(enrolamento) {
+    const sequencia = document.getElementById('sequenciaFases').value;
+    const polaridade = document.getElementById(`polaridade${enrolamento}`).value;
+    const campoCodHor = document.getElementById(`codHor${enrolamento}`);
+    const codHor = campoCodHor ? (parseInt(campoCodHor.value) || 0) : 0;
+
+    ['ia', 'ib', 'ic'].forEach((fase, faseIdx) => {
+        const angulo = anguloPadraoCorrente(enrolamento, faseIdx, sequencia, polaridade, codHor);
+        autoPreencherCampo(`${fase}${enrolamento}Ang`, angulo.toFixed(0));
+    });
+}
+
+function autoPreencherTodosAngulos() {
+    const numEnrolamentos = parseInt(document.getElementById('numEnrolamentos').value) || 2;
+    for (let i = 1; i <= numEnrolamentos; i++) autoPreencherAngulosEnrolamento(i);
+}
+
+document.getElementById('sequenciaFases').addEventListener('change', autoPreencherTodosAngulos);
+[1, 2, 3].forEach(i => {
+    const campoPolaridade = document.getElementById(`polaridade${i}`);
+    if (campoPolaridade) campoPolaridade.addEventListener('change', () => autoPreencherAngulosEnrolamento(i));
+
+    const campoCodHor = document.getElementById(`codHor${i}`);
+    if (campoCodHor) campoCodHor.addEventListener('input', () => autoPreencherAngulosEnrolamento(i));
+});
+
+// Preenchimento inicial (Sequência = ABC, TCs Entrante por padrão) assim que
+// a página carrega, para os enrolamentos visíveis no momento
+document.addEventListener('DOMContentLoaded', autoPreencherTodosAngulos);
+
+// Botões "N" (Nominal): editar um campo manualmente faz o preenchimento
+// automático "esquecer" dele (autoPreencherCampo passa a ignorá-lo, pra não
+// sobrescrever o que o usuário digitou). O "N" é a forma de voltar atrás —
+// recalcula magnitude (= TAP, se der pra calcular) e ângulo (padrão da
+// Sequência/código horário) dessa fase e escreve direto, ignorando a
+// proteção — e também atualiza o rastreamento, pra ela voltar a acompanhar
+// futuras mudanças de potência/RTC/kV/sequência normalmente.
+function restaurarNominalFase(enrolamento, fase) {
+    const faseIdx = ['ia', 'ib', 'ic'].indexOf(fase);
+    if (faseIdx === -1) return;
+
+    const sequencia = document.getElementById('sequenciaFases').value;
+    const polaridade = document.getElementById(`polaridade${enrolamento}`).value;
+    const campoCodHor = document.getElementById(`codHor${enrolamento}`);
+    const codHor = campoCodHor ? (parseInt(campoCodHor.value) || 0) : 0;
+    const angulo = anguloPadraoCorrente(enrolamento, faseIdx, sequencia, polaridade, codHor).toFixed(0);
+
+    const idAng = `${fase}${enrolamento}Ang`;
+    document.getElementById(idAng).value = angulo;
+    ultimoAutoPreenchido[idAng] = angulo;
+
+    const potencia = parseFloat(document.getElementById('potencia').value) || 0;
+    const kv = parseFloat(document.getElementById(`kv${enrolamento}`).value);
+    const rtc = parseFloat(document.getElementById(`rtc${enrolamento}`).value);
+    if (potencia > 0 && kv && rtc) {
+        const tapFormatado = ((potencia * 1000) / (rtc * kv * Math.sqrt(3))).toFixed(3);
+        const idMag = `${fase}${enrolamento}Mag`;
+        document.getElementById(idMag).value = tapFormatado;
+        ultimoAutoPreenchido[idMag] = tapFormatado;
+    }
+}
+
+document.querySelectorAll('.btn-nominal').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        // dataset.enrolamento é string ("1") — precisa virar Number aqui,
+        // já que anguloPadraoCorrente compara enrolamento === 1 (===
+        // estrito falha silenciosamente contra a string e cai no ramo
+        // errado, gerando um ângulo com +180° a mais que o esperado)
+        restaurarNominalFase(parseInt(btn.dataset.enrolamento, 10), btn.dataset.fase);
+    });
+});
 

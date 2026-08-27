@@ -324,6 +324,14 @@ body {
   padding-left: 15px;
 }
 
+/* Numa linha com labels de comprimentos bem diferentes, um label mais curto
+   quebra em 1 linha e o de baixo dele fica mais alto que os campos vizinhos
+   cujo label quebrou em 2 — reserva altura fixa pra 2 linhas em todos, então
+   os campos ficam alinhados independente de quantas linhas cada label ocupa */
+.row-labels-alinhadas .form-label {
+  min-height: 2.6em;
+}
+
 /* Botão "Equilibrar" (E) — fica colado ao campo de ângulo (não solto na
    extremidade direita da linha, onde passaria batido). .campo-com-equilibrar
    é um flex simples, então acompanha o campo de ângulo tanto lado a lado
@@ -336,7 +344,8 @@ body {
   flex: 1;
 }
 
-.btn-equilibrar {
+.btn-equilibrar,
+.btn-nominal {
   flex-shrink: 0;
   width: 22px;
   height: 22px;
@@ -357,6 +366,18 @@ body {
 .btn-equilibrar:hover {
   background-color: #e30613;
   border-color: #e30613;
+  color: #fff;
+}
+
+/* "N" (Nominal) — cor de destaque diferente do "E", pra não confundir
+   "equilibrar com esta fase" com "restaurar esta fase pro valor calculado
+   automaticamente". As duas classes (.btn-equilibrar/.btn-nominal) precisam
+   ficar em botões SEPARADOS — nunca as duas juntas no mesmo elemento, senão
+   os dois listeners de clique (ligados via querySelectorAll de cada classe)
+   disparam ao mesmo tempo. */
+.btn-nominal:hover {
+  background-color: #495057;
+  border-color: #495057;
   color: #fff;
 }
 
@@ -775,6 +796,13 @@ input[readonly] {
 
 .tabela-pontos-teste tbody tr:hover {
   background-color: #f8f9fa;
+}
+
+/* Lista de pontos de teste: tabela única, com Ia/Ib/Ic empilhadas em 3 linhas
+   por ponto (rowspan nas colunas Ponto/Marco/Ifren/Idif) — a borda mais forte
+   no início de cada grupo de 3 linhas marca a virada de um ponto pro outro */
+.tabela-pontos-teste tr.linha-novo-ponto td {
+  border-top: 2px solid #ccc;
 }
 
 /* Tabela de parâmetros para impressão: só existe na página impressa, gerada

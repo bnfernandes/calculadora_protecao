@@ -1,18 +1,21 @@
 // calc_87_grafico.js - Geração de Gráfico (Função 87)
 
-// Ponto de operação de uma fase: triângulo vermelho maior quando atua (dispara),
+// Ponto de operação de uma fase: "X" vermelho maior quando atua (dispara),
 // círculo na cor da fase quando não atua — mesma lógica de destaque da planilha Excel
+const SIMBOLO_DISPARO = 'path://M -8 -8 L 8 8 M -8 8 L 8 -8';
+
 function criarSerieFase(letraFase, ponto, atua, cor) {
     return {
         name: `Fase ${letraFase}`,
         type: 'scatter',
         data: [ponto],
-        symbol: atua ? 'triangle' : 'circle',
+        symbol: atua ? SIMBOLO_DISPARO : 'circle',
         symbolSize: atua ? 16 : 12,
         itemStyle: {
-            color: atua ? '#cc0000' : cor,
-            borderColor: atua ? '#7a0000' : cor,
-            borderWidth: atua ? 2 : 0
+            color: atua ? 'transparent' : cor,
+            borderColor: atua ? '#cc0000' : cor,
+            borderWidth: atua ? 3 : 0,
+            borderCap: 'round'
         },
         z: 3,
         label: {
@@ -79,7 +82,7 @@ function criarGraficoDiferencial(resultados, config) {
                 if (params.seriesName.includes('Fase')) {
                     const fase = resultados[`fase${params.seriesName.slice(-1)}`];
                     const status = fase.atua ? 'ATUA' : 'NÃO ATUA';
-                    return `${params.seriesName} — ${status}<br/>I<sub>fren</sub>: ${params.value[0].toFixed(3)} A<br/>I<sub>dif</sub>: ${params.value[1].toFixed(3)} A`;
+                    return `${params.seriesName} — ${status}<br/>I<sub>fren</sub>: ${params.value[0].toFixed(3)} xTAP<br/>I<sub>dif</sub>: ${params.value[1].toFixed(3)} xTAP`;
                 }
                 return params.seriesName;
             }
@@ -100,7 +103,7 @@ function criarGraficoDiferencial(resultados, config) {
         },
         xAxis: {
             type: 'value',
-            name: 'Corrente de Frenagem (A)',
+            name: 'Corrente de Frenagem (xTAP)',
             nameLocation: 'middle',
             nameGap: 35,
             nameTextStyle: {
@@ -119,7 +122,7 @@ function criarGraficoDiferencial(resultados, config) {
         },
         yAxis: {
             type: 'value',
-            name: 'Corrente Diferencial (A)',
+            name: 'Corrente Diferencial (xTAP)',
             nameLocation: 'middle',
             nameGap: 50,
             nameTextStyle: {
