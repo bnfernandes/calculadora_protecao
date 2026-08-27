@@ -291,16 +291,20 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     if (pontoAtuacao) {
         const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
         const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
-        const corPonto = '#ff6b35';
+        const corPonto = '#000000';
         const corLinha = '#495057'; // cinza escuro — só as linhas-guia e o rótulo, não o marcador
 
         series.push({
             name: 'Ponto de Atuação',
+            // zlevel maior que o da curva (1) — camada de canvas própria, desenhada
+            // por cima, garante que o "X" nunca fique parcialmente encoberto pela
+            // linha vermelha passando exatamente por baixo dele
+            zlevel: 2,
             type: 'scatter',
-            zlevel: 1,
             data: [[xPonto, yPonto]],
-            symbolSize: 12,
-            itemStyle: { color: corPonto }
+            symbol: 'path://M -8 -8 L 8 8 M -8 8 L 8 -8',
+            symbolSize: 16,
+            itemStyle: { color: 'transparent', borderColor: corPonto, borderWidth: 3, borderCap: 'round' }
         });
 
         // Linhas-guia numa série própria, separada do marcador acima — assim
