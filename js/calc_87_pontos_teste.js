@@ -358,14 +358,20 @@ function exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInje
         html += '</tbody></table></div>';
     } else {
         // Uma única tabela: Ponto/Marco/Ifren/Idif ocupam 1 célula mesclada
-        // (rowspan) por ponto, com Ia/Ib/Ic empilhadas em linhas dentro dele
+        // (rowspan) por ponto, com Ia/Ib/Ic empilhadas em linhas dentro dele.
+        // Cada ponto vira seu próprio <tbody> — várias tbody num mesmo table
+        // são válidas em HTML, e isso permite proteger o grupo de 3 linhas
+        // inteiro de quebra de página na impressão (break-inside em tbody,
+        // ver styles.css), coisa que não dá pra fazer em <tr> soltos quando
+        // colunas vizinhas dependem de rowspan.
         html += '<div class="table-responsive"><table class="tabela-pontos-teste">';
         html += '<thead><tr>' +
             '<th>Ponto</th><th>Marco</th><th>I<sub>fren</sub> (xTAP)</th>' +
             '<th>I<sub>dif</sub> curva (xTAP)</th><th>Fator × I<sub>dif</sub> (xTAP)</th>' +
             '<th>Enrolamento 1</th><th>Enrolamento 2</th>' +
-            '</tr></thead><tbody>';
+            '</tr></thead>';
         linhas.forEach(l => {
+            html += '<tbody>';
             l.injecao.forEach((inj, faseIdx) => {
                 html += `<tr class="${faseIdx === 0 ? 'linha-novo-ponto' : ''}">`;
                 if (faseIdx === 0) {
@@ -375,10 +381,10 @@ function exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInje
                 }
                 html += `<td>I<sub>${inj.fase}1</sub> = ${inj.i1.mag.toFixed(3)}∠${inj.i1.ang.toFixed(1)}° A</td>` +
                     `<td>I<sub>${inj.fase}2</sub> = ${inj.i2.mag.toFixed(3)}∠${inj.i2.ang.toFixed(1)}° A</td></tr>`;
-                    `<td>I<sub>2</sub> = ${inj.i2.mag.toFixed(3)}∠${inj.i2.ang.toFixed(1)}° A</td></tr>`;
             });
+            html += '</tbody>';
         });
-        html += '</tbody></table></div>';
+        html += '</table></div>';
     }
 
     html += '</div>';

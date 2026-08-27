@@ -134,6 +134,9 @@ body {
 .card-title {
   margin: 0;
   font-weight: 600;
+  /* Sem isto, herda o tamanho padrão da tag <h5> do navegador (~0.83em,
+     MENOR que o corpo de texto) — ver ESCALA DE TEXTO em equations.css */
+  font-size: 1.25rem;
 }
 
 .card-body {
@@ -713,6 +716,10 @@ input[readonly] {
   margin-bottom: 15px;
   padding-bottom: 8px;
   border-bottom: 2px solid #eee;
+  /* Sem isto, herda o tamanho padrão da tag <h6> do navegador (~0.67em,
+     bem menor que o próprio conteúdo que introduz) — ver ESCALA DE TEXTO
+     em equations.css */
+  font-size: 1.125rem;
 }
 
 .resultado-box {
@@ -734,19 +741,29 @@ input[readonly] {
   gap: 10px;
   font-weight: 600;
   color: #333;
+  /* mesmo nível de título de seção que .resultado-titulo — ver ESCALA DE
+     TEXTO em equations.css */
+  font-size: 1.125rem;
 }
 
 .resumo-idif-ifren {
   display: flex;
   gap: 25px;
   flex-wrap: wrap;
-  font-size: 1.1em;
+  font-size: 1.125rem;
   margin: 10px 0 15px;
 }
 
 .badge-atuacao {
   display: inline-block;
-  font-size: 0.7em;
+  /* Era 0.7em (relativo ao <h6> pai, também reduzido) — os dois fatores se
+     multiplicavam e o badge saía minúsculo (~7.5px na tela, ~5.6px impresso).
+     rem quebra essa corrente: sempre relativo à raiz, nunca ao pai — ver
+     ESCALA DE TEXTO em equations.css. max() dá um piso absoluto de 8px —
+     é o menor nível da escala, então é o primeiro a esbarrar no limite de
+     legibilidade se a raiz (html, @media print em styles.css) for reduzida
+     ainda mais no futuro. */
+  font-size: max(8px, 0.75rem);
   font-weight: 700;
   letter-spacing: 0.03em;
   padding: 4px 10px;
@@ -766,7 +783,7 @@ input[readonly] {
 .resultado-valor {
   font-weight: 600;
   color: #e30613;
-  font-size: 1.05em;
+  font-size: 1.125rem;
 }
 
 .table-responsive {
@@ -824,15 +841,32 @@ input[readonly] {
     margin: 1.5cm;
   }
 
+  /* Base única da escala tipográfica (ver ESCALA DE TEXTO em equations.css):
+     como os níveis da escala são todos em rem (relativos a esta raiz, nunca
+     ao elemento pai — é o que evita um <span> pequeno dentro de um <h6> já
+     reduzido multiplicarem os dois fatores e sumirem de tão pequenos),
+     mudar só este valor encolhe título/corpo/nota juntos, na mesma
+     proporção, sem precisar de uma regra de font-size por elemento — antes
+     era assim, e vários elementos (título de card, título de seção, badge)
+     ficavam esquecidos, sem nenhum ajuste pra impressão.
+     10px (0.625rem-equivalente de 16px) é o menor valor que ainda mantém
+     todos os níveis da escala acima de ~8px — o mínimo geralmente
+     recomendado pra texto impresso continuar legível. Abaixo disso, o
+     badge (o menor nível, 0.75rem) já teria um piso à parte pra não sumir
+     (ver .badge-atuacao). */
+  html {
+    font-size: 10px;
+  }
+
   body {
     background: #fff;
-    font-size: 12px;
   }
 
   .navbar,
   .footer,
   .btn,
-  .calc-form {
+  .calc-form,
+  .grupo-impressao {
     display: none !important;
   }
 
@@ -873,8 +907,87 @@ input[readonly] {
     margin-bottom: 8px;
   }
 
+  /* Cards lado a lado (TAPs, Constantes C, Idif/Ifren de uma mesma fase) —
+     flex-wrap deixa a quantidade por linha se ajustar sozinha à largura
+     disponível da página impressa, caindo pro card seguinte pra baixo em vez
+     de espremer/sobrepor texto. min-width:0 é o que permite o item encolher
+     abaixo da largura "natural" do conteúdo (senão o flexbox nunca reduz um
+     item além do tamanho mínimo do seu conteúdo, e a quebra de linha do
+     texto — ver .formula-equation em equations.css — nunca chega a entrar
+     em ação). */
+  .cards-lado-a-lado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cards-lado-a-lado > .resultado-box,
+  .cards-lado-a-lado > .formula {
+    /* 220px parecia razoável pensando na largura da folha inteira (~680px
+       de área útil no A4 com margem de 1.5cm), mas cada nível até chegar
+       aqui (.container, .card, .card-body, .results-area) tem seu próprio
+       padding, e a largura REAL disponível pra esses cards é ~590px —
+       medido, não estimado. Com 220px, 3 cards + 2 gaps (676px) nunca
+       cabiam nesses 590px, e um card sempre sobrava pra segunda linha
+       mesmo com espaço "de sobra" aparente. 180px cabe 3 cards nos 590px
+       reais (556px) — o quarto (Constantes C com 3 enrolamentos) ainda cai
+       pra segunda linha, mas isso é o esperado/dinâmico, não um bug. */
+    flex: 1 1 180px;
+    min-width: 0;
+    margin: 0;
+    /* align-items:stretch (padrão do flex) já iguala a altura de todos os
+       cards de uma mesma linha ao mais alto — centraliza o conteúdo dentro
+       do espaço extra em vez de deixá-lo colado no topo */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* O ECharts cria uma DIV própria dentro do container (largura fixa em
+     pixels, calculada a partir da tela — mais larga que a página impressa)
+     e o canvas fica "position:absolute" dentro dela. Como nunca se pode
+     chamar chart.resize()/setOption() durante beforeprint (corrompe o
+     snapshot, ver nota em main.js), essa div mantém o tamanho fixo da tela.
+     Só limitar o canvas não resolve: sendo absolutamente posicionado, o
+     "100%" dele se resolve contra essa div (também fixa), não contra a
+     página — por isso a div intermediária também precisa ser forçada a
+     100%. Só então o max-width do canvas (relativo a ela) realmente encolhe
+     o raster proporcionalmente pra caber na página, em vez de vazar e sair
+     cortado/deslocado para a direita.
+
+     Listados por id explícito (em vez de um seletor [id^="grafico"] genérico)
+     de propósito: a 51 tem um <div id="grafico-container"> que embrulha
+     <div id="grafico-curva">, e um seletor por prefixo bateria nos dois
+     níveis (o container por fora E o gráfico de verdade por dentro),
+     alargando um elemento que não deveria mudar. Restrito às 3 divs que a
+     87 realmente passa pro echarts.init(), sem afetar 51/67. */
+  #grafico-diferencial > div,
+  #grafico-ponto-teste > div,
+  #grafico-lista-pontos > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    /* a altura fixa (herdada da tela) também precisa ceder — sem isso, sobra
+       um vão vazio abaixo do gráfico já reduzido em largura pelo canvas
+       (altura recalculada via aspect-ratio, ver ajustarProporcaoGraficosImpressao
+       em main.js — só ele sabe a proporção real de cada gráfico específico) */
+    height: auto !important;
+  }
+
+  #grafico-diferencial canvas,
+  #grafico-ponto-teste canvas,
+  #grafico-lista-pontos canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  #grafico-diferencial,
+  #grafico-ponto-teste,
+  #grafico-lista-pontos {
+    height: auto !important;
+  }
+
   .resumo-idif-ifren {
-    font-size: 1em;
     gap: 15px;
     margin: 6px 0 8px;
   }
@@ -916,6 +1029,36 @@ input[readonly] {
     color: #e30613;
     font-weight: 600;
     padding-top: 6px;
+  }
+
+  /* .tabela-pontos-teste nunca tinha uma versão compacta pra impressão (só
+     era usada interativamente, na tela) — sem isso, ela imprime no tamanho
+     de tela normal, destoando (maior) do resto da página já reduzida, e o
+     "white-space:nowrap" de cada célula (styles.css, versão de tela) força
+     a linha toda numa largura só, sem quebrar — numa página bem mais
+     estreita que a tela, isso estoura a largura impressa e corta o final
+     das linhas (a de Enrolamento 1/2 é a mais larga, com texto tipo
+     "IA1 = 27.938∠0.0° A"). */
+  .tabela-pontos-teste {
+    font-size: 0.85em;
+  }
+
+  .tabela-pontos-teste th,
+  .tabela-pontos-teste td {
+    padding: 4px 8px;
+    white-space: normal;
+  }
+
+  /* Cada ponto da lista (3 linhas Ia/Ib/Ic mescladas por rowspan) precisa
+     ficar inteiro na mesma página — se a quebra de página cair no meio de
+     um grupo, as linhas de baixo aparecem "soltas", sem as colunas
+     mescladas (Ponto/Marco/Ifren/Idif), que só existem na 1ª linha do
+     grupo. Como rowspan não pode ficar em <tr> soltos sem quebrar layout,
+     o HTML (calc_87_pontos_teste.js) separa cada ponto em seu próprio
+     <tbody> — daí dá pra proteger o grupo inteiro de uma vez. */
+  .tabela-pontos-teste tbody,
+  .tabela-parametros-print tr {
+    break-inside: avoid;
   }
 }
 

@@ -634,36 +634,74 @@
                         útil para uma versão impressa/PDF a ser usada no comissionamento em campo.
                     </p>
 
-                    <div class="form-group form-check mb-3">
-                        <input type="checkbox" class="form-check-input" id="modoListaPontos">
-                        <label class="form-check-label" for="modoListaPontos">Gerar lista de pontos ao longo da curva (para impressão)</label>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="form-group">
-                                <label for="fatorTeste" class="form-label">Fator de I<sub>dif</sub> (&gt;1 dispara / &lt;1 restringe)</label>
-                                <input type="number" class="form-control" id="fatorTeste" step="0.01" value="1">
-                            </div>
+                    <!-- Campos de ajuste: agrupados à parte dos botões/gráficos abaixo
+                         porque na impressão viram uma tabela compacta (main.js), igual
+                         ao formulário de Parâmetros de Entrada — só os campos, não os
+                         botões (que já não imprimem) nem os gráficos (que devem
+                         continuar aparecendo no PDF). -->
+                    <div class="grupo-impressao" id="camposTeste87">
+                        <div class="form-group form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="modoListaPontos">
+                            <label class="form-check-label" for="modoListaPontos">Gerar lista de pontos ao longo da curva (para impressão)</label>
                         </div>
-                    </div>
 
-                    <div id="secaoPontoUnico">
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-4">
                                 <div class="form-group">
-                                    <label for="ifrenTeste" class="form-label">I<sub>fren</sub> (xTAP)</label>
-                                    <input type="number" class="form-control" id="ifrenTeste" min="0" step="0.1" value="0.5">
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label for="passoIfren" class="form-label">Passo do Avanço/Recuo (xTAP)</label>
-                                    <input type="number" class="form-control" id="passoIfren" min="0" step="0.1" value="0.5">
+                                    <label for="fatorTeste" class="form-label">Fator de I<sub>dif</sub> (&gt;1 dispara / &lt;1 restringe)</label>
+                                    <input type="number" class="form-control" id="fatorTeste" step="0.01" value="1">
                                 </div>
                             </div>
                         </div>
 
+                        <div id="secaoPontoUnicoCampos">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="ifrenTeste" class="form-label">I<sub>fren</sub> (xTAP)</label>
+                                        <input type="number" class="form-control" id="ifrenTeste" min="0" step="0.1" value="0.5">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="passoIfren" class="form-label">Passo do Avanço/Recuo (xTAP)</label>
+                                        <input type="number" class="form-control" id="passoIfren" min="0" step="0.1" value="0.5">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="secaoListaPontosCampos" style="display: none;">
+                            <div class="row row-labels-alinhadas">
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="qtdTrecho1" class="form-label">Pontos no Trecho 1 (antes do 1º joelho)</label>
+                                        <input type="number" class="form-control" id="qtdTrecho1" min="0" step="1" value="2">
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="qtdTrecho2" class="form-label">Pontos no Trecho 2 (entre os joelhos)</label>
+                                        <input type="number" class="form-control" id="qtdTrecho2" min="0" step="1" value="2">
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="qtdTrecho3" class="form-label">Pontos no Trecho 3 (depois do 2º joelho)</label>
+                                        <input type="number" class="form-control" id="qtdTrecho3" min="0" step="1" value="2">
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="form-group">
+                                        <label for="ifrenFinalD" class="form-label">I<sub>fren</sub> Final (Ponto D) [xTAP]</label>
+                                        <input type="number" class="form-control" id="ifrenFinalD" step="0.1" placeholder="Padrão: 2x Ponto de Inflexão 2, se vazio">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="secaoPontoUnicoAcoes">
                         <div class="d-flex justify-content-end mt-3">
                             <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnRecuarIfren">◀ Recuar</button>
                             <button type="button" class="btn btn-primary" style="margin-right: 10px;" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
@@ -673,34 +711,7 @@
                         <div id="grafico-ponto-teste" style="width: 100%; height: 400px; margin-top: 20px;"></div>
                     </div>
 
-                    <div id="secaoListaPontos" style="display: none;">
-                        <div class="row row-labels-alinhadas">
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="qtdTrecho1" class="form-label">Pontos no Trecho 1 (antes do 1º joelho)</label>
-                                    <input type="number" class="form-control" id="qtdTrecho1" min="0" step="1" value="2">
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="qtdTrecho2" class="form-label">Pontos no Trecho 2 (entre os joelhos)</label>
-                                    <input type="number" class="form-control" id="qtdTrecho2" min="0" step="1" value="2">
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="qtdTrecho3" class="form-label">Pontos no Trecho 3 (depois do 2º joelho)</label>
-                                    <input type="number" class="form-control" id="qtdTrecho3" min="0" step="1" value="2">
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="ifrenFinalD" class="form-label">I<sub>fren</sub> Final (Ponto D) [xTAP]</label>
-                                    <input type="number" class="form-control" id="ifrenFinalD" step="0.1" placeholder="Padrão: 2x Ponto de Inflexão 2, se vazio">
-                                </div>
-                            </div>
-                        </div>
-
+                    <div id="secaoListaPontosAcoes" style="display: none;">
                         <div class="d-flex justify-content-end mt-3">
                             <button type="button" class="btn btn-primary" id="btnGerarLista">Gerar Lista de Pontos de Teste</button>
                         </div>
@@ -764,11 +775,15 @@
         });
 
         // Alterna entre o ponto único (interativo, com gráfico) e a lista de
-        // pontos ao longo da curva (pensada para uma versão impressa/PDF)
+        // pontos ao longo da curva (pensada para uma versão impressa/PDF).
+        // Campos e ações (botões/gráfico) de cada modo são elementos
+        // separados (ver comentário no HTML), então alterna os 4 juntos.
         document.getElementById('modoListaPontos').addEventListener('change', function() {
             const lista = this.checked;
-            document.getElementById('secaoPontoUnico').style.display = lista ? 'none' : '';
-            document.getElementById('secaoListaPontos').style.display = lista ? '' : 'none';
+            document.getElementById('secaoPontoUnicoCampos').style.display = lista ? 'none' : '';
+            document.getElementById('secaoPontoUnicoAcoes').style.display = lista ? 'none' : '';
+            document.getElementById('secaoListaPontosCampos').style.display = lista ? '' : 'none';
+            document.getElementById('secaoListaPontosAcoes').style.display = lista ? '' : 'none';
             document.getElementById('pontosTesteResultado').innerHTML = '';
         });
     </script>

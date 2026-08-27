@@ -43,10 +43,33 @@ document.addEventListener('DOMContentLoaded', function() {
             // beforeprint — ver nota logo abaixo) e dá tempo do gráfico
             // redesenhar sem elas antes de abrir o diálogo de impressão
             alternarBarrasZoomImpressao(false);
+            ajustarProporcaoGraficosImpressao();
             setTimeout(function() { window.print(); }, 250);
         });
     }
 });
+
+// Proporção dos gráficos na impressão -------------------------------------
+// O CSS de impressão força os containers dos gráficos (ver styles.css) a
+// width:100%/height:auto, pra caber na página impressa (mais estreita que a
+// tela). Sem mais nada, isso deixaria a altura colapsar/ficar indefinida —
+// dá pra calcular a proporção real de CADA gráfico (varia com a largura da
+// tela de quem imprime) e fixá-la via aspect-ratio, aqui, uma única vez.
+// chart.getWidth()/getHeight() são apenas leitura (ao contrário de
+// setOption/resize, nunca tocam no gráfico), então não têm o risco de
+// corromper o snapshot de impressão — mas por consistência com o resto do
+// fluxo do botão "Gerar PDF", roda no click, nunca no beforeprint.
+function ajustarProporcaoGraficosImpressao() {
+    if (typeof echarts === 'undefined') return;
+    document.querySelectorAll('[id]').forEach(function(el) {
+        const chart = echarts.getInstanceByDom(el);
+        if (!chart) return;
+        const proporcao = chart.getWidth() + ' / ' + chart.getHeight();
+        el.style.aspectRatio = proporcao;
+        const wrapper = el.querySelector(':scope > div');
+        if (wrapper) wrapper.style.aspectRatio = proporcao;
+    });
+}
 
 // Nota: NÃO chamar chart.resize() em 'beforeprint'. Os containers dos gráficos
 // têm max-width fixo e já ficam com o mesmo tamanho na tela e no papel, então o
@@ -64,16 +87,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // (ex: Enrolamento 3 quando numEnrolamentos = 2).
 
 function valorCampoImpressao(campo) {
+    if (campo.type === 'checkbox') {
+        return campo.checked ? 'Sim' : 'Não';
+    }
     if (campo.tagName === 'SELECT') {
         return campo.options[campo.selectedIndex] ? campo.options[campo.selectedIndex].text : '';
     }
     return campo.value !== '' ? campo.value : '—';
 }
 
-function construirTabelaParametrosHTML(form) {
+function construirTabelaParametrosHTML(container) {
     const grupos = [{ titulo: '', linhas: [] }];
 
-    form.querySelectorAll('h4, h5, h6, .form-group').forEach(function(el) {
+    container.querySelectorAll('h4, h5, h6, .form-group').forEach(function(el) {
         if (el.tagName === 'H4' || el.tagName === 'H5' || el.tagName === 'H6') {
             grupos.push({ titulo: el.textContent.trim(), linhas: [] });
             return;
@@ -113,7 +139,11 @@ function atualizarTabelasParametrosImpressao() {
     // Só nas páginas com o botão "Gerar PDF" (evita mexer na 21, em manutenção)
     if (!document.getElementById('btnGerarPdf')) return;
 
-    document.querySelectorAll('.calc-form').forEach(function(form) {
+    // .calc-form (o formulário principal de cada página) e .grupo-impressao
+    // (grupos de campos avulsos fora do formulário principal, como os da
+    // Sugestão de Pontos de Teste na 87) recebem o mesmo tratamento — vira
+    // uma tabela compacta na impressão, escondendo o original (ver CSS).
+    document.querySelectorAll('.calc-form, .grupo-impressao').forEach(function(form) {
         const existente = form.nextElementSibling;
         if (existente && existente.classList.contains('tabela-parametros-print')) {
             existente.remove();

@@ -1,4 +1,28 @@
 /* Estilos para fórmulas matemáticas em HTML puro */
+
+/* ESCALA DE TEXTO do site — pensada a partir do formulário (o mais uniforme:
+   praticamente tudo nele já usa o tamanho padrão do navegador, 1rem/16px),
+   escalando pra cima/baixo dali conforme a hierarquia visual real, do maior
+   pro menor:
+     2rem     (32px) — h1.page-title (título da página)
+     1.25rem  (20px) — .card-title (título do card: "Resultados" etc.)
+     1.2rem   (19.2px) — .formula-equation (a equação em si, o conteúdo
+                          principal de leitura dentro de um card de fórmula)
+     1.125rem (18px) — .resultado-titulo / .fase-box h6 / .formula-title
+                        (títulos de subseção) e .resultado-valor /
+                        .resumo-idif-ifren (valores em destaque — mesmo
+                        nível dos subtítulos, não brigam por atenção)
+     1rem     (16px) — corpo de texto, formulário (referência/base)
+     0.8125rem (13px) — .formula-nota (nota pequena)
+     0.75rem  (12px) — .badge-atuacao
+   Todos em REM (relativos à raiz <html>), nunca EM relativo ao elemento pai
+   — um <span> pequeno dentro de um <h6> já reduzido, por exemplo, NÃO
+   multiplica os dois fatores (era assim que o badge ATUA ficava minúsculo,
+   ilegível na impressão). Isso também deixa a impressão inteira reagir a
+   uma única mudança: @media print define html{font-size:10px} (ver
+   styles.css) e todo mundo encolhe junto, na mesma proporção — sem precisar
+   de uma regra de font-size por elemento pra impressão (era assim antes, e
+   vários elementos ficavam esquecidos, sem ajuste nenhum). */
 .formula {
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
@@ -11,14 +35,14 @@
 
 .formula-title {
     font-weight: bold;
-    font-size: 1.1em;
+    font-size: 1.125rem;
     color: #495057;
     margin-bottom: 10px;
     text-align: center;
 }
 
 .formula-equation {
-    font-size: 1.3em;
+    font-size: 1.2rem;
     text-align: center;
     margin: 15px 0;
     color: #212529;
@@ -93,7 +117,11 @@
    por código horário) */
 .formula-nota {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 0.6em;
+    /* Era 0.6em relativo a .formula-equation (que por sua vez já é maior
+       que o corpo) — dava uma nota "pequena" ilegível na impressão (~5.8px).
+       rem independe do tamanho do pai — ver ESCALA DE TEXTO no topo do
+       arquivo */
+    font-size: 0.8125rem;
     color: #6c757d;
     font-style: italic;
 }
@@ -151,8 +179,11 @@ sub {
     }
 }
 
-/* Impressão: mantém as equações (não vira texto simples), só reduz fonte e
-   espaçamento — o objetivo é caber mais conteúdo por página, mantendo legível */
+/* Impressão: mantém as equações (não vira texto simples), só reduz
+   espaçamento — o objetivo é caber mais conteúdo por página, mantendo
+   legível. Fonte NÃO é reduzida aqui elemento por elemento — a escala
+   inteira (ESCALA DE TEXTO, topo do arquivo) já encolhe sozinha, junto,
+   quando a impressão redefine html{font-size:12px} em styles.css. */
 @media print {
     .formula {
         padding: 6px 10px;
@@ -161,14 +192,18 @@ sub {
     }
 
     .formula-title {
-        font-size: 0.9em;
         margin-bottom: 3px;
     }
 
     .formula-equation {
-        font-size: 0.8em;
         line-height: 1.3;
         margin: 4px 0;
+        /* Com os cards de Idif/Ifren lado a lado (.cards-lado-a-lado em
+           styles.css), a largura de cada um cai pela metade — sem isso, uma
+           linha longa como a de "(compensação por código horário)" ultrapassa
+           o card em vez de quebrar */
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 
     .fraction {
@@ -177,7 +212,6 @@ sub {
 
     .numerator,
     .denominator {
-        font-size: 0.85em;
         padding-bottom: 1px;
         padding-top: 1px;
         margin-bottom: 1px;

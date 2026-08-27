@@ -142,8 +142,9 @@ function filtroHomopolarHTML(info, nomeEnrol) {
 function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomopolarInfo = []) {
     let html = '<div class="resultados-87">';
 
-    // Seção de TAPs calculados
-    let tapSecao = '';
+    // Seção de TAPs calculados — a fórmula genérica entra na mesma fileira dos
+    // cards por enrolamento (cards-lado-a-lado estica todos pra mesma altura)
+    let tapSecao = '<div class="cards-lado-a-lado">';
     if (config.potencia === 0) {
         tapSecao += formulaBoxHTML({ linhas: ['<p><strong>TAP = Valor inserido pelo usuário</strong></p>'] });
     } else {
@@ -157,6 +158,7 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
         conteudo += `<p class="resultado-valor">TAP = ${taps[i].toFixed(3)} A</p>`;
         tapSecao += boxResultadoHTML(conteudo);
     }
+    tapSecao += '</div>';
     html += secaoResultadoHTML('Cálculo dos TAPs', tapSecao);
 
     // Seção de Filtro Homopolar (só enrolamentos com o filtro ativo)
@@ -171,6 +173,7 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
     // Seção de Constantes C
     html += '<div class="resultado-secao">';
     html += '<h6 class="resultado-titulo">Constantes C (Fator de Correção)</h6>';
+    html += '<div class="cards-lado-a-lado">';
     for (let i = 0; i < config.numEnrolamentos; i++) {
         let conexaoNome = '';
         if (enrolamentos[i].conexao === 'Y') conexaoNome = 'Y (Estrela)';
@@ -182,6 +185,7 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
             `<p class="resultado-valor">C = ${fmtCDestaque(C[i])}</p>`
         );
     }
+    html += '</div>';
     html += '</div>';
 
     // Seção de Correntes Diferencial e Frenagem
@@ -205,6 +209,8 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
         conteudo += `<span><strong>I<sub>fren</sub>:</strong> ${fren.valor.toFixed(4)} A</span>`;
         conteudo += '</div>';
 
+        conteudo += '<div class="cards-lado-a-lado">';
+
         conteudo += formulaBoxHTML({
             titulo: 'Corrente Diferencial (I<sub>dif</sub>)',
             linhas: [
@@ -224,6 +230,8 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
             ],
             resultado: `I<sub>fren</sub> = ${fren.valor.toFixed(4)} A`
         });
+
+        conteudo += '</div>';
 
         html += boxResultadoHTML(conteudo, 'fase-box');
     });
