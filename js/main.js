@@ -97,6 +97,10 @@ function valorCampoImpressao(campo) {
 }
 
 function construirTabelaParametrosHTML(container) {
+    // data-sem-coluna-unidade omite a coluna Unidade (usado onde a unidade já
+    // está embutida na própria descrição do ajuste, ex: "TAP Enrol. 1 [A]") —
+    // opt-in por container pra não afetar páginas que ainda dependem da coluna
+    const semUnidade = container.hasAttribute('data-sem-coluna-unidade');
     const grupos = [{ titulo: '', linhas: [] }];
 
     container.querySelectorAll('h4, h5, h6, .form-group').forEach(function(el) {
@@ -111,23 +115,25 @@ function construirTabelaParametrosHTML(container) {
 
         const labelEl = el.querySelector('label');
         const unidadeEl = el.querySelector('.input-group-text');
+        // data-label-impressao permite um texto mais curto só na tabela impressa
+        // (ex: "Enrolamento" -> "Enrol."), sem mudar o label do formulário na tela
         grupos[grupos.length - 1].linhas.push({
-            label: labelEl ? labelEl.innerHTML : '',
+            label: labelEl ? (labelEl.getAttribute('data-label-impressao') || labelEl.innerHTML) : '',
             valor: valorCampoImpressao(campo),
             unidade: unidadeEl ? unidadeEl.textContent.trim() : ''
         });
     });
 
     let html = '<table class="tabela-parametros-print">' +
-        '<thead><tr><th>Ajuste</th><th>Valor</th><th>Unidade</th></tr></thead><tbody>';
+        '<thead><tr><th>Ajuste</th><th>Valor</th>' + (semUnidade ? '' : '<th>Unidade</th>') + '</tr></thead><tbody>';
 
     grupos.forEach(function(grupo) {
         if (grupo.linhas.length === 0) return;
         if (grupo.titulo) {
-            html += '<tr class="tp-subtitulo"><td colspan="3">' + grupo.titulo + '</td></tr>';
+            html += '<tr class="tp-subtitulo"><td colspan="' + (semUnidade ? 2 : 3) + '">' + grupo.titulo + '</td></tr>';
         }
         grupo.linhas.forEach(function(l) {
-            html += '<tr><td>' + l.label + '</td><td>' + l.valor + '</td><td>' + l.unidade + '</td></tr>';
+            html += '<tr><td>' + l.label + '</td><td>' + l.valor + '</td>' + (semUnidade ? '' : '<td>' + l.unidade + '</td>') + '</tr>';
         });
     });
 

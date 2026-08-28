@@ -1007,6 +1007,12 @@ input[readonly] {
   #grafico-ponto-teste,
   #grafico-lista-pontos {
     height: auto !important;
+    /* O gráfico é um único canvas rasterizado — cortado ao meio na quebra de
+       página, ele sai visualmente partido (metade numa folha, metade na
+       outra), diferente de texto que pelo menos continua legível cortado.
+       Se não couber inteiro no que resta da página atual, empurra ele
+       inteiro pra próxima. */
+    break-inside: avoid;
   }
 
   .resumo-idif-ifren {
