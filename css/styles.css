@@ -866,7 +866,8 @@ input[readonly] {
   .footer,
   .btn,
   .calc-form,
-  .grupo-impressao {
+  .grupo-impressao,
+  .oculto-impressao {
     display: none !important;
   }
 
@@ -884,6 +885,17 @@ input[readonly] {
     padding: 10px 14px;
   }
 
+  /* Nunca tinha sido reduzida pra impressão (só a tela: margin-top:20px,
+     padding:15px) — somada ao padding do card-body, isso exagerava o
+     espaço antes do PRIMEIRO título de seção em relação ao espaço entre as
+     seções seguintes (.resultado-secao margin-bottom, 12px). padding-top
+     reduzido a 2px pra igualar: 2px + os 10px de padding-top do card-body
+     (que já vêm antes desta caixa) somam os mesmos 12px das demais. */
+  .results-area {
+    margin-top: 0;
+    padding: 2px 8px 8px;
+  }
+
   .formula,
   .resultado-box,
   .fase-box,
@@ -897,6 +909,13 @@ input[readonly] {
   }
 
   .resultado-titulo {
+    /* Sem isto, herda a margem padrão do navegador pra <h6> (~2.33em do
+       próprio font-size, ~26px aqui) — maior que o margin-bottom de
+       .resultado-secao (12px), e como margens adjacentes colapsam pelo
+       maior valor, era essa margem "invisível" do h6 que dominava o espaço
+       entre TODAS as seções (e se somava ao padding do .card-body/
+       .results-area antes do primeiro título, exagerando ainda mais ali). */
+    margin-top: 0;
     margin-bottom: 8px;
     padding-bottom: 4px;
   }
@@ -910,11 +929,9 @@ input[readonly] {
   /* Cards lado a lado (TAPs, Constantes C, Idif/Ifren de uma mesma fase) —
      flex-wrap deixa a quantidade por linha se ajustar sozinha à largura
      disponível da página impressa, caindo pro card seguinte pra baixo em vez
-     de espremer/sobrepor texto. min-width:0 é o que permite o item encolher
-     abaixo da largura "natural" do conteúdo (senão o flexbox nunca reduz um
-     item além do tamanho mínimo do seu conteúdo, e a quebra de linha do
-     texto — ver .formula-equation em equations.css — nunca chega a entrar
-     em ação). */
+     de espremer/sobrepor texto. Setores diferentes (TAP, Constantes C, ...)
+     nunca dividem a mesma linha entre si — cada um é seu próprio container
+     flex, empilhados como qualquer bloco normal. */
   .cards-lado-a-lado {
     display: flex;
     flex-wrap: wrap;
@@ -923,17 +940,22 @@ input[readonly] {
 
   .cards-lado-a-lado > .resultado-box,
   .cards-lado-a-lado > .formula {
-    /* 220px parecia razoável pensando na largura da folha inteira (~680px
-       de área útil no A4 com margem de 1.5cm), mas cada nível até chegar
-       aqui (.container, .card, .card-body, .results-area) tem seu próprio
-       padding, e a largura REAL disponível pra esses cards é ~590px —
-       medido, não estimado. Com 220px, 3 cards + 2 gaps (676px) nunca
-       cabiam nesses 590px, e um card sempre sobrava pra segunda linha
-       mesmo com espaço "de sobra" aparente. 180px cabe 3 cards nos 590px
-       reais (556px) — o quarto (Constantes C com 3 enrolamentos) ainda cai
-       pra segunda linha, mas isso é o esperado/dinâmico, não um bug. */
-    flex: 1 1 180px;
-    min-width: 0;
+    /* flex-basis:0 (não "auto") é o que importa aqui: o flexbox só quebra
+       linha quando a largura PREFERIDA de cada card (o conteúdo todo numa
+       linha só, sem quebrar nada) não cabe — com "auto" um card de 3 linhas
+       de fórmula (ex: Filtro Homopolar) "prefere" ~320px, e dois deles juntos
+       (640px) nunca eram sequer considerados pra mesma linha mesmo cabendo
+       perfeitamente ao encolher só um pouco (2×291px = 582px, dentro dos
+       ~590px reais). Com flex-basis:0, essa decisão passa a usar o mínimo
+       seguro de cada card (min-width:auto = min-content, o padrão do
+       flexbox — a largura da maior palavra/token que não pode quebrar,
+       nunca menor que isso) em vez do preferido, deixando mais cards
+       coexistirem na mesma linha sem cortar/sobrepor nada. flex-grow:1
+       ainda estica os cards de uma linha pra preencher o espaço sobrando —
+       inclusive um card sozinho que caiu pra própria linha. Substitui um
+       número fixo calibrado à mão pra um caso específico (era 180px,
+       pensado só nos 3 cards de TAP). */
+    flex: 1 1 0;
     margin: 0;
     /* align-items:stretch (padrão do flex) já iguala a altura de todos os
        cards de uma mesma linha ao mais alto — centraliza o conteúdo dentro
@@ -990,6 +1012,35 @@ input[readonly] {
   .resumo-idif-ifren {
     gap: 15px;
     margin: 6px 0 8px;
+  }
+
+  /* Fase + badge de atuação e os valores de Idif/Ifren, cada um sua própria
+     linha na tela, viram uma linha só na impressão (economiza espaço
+     vertical) — flex ignora o display de bloco original do <h6> e do
+     .resumo-idif-ifren, colocando os dois lado a lado. */
+  .linha-fase-resumo {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+
+  .linha-fase-resumo h6,
+  .linha-fase-resumo .resumo-idif-ifren {
+    margin: 0;
+  }
+
+  /* Enrolamento (+ conexão) e o valor de C, cada um seu próprio <p> na tela,
+     viram uma linha só na impressão — mesma ideia de .linha-fase-resumo. */
+  .linha-constante-c {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .linha-constante-c p {
+    margin: 0;
   }
 
   /* Garante que o preenchimento colorido dos badges e da área de operação do

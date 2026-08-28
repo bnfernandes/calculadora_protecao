@@ -161,12 +161,14 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
     tapSecao += '</div>';
     html += secaoResultadoHTML('Cálculo dos TAPs', tapSecao);
 
-    // Seção de Filtro Homopolar (só enrolamentos com o filtro ativo)
+    // Seção de Filtro Homopolar (só enrolamentos com o filtro ativo) — mesmo
+    // padrão de cards lado a lado na impressão usado em TAPs/Constantes C
     if (filtroHomopolarInfo.length > 0) {
-        let filtroSecao = '';
+        let filtroSecao = '<div class="cards-lado-a-lado">';
         filtroHomopolarInfo.forEach(info => {
             filtroSecao += boxResultadoHTML(filtroHomopolarHTML(info, enrolamentos[info.dev].nome));
         });
+        filtroSecao += '</div>';
         html += secaoResultadoHTML('Filtro Homopolar', filtroSecao);
     }
 
@@ -181,8 +183,10 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
         else if (enrolamentos[i].conexao === 'Z') conexaoNome = 'Z (Zigzag)';
 
         html += boxResultadoHTML(
+            `<div class="linha-constante-c">` +
             `<p><strong>${enrolamentos[i].nome}</strong> (${conexaoNome}):</p>` +
-            `<p class="resultado-valor">C = ${fmtCDestaque(C[i])}</p>`
+            `<p class="resultado-valor">C = ${fmtCDestaque(C[i])}</p>` +
+            `</div>`
         );
     }
     html += '</div>';
@@ -201,12 +205,14 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
         const dif = resultados[faseKey].dif;
         const fren = resultados[faseKey].fren;
 
-        let conteudo = `<h6>Fase ${fase} ` +
+        let conteudo = '<div class="linha-fase-resumo">';
+        conteudo += `<h6>Fase ${fase} ` +
             `<span class="badge-atuacao ${atua ? 'badge-atua' : 'badge-nao-atua'}">${atua ? 'ATUA' : 'NÃO ATUA'}</span></h6>`;
 
         conteudo += '<div class="resumo-idif-ifren">';
         conteudo += `<span><strong>I<sub>dif</sub>:</strong> ${dif.valor.toFixed(4)} A</span>`;
         conteudo += `<span><strong>I<sub>fren</sub>:</strong> ${fren.valor.toFixed(4)} A</span>`;
+        conteudo += '</div>';
         conteudo += '</div>';
 
         conteudo += '<div class="cards-lado-a-lado">';
