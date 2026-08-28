@@ -40,15 +40,20 @@ function criarGraficoDiferencial(resultados, config) {
     const pontoFaseB = [resultados.faseB.ifren, resultados.faseB.idif];
     const pontoFaseC = [resultados.faseC.ifren, resultados.faseC.idif];
 
-    // Determinar limites do gráfico
-    const maxIfren = Math.max(resultados.faseA.ifren, resultados.faseB.ifren, resultados.faseC.ifren, 10);
-    const maxIdif = Math.max(resultados.faseA.idif, resultados.faseB.idif, resultados.faseC.idif, 5);
+    // Limites do gráfico: fim natural do Trecho 3 + folga, ou até onde as fases
+    // plotadas exigirem (ver calcularLimitesCurva87 em calc_87.js)
+    const pontosExtras = [
+        [resultados.faseA.ifren, resultados.faseA.idif],
+        [resultados.faseB.ifren, resultados.faseB.idif],
+        [resultados.faseC.ifren, resultados.faseC.idif]
+    ];
+    const limites = calcularLimitesCurva87(config, pontosExtras);
 
     // Parâmetros da curva (do formulário) — mesma função usada para decidir se a fase atua
     const pickupMin = config.sensibilidade; // Sensibilidade (xTAP)
     const pontoInflexao1 = config.pontoInflexao1; // Ponto de inflexão 1 (xTAP)
     const pontoInflexao2 = config.pontoInflexao2; // Ponto de inflexão 2 (xTAP)
-    const ifren_final = maxIfren * 1.2;
+    const ifren_final = limites.ifrenFinal;
 
     const curvaCaracteristica = [0, pontoInflexao1, pontoInflexao2, ifren_final]
         .map(ifren => [ifren, curvaOperacaoY(ifren, config)]);
@@ -61,8 +66,8 @@ function criarGraficoDiferencial(resultados, config) {
         [pontoInflexao1, pickupMin],
         [pontoInflexao2, idif_inflexao2],
         [ifren_final, idif_final],
-        [ifren_final, maxIdif * 1.5],
-        [0, maxIdif * 1.5],
+        [ifren_final, limites.yMax],
+        [0, limites.yMax],
         [0, pickupMin]
     ];
 
@@ -88,7 +93,11 @@ function criarGraficoDiferencial(resultados, config) {
             }
         },
         legend: {
-            data: ['Curva Característica', 'Região de Operação', 'Fase A', 'Fase B', 'Fase C'],
+            data: [
+                { name: 'Curva Característica', icon: 'path://M-10,-1.5L10,-1.5L10,1.5L-10,1.5Z', itemStyle: { color: '#333' } },
+                { name: 'Região de Operação', icon: 'rect', itemStyle: { color: 'rgba(255, 0, 0, 0.1)', borderWidth: 0 } },
+                'Fase A', 'Fase B', 'Fase C'
+            ],
             bottom: 10,
             textStyle: {
                 fontSize: 11
@@ -111,7 +120,7 @@ function criarGraficoDiferencial(resultados, config) {
                 fontWeight: 'bold'
             },
             min: 0,
-            max: maxIfren * 1.2,
+            max: limites.xMax,
             splitLine: {
                 show: true,
                 lineStyle: {
@@ -130,7 +139,7 @@ function criarGraficoDiferencial(resultados, config) {
                 fontWeight: 'bold'
             },
             min: 0,
-            max: Math.max(maxIdif * 1.3, idif_final * 1.1),
+            max: limites.yMax,
             splitLine: {
                 show: true,
                 lineStyle: {

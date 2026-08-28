@@ -170,13 +170,12 @@ function criarGraficoPontoTeste(ifren, idifAlvo, atua, config) {
         _chartPontoTeste = echarts.init(container);
     }
 
-    const maxIfren = Math.max(ifren * 1.3, config.pontoInflexao2 * 1.5, 10);
-    const maxIdif = Math.max(idifAlvo * 1.3, config.sensibilidade * 2, 5);
+    const limites = calcularLimitesCurva87(config, [[ifren, idifAlvo]]);
 
     const pickupMin = config.sensibilidade;
     const pontoInflexao1 = config.pontoInflexao1;
     const pontoInflexao2 = config.pontoInflexao2;
-    const ifren_final = maxIfren * 1.2;
+    const ifren_final = limites.ifrenFinal;
 
     const curvaCaracteristica = [0, pontoInflexao1, pontoInflexao2, ifren_final]
         .map(i => [i, curvaOperacaoY(i, config)]);
@@ -188,8 +187,8 @@ function criarGraficoPontoTeste(ifren, idifAlvo, atua, config) {
         [pontoInflexao1, pickupMin],
         [pontoInflexao2, idif_inflexao2],
         [ifren_final, idif_final],
-        [ifren_final, maxIdif * 1.5],
-        [0, maxIdif * 1.5],
+        [ifren_final, limites.yMax],
+        [0, limites.yMax],
         [0, pickupMin]
     ];
 
@@ -207,7 +206,11 @@ function criarGraficoPontoTeste(ifren, idifAlvo, atua, config) {
                 : params.seriesName
         },
         legend: {
-            data: ['Curva Característica', 'Região de Operação', 'Ponto de Teste'],
+            data: [
+                { name: 'Curva Característica', icon: 'path://M-10,-1.5L10,-1.5L10,1.5L-10,1.5Z', itemStyle: { color: '#333' } },
+                { name: 'Região de Operação', icon: 'rect', itemStyle: { color: 'rgba(255, 0, 0, 0.1)', borderWidth: 0 } },
+                'Ponto de Teste'
+            ],
             bottom: 10,
             textStyle: { fontSize: 11 }
         },
@@ -219,7 +222,7 @@ function criarGraficoPontoTeste(ifren, idifAlvo, atua, config) {
             nameGap: 35,
             nameTextStyle: { fontSize: 13, fontWeight: 'bold' },
             min: 0,
-            max: maxIfren * 1.2,
+            max: limites.xMax,
             splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e0e0' } }
         },
         yAxis: {
@@ -229,7 +232,7 @@ function criarGraficoPontoTeste(ifren, idifAlvo, atua, config) {
             nameGap: 50,
             nameTextStyle: { fontSize: 13, fontWeight: 'bold' },
             min: 0,
-            max: Math.max(maxIdif * 1.3, idif_final * 1.1),
+            max: limites.yMax,
             splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e0e0' } }
         },
         series: [
@@ -322,7 +325,7 @@ function gerarListaPontosTeste() {
     });
 
     exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInjecao, linhas);
-    criarGraficoListaPontos(linhas, fator >= 1, ifrenD, config);
+    criarGraficoListaPontos(linhas, fator >= 1, config);
 }
 
 function exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInjecao, linhas) {
@@ -397,7 +400,7 @@ function exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInje
 // criarGraficoPontoTeste, mas com N marcadores em vez de um único
 let _chartListaPontos = null;
 
-function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
+function criarGraficoListaPontos(linhas, atua, config) {
     const container = document.getElementById('grafico-lista-pontos');
     if (!container) return;
 
@@ -405,14 +408,12 @@ function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
         _chartListaPontos = echarts.init(container);
     }
 
-    const maiorIdifAlvo = Math.max(...linhas.map(l => l.idifAlvo));
-    const maxIfren = Math.max(ifrenD * 1.2, config.pontoInflexao2 * 1.5, 10);
-    const maxIdif = Math.max(maiorIdifAlvo * 1.3, config.sensibilidade * 2, 5);
+    const limites = calcularLimitesCurva87(config, linhas.map(l => [l.ifren, l.idifAlvo]));
 
     const pickupMin = config.sensibilidade;
     const pontoInflexao1 = config.pontoInflexao1;
     const pontoInflexao2 = config.pontoInflexao2;
-    const ifren_final = maxIfren * 1.2;
+    const ifren_final = limites.ifrenFinal;
 
     const curvaCaracteristica = [0, pontoInflexao1, pontoInflexao2, ifren_final]
         .map(i => [i, curvaOperacaoY(i, config)]);
@@ -424,8 +425,8 @@ function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
         [pontoInflexao1, pickupMin],
         [pontoInflexao2, idif_inflexao2],
         [ifren_final, idif_final],
-        [ifren_final, maxIdif * 1.5],
-        [0, maxIdif * 1.5],
+        [ifren_final, limites.yMax],
+        [0, limites.yMax],
         [0, pickupMin]
     ];
 
@@ -446,7 +447,11 @@ function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
             }
         },
         legend: {
-            data: ['Curva Característica', 'Região de Operação', 'Pontos de Teste'],
+            data: [
+                { name: 'Curva Característica', icon: 'path://M-10,-1.5L10,-1.5L10,1.5L-10,1.5Z', itemStyle: { color: '#333' } },
+                { name: 'Região de Operação', icon: 'rect', itemStyle: { color: 'rgba(255, 0, 0, 0.1)', borderWidth: 0 } },
+                'Pontos de Teste'
+            ],
             bottom: 10,
             textStyle: { fontSize: 11 }
         },
@@ -458,7 +463,7 @@ function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
             nameGap: 35,
             nameTextStyle: { fontSize: 13, fontWeight: 'bold' },
             min: 0,
-            max: maxIfren * 1.2,
+            max: limites.xMax,
             splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e0e0' } }
         },
         yAxis: {
@@ -468,7 +473,7 @@ function criarGraficoListaPontos(linhas, atua, ifrenD, config) {
             nameGap: 50,
             nameTextStyle: { fontSize: 13, fontWeight: 'bold' },
             min: 0,
-            max: Math.max(maxIdif * 1.3, idif_final * 1.1),
+            max: limites.yMax,
             splitLine: { show: true, lineStyle: { type: 'dashed', color: '#e0e0e0' } }
         },
         series: [

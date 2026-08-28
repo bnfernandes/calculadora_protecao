@@ -255,6 +255,42 @@ function curvaOperacaoY(ifren, config) {
     return sens + alfa1 * (p2 - p1) + alfa2 * (ifren - p2);
 }
 
+// Limites dos eixos (Ifren x Idif) dos três gráficos da curva característica
+// (calc_87_grafico.js e calc_87_pontos_teste.js). A borda direita usa como
+// referência o fim do Trecho 3 (Inclinação 2) com a mesma largura do Trecho 2
+// (Inflexão2 - Inflexão1), repetida a partir da Inflexão 2 — dá pra enxergar os
+// três trechos sem desperdiçar área de plotagem com uma cauda arbitrariamente
+// longa — arredondada para baixo + 2 xTAP de folga. `pontosExtras` (pares
+// [ifren, idif] já plotados — correntes de falta, ponto de teste, pontos da
+// lista/Ponto D) esticam essa borda além do fim natural quando algum ponto cai
+// fora dele. A curva/área de trip é sempre recalculada até essa borda (nunca
+// só até o fim "natural") — curvaOperacaoY já extrapola o trecho 3 (reta) pra
+// qualquer Ifren, então isso não deixa faixa em branco sem curva/vermelho entre
+// o fim do trecho e a margem. Sem margem à esquerda (min sempre 0 — corrente de
+// frenagem/diferencial negativa não faz sentido).
+function calcularLimitesCurva87(config, pontosExtras) {
+    const p1 = config.pontoInflexao1;
+    const p2 = config.pontoInflexao2;
+
+    let ifrenNatural = 2 * p2 - p1;
+    (pontosExtras || []).forEach(function(pt) {
+        if (pt[0] > ifrenNatural) ifrenNatural = pt[0];
+    });
+
+    const xMax = Math.floor(ifrenNatural) + 2;
+
+    let idifFinal = curvaOperacaoY(xMax, config);
+    (pontosExtras || []).forEach(function(pt) {
+        if (pt[1] > idifFinal) idifFinal = pt[1];
+    });
+
+    return {
+        ifrenFinal: xMax,
+        xMax: xMax,
+        yMax: Math.floor(idifFinal) + 2
+    };
+}
+
 // Função para calcular as constantes C
 // A tabela exaustiva do VBA (todas as combinações Y/D/Z x enrolamento de referência)
 // se reduz a uma regra única: o fator 1/√3 aparece exatamente quando a conexão do
