@@ -47,7 +47,34 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() { window.print(); }, 250);
         });
     }
+
+    criarBotaoVoltarAoTopo();
 });
+
+// Botão "voltar ao topo" ---------------------------------------------------
+// Flutuante, injetado uma vez em toda página que carrega main.js (todas
+// carregam) — em páginas de resultado longas (ex: 87 depois de calcular), o
+// botão "Gerar PDF" fica lá no topo, longe de rolar de volta manualmente.
+// Só aparece depois de rolar um pouco (fica fora do caminho perto do topo,
+// onde o "Gerar PDF" de verdade já está à mão) e nunca aparece na impressão
+// (ver @media print em styles.css).
+function criarBotaoVoltarAoTopo() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'btnVoltarTopo';
+    btn.className = 'btn-voltar-topo';
+    btn.setAttribute('aria-label', 'Voltar ao topo');
+    btn.textContent = '↑';
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', function() {
+        btn.classList.toggle('visivel', window.scrollY > 300);
+    });
+}
 
 // Proporção dos gráficos na impressão -------------------------------------
 // O CSS de impressão força os containers dos gráficos (ver styles.css) a
