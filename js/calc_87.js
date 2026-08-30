@@ -255,6 +255,21 @@ function curvaOperacaoY(ifren, config) {
     return sens + alfa1 * (p2 - p1) + alfa2 * (ifren - p2);
 }
 
+// Frenagem mínima fisicamente alcançável pra um dado Idif alvo. Ifren é a
+// média dos MÓDULOS das duas correntes de enrolamento normalizadas pelo TAP
+// (|a|+|b|)/2, e Idif é o módulo da soma delas com sinal, |a-b| (o sinal do
+// segundo termo já embute a convenção de +180° entre enrolamentos). Pela
+// desigualdade triangular |a-b| <= |a|+|b| sempre, ou seja Ifren >= Idif/2
+// sempre — não existe par de correntes que fure esse piso. Abaixo dele, a
+// injeção não erra o Idif (esse continua batendo), mas o Ifren resultante
+// trava em Idif/2, nunca no valor mais baixo pedido (era por isso que o
+// extremo Ifren=0 nunca era alcançável de verdade, e o enrolamento 2 saía
+// com o ângulo "errado" — a=Idif/2+Ifren e b=-Idif/2+Ifren trocam de sinal
+// relativo exatamente nesse ponto).
+function frenagemMinima(idifAlvo) {
+    return idifAlvo / 2;
+}
+
 // Limites dos eixos (Ifren x Idif) dos três gráficos da curva característica
 // (calc_87_grafico.js e calc_87_pontos_teste.js). A borda direita usa como
 // referência o fim do Trecho 3 (Inclinação 2) com a mesma largura do Trecho 2

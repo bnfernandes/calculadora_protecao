@@ -42,15 +42,28 @@ function correntesInjecao(idifAlvo, ifrenPt, taps, enrolamentos, config) {
     return { i1, i2 };
 }
 
-// Gera os pontos (Ifren, Idif) ao longo da curva: extremos A/B/C/D dos 3 trechos
-// mais os pontos interiores pedidos em cada trecho (Qtd_Trecho_01/02/03 do VBA)
-function gerarPontosCurva(config, qtd1, qtd2, qtd3, ifrenD) {
+// Gera os pontos (Ifren, Idif) ao longo da curva: extremos B/C/D dos 3 trechos
+// mais os pontos interiores pedidos em cada trecho (Qtd_Trecho_01/02/03 do VBA).
+// O extremo A (Ifren=0) não é gerado: abaixo da frenagem mínima fisicamente
+// possível pro Idif ali visado (frenagemMinima, calc_87.js), não existe
+// corrente de injeção que alcance esse ponto — o Trecho 1 passa a começar
+// nesse piso em vez de 0.
+function gerarPontosCurva(config, qtd1, qtd2, qtd3, ifrenD, fator) {
     const p1 = config.pontoInflexao1;
     const p2 = config.pontoInflexao2;
     const pontos = [];
 
     function ponto(ifren, marco) {
-        pontos.push({ ifren, idif: curvaOperacaoY(ifren, config), marco });
+        let idif = curvaOperacaoY(ifren, config);
+        // Rede de segurança: mesmo pontos de trechos mais altos podem, em
+        // curvas com inclinações extremas, cair abaixo do próprio piso —
+        // corrige e recalcula o Idif nesse Ifren ajustado
+        const minimo = frenagemMinima(idif * fator);
+        if (ifren < minimo) {
+            ifren = minimo;
+            idif = curvaOperacaoY(ifren, config);
+        }
+        pontos.push({ ifren, idif, marco });
     }
     function interiores(de, ate, qtd) {
         if (qtd <= 0) return;
@@ -58,8 +71,10 @@ function gerarPontosCurva(config, qtd1, qtd2, qtd3, ifrenD) {
         for (let i = 1; i <= qtd; i++) ponto(de + passo * i, '');
     }
 
-    ponto(0, 'A');
-    interiores(0, p1, qtd1);
+    // Patamar (Ifren <= p1) tem Idif constante = sensibilidade x fator, então
+    // o piso é o mesmo em todo o Trecho 1 — dá pra calcular uma vez só
+    const ifrenMinimoTrecho1 = Math.min(frenagemMinima(curvaOperacaoY(0, config) * fator), p1);
+    interiores(ifrenMinimoTrecho1, p1, qtd1);
     ponto(p1, 'B');
     interiores(p1, p2, qtd2);
     ponto(p2, 'C');
@@ -84,10 +99,22 @@ function gerarPontoTeste() {
 
     const fator = parseFloat(document.getElementById('fatorTeste').value) || 0;
 
-    const idifCurva = curvaOperacaoY(ifren, config);
+    let idifCurva = curvaOperacaoY(ifren, config);
     let idifAlvo = idifCurva * fator;
     const avisoNegativo = idifAlvo < 0;
     if (avisoNegativo) idifAlvo = 0;
+
+    // Abaixo da frenagem mínima fisicamente possível pro Idif alvo (ver
+    // frenagemMinima em calc_87.js), a injeção não alcança esse Ifren —
+    // corrige pro mínimo e recalcula a curva nesse ponto ajustado
+    const ifrenMinimo = frenagemMinima(idifAlvo);
+    const ifrenAjustado = ifren < ifrenMinimo;
+    if (ifrenAjustado) {
+        ifren = ifrenMinimo;
+        campoIfren.value = ifren.toFixed(3);
+        idifCurva = curvaOperacaoY(ifren, config);
+        idifAlvo = idifCurva * fator;
+    }
 
     const atua = idifAlvo >= idifCurva;
 
@@ -106,7 +133,7 @@ function gerarPontoTeste() {
         }));
     }
 
-    exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, atua, suportaInjecao, injecao });
+    exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, ifrenAjustado, atua, suportaInjecao, injecao });
     criarGraficoPontoTeste(ifren, idifAlvo, atua, config);
 }
 
@@ -121,7 +148,7 @@ function ajustarIfrenTeste(sentido) {
     gerarPontoTeste();
 }
 
-function exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, atua, suportaInjecao, injecao }) {
+function exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, ifrenAjustado, atua, suportaInjecao, injecao }) {
     const regiao = fator > 1 ? 'região de disparo' : (fator < 1 ? 'região de restrição' : 'exatamente sobre a fronteira de disparo');
     let html = '<div class="resultados-87">';
 
@@ -136,6 +163,11 @@ function exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, at
 
     if (avisoNegativo) {
         html += '<p class="formula-nota" style="color: #cc0000;">Fator negativo levaria I<sub>dif</sub> alvo abaixo de zero — valor ajustado para 0.</p>';
+    }
+
+    if (ifrenAjustado) {
+        html += '<p class="formula-nota" style="color: #cc0000;">I<sub>fren</sub> informado ficava abaixo do mínimo fisicamente possível pra esse I<sub>dif</sub> alvo ' +
+            '(I<sub>fren</sub> &lt; I<sub>dif</sub>/2 nunca é alcançável — a injeção resultante teria esse I<sub>dif</sub>, mas com I<sub>fren</sub> preso em I<sub>dif</sub>/2) — ajustado para o mínimo.</p>';
     }
 
     if (!suportaInjecao) {
@@ -309,7 +341,7 @@ function gerarListaPontosTeste() {
     const mp2 = enrolamentos[1].polaridade === 'Saliente' ? 1 : 0;
     const msf = config.seqFases === 'ACB' ? 1 : 0;
 
-    const linhas = gerarPontosCurva(config, qtd1, qtd2, qtd3, ifrenD).map((p, idx) => {
+    const linhas = gerarPontosCurva(config, qtd1, qtd2, qtd3, ifrenD, fator).map((p, idx) => {
         const idifAlvo = p.idif * fator;
         const linha = { ...p, idifAlvo, ponto: idx + 1 };
 
