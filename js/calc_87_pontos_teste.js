@@ -166,8 +166,7 @@ function exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, if
     }
 
     if (ifrenAjustado) {
-        html += '<p class="formula-nota" style="color: #cc0000;">I<sub>fren</sub> informado ficava abaixo do mínimo fisicamente possível pra esse I<sub>dif</sub> alvo ' +
-            '(I<sub>fren</sub> &lt; I<sub>dif</sub>/2 nunca é alcançável — a injeção resultante teria esse I<sub>dif</sub>, mas com I<sub>fren</sub> preso em I<sub>dif</sub>/2) — ajustado para o mínimo.</p>';
+        html += '<p class="formula-nota" style="color: #cc0000;">I<sub>fren</sub> informado ficava abaixo do mínimo possível pra esse I<sub>dif</sub> alvo, ajustado para o mínimo.</p>';
     }
 
     if (!suportaInjecao) {
