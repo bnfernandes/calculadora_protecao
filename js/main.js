@@ -109,6 +109,7 @@ function construirTabelaParametrosHTML(container) {
             return;
         }
         if (el.offsetParent === null) return; // campo oculto no momento (ex: seção condicional)
+        if (el.closest('[data-omitir-impressao]')) return; // opt-in: fora da tabela impressa (valor já mostrado nos Resultados)
 
         const campo = el.querySelector('input, select');
         if (!campo) return;

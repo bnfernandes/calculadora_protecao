@@ -720,6 +720,14 @@ input[readonly] {
      bem menor que o próprio conteúdo que introduz) — ver ESCALA DE TEXTO
      em equations.css */
   font-size: 1.125rem;
+  /* Sem isto, herda a margem padrão do navegador pra <h6> (~2.33em do
+     próprio font-size, ~42px aqui) — some com .resultado-secao (sem
+     padding, então a margem do h6 propaga pra fora dele) e, na 1ª seção,
+     ainda com o padding+margin-top de .results-area, deixando um vão bem
+     maior antes da 1ª seção do que entre as seções seguintes (que já têm
+     30px via .resultado-secao margin-bottom). Mesmo problema já corrigido
+     só pra impressão (ver @media print) — vale pra tela também. */
+  margin-top: 0;
 }
 
 .resultado-box {
@@ -910,13 +918,8 @@ input[readonly] {
   }
 
   .resultado-titulo {
-    /* Sem isto, herda a margem padrão do navegador pra <h6> (~2.33em do
-       próprio font-size, ~26px aqui) — maior que o margin-bottom de
-       .resultado-secao (12px), e como margens adjacentes colapsam pelo
-       maior valor, era essa margem "invisível" do h6 que dominava o espaço
-       entre TODAS as seções (e se somava ao padding do .card-body/
-       .results-area antes do primeiro título, exagerando ainda mais ali). */
-    margin-top: 0;
+    /* margin-top:0 já vem da regra base (styles.css, fora do @media print) —
+       aqui só os ajustes específicos de impressão */
     margin-bottom: 8px;
     padding-bottom: 4px;
     /* Sem isto, um título de seção pode ficar sozinho no fim de uma página,
