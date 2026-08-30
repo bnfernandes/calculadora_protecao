@@ -20,39 +20,43 @@ const CURVE_CONSTANTS = {
     'IEEE-EI': { padrao: 'IEEE', K: 28.2, a: 2, c: 0.1217, tr: 29.1 }
 };
 
-// Função para calcular o tempo de atuação
-function calcularTempoAtuacao(tipoCurva, multiplicador, I, I0, tempoMinimo = 0) {
-    if (tipoCurva === 'TEMPO-FIXO') {
-        return tempoMinimo / 1000; // Converte ms para s
-    }
-    
+// Tempo de disparo da curva em si, sem aplicar o piso do tempo mínimo — usado
+// tanto por calcularTempoAtuacao (que aplica o piso por cima) quanto por
+// calcularFuncao51 (que precisa do valor bruto pra saber se o piso "cortou"
+// o resultado da curva, e avisar o usuário nesse caso).
+function calcularTempoBruto(tipoCurva, multiplicador, I, I0) {
     const constants = CURVE_CONSTANTS[tipoCurva];
     if (!constants) {
         throw new Error(`Tipo de curva não reconhecido: ${tipoCurva}`);
     }
-    
+
     const { padrao } = constants;
     const razaoCorrente = I / I0;
-    let tempo = 0;
 
     if (padrao === 'IEC') {
         const { K, a } = constants;
         if (razaoCorrente <= 1) return Infinity;
-        tempo = multiplicador * K / (Math.pow(razaoCorrente, a) - 1);
+        return multiplicador * K / (Math.pow(razaoCorrente, a) - 1);
     } else if (padrao === 'ANSI') {
         const { A, B, C, D, E } = constants;
         if (razaoCorrente <= C) return Infinity;
         const term = razaoCorrente - C;
-        tempo = multiplicador * (A + B / term + D / Math.pow(term, 2) + E / Math.pow(term, 3));
+        return multiplicador * (A + B / term + D / Math.pow(term, 2) + E / Math.pow(term, 3));
     } else if (padrao === 'IEEE') {
         const { K, a, c } = constants;
         if (razaoCorrente <= 1) return Infinity;
-        tempo = multiplicador * (K / (Math.pow(razaoCorrente, a) - 1) + c);
+        return multiplicador * (K / (Math.pow(razaoCorrente, a) - 1) + c);
     } else {
         throw new Error('Padrão de curva não reconhecido: ' + padrao);
     }
-    
-    return Math.max(tempo, tempoMinimo / 1000);
+}
+
+// Função para calcular o tempo de atuação (com o piso do tempo mínimo já aplicado)
+function calcularTempoAtuacao(tipoCurva, multiplicador, I, I0, tempoMinimo = 0) {
+    if (tipoCurva === 'TEMPO-FIXO') {
+        return tempoMinimo / 1000; // Converte ms para s
+    }
+    return Math.max(calcularTempoBruto(tipoCurva, multiplicador, I, I0), tempoMinimo / 1000);
 }
 
 // Pontos de I/I0 espaçados igualmente em escala log entre min e max (não em
@@ -118,64 +122,106 @@ function calcularFuncao51(parametros) {
     if (!I_calc || !correntePartida) {
         throw new Error('É necessário fornecer a corrente de falta (I) ou o fator, e a corrente de partida (I0)');
     }
-    
+
+    // tempoCalculado: valor bruto da curva, sem o piso do tempo mínimo (null
+    // pra TEMPO-FIXO, onde não existe "curva" pra calcular). limitadoPeloMinimo
+    // indica se o piso efetivamente "cortou" o resultado da curva — usado pra
+    // avisar o usuário (formatarEquacaoHTML) em vez de mostrar só o valor final,
+    // que esconderia o que a curva teria dado sem o piso.
+    const tempoCalculado = tipoCurva === 'TEMPO-FIXO'
+        ? null
+        : calcularTempoBruto(tipoCurva, indiceTempo, I_calc, correntePartida);
     const tempoAtuacao = calcularTempoAtuacao(tipoCurva, indiceTempo, I_calc, correntePartida, tempoFixoMinimo);
-    
+    const limitadoPeloMinimo = tempoCalculado !== null && (tempoFixoMinimo / 1000) > tempoCalculado;
+
     const pontosCurva = gerarPontosCurva(tipoCurva, indiceTempo, correntePartida, tempoFixoMinimo);
-    
+
     return {
         fatorCalculado: I_calc / correntePartida,
+        correnteFaltaCalculada: I_calc,
+        tempoCalculado,
         tempoAtuacao,
+        limitadoPeloMinimo,
         pontosCurva,
         parametrosUsados: parametros
     };
 }
 
 // Função para formatar equação em HTML puro (divisões sempre como frações em
-// duas linhas — ver js/formula-html.js, mesmo padrão usado nas Funções 67 e 87)
-function formatarEquacaoHTML(tipoCurva, multiplicador) {
+// duas linhas — ver js/formula-html.js, mesmo padrão usado nas Funções 67 e 87).
+// Equação e legenda ("onde:") em cards lado a lado, mesmo padrão da 87
+// (.cards-lado-a-lado) — .formula-legenda dá um min-width ao card da equação
+// pra evitar que a fórmula ANSI (a mais larga, 3 frações) esprema a ponto de
+// uma fração quebrar no meio (numerador e denominador cada um em sua linha).
+// O card da equação já traz o tipo de curva no título, a substituição dos
+// valores e o resultado final (vermelho); a legenda "onde" já traz os
+// valores de I/I0/M/tempo mínimo — não precisam de cards à parte
+// (Parâmetros Calculados/Configuração da Proteção/Tempo de Atuação).
+function formatarEquacaoHTML({ tipoCurva, multiplicador, correntePartida, correnteFalta, razaoCorrente, tempoCalculado, tempoAtuacao, limitadoPeloMinimo, tempoFixoMinimo }) {
     if (tipoCurva === 'TEMPO-FIXO') {
-        return `<div class="formula">t = ${multiplicador} ms</div>`;
+        return formulaBoxHTML({
+            titulo: 'Tempo Fixo',
+            linhas: [linhaEquacaoHTML(`t = ${tempoFixoMinimo} ms (valor fixo, sem curva)`)],
+            resultado: `t = ${tempoAtuacao.toFixed(3)} s`
+        });
     }
 
     const constants = CURVE_CONSTANTS[tipoCurva];
     if (!constants) return '';
 
+    const razao = razaoCorrente.toFixed(3);
+
+    // Cada linha já traz o valor usado, não só o significado do símbolo —
+    // substitui os cards "Parâmetros Calculados"/"Configuração da Proteção"
+    // (corrente de partida = I0, corrente de falta = I, I/I0, multiplicador)
     const comuns = [
-        'T = tempo de disparo (seg)',
+        't = tempo de disparo (seg)',
         `M = ${multiplicador} (multiplicador)`,
-        'I = intensidade medida',
-        'I<sub>0</sub> = ajuste de intensidade de arranque'
+        `I = ${correnteFalta} A (corrente de falta)`,
+        `I<sub>0</sub> = ${correntePartida} A (corrente de partida)`,
+        `I/I<sub>0</sub> = ${razao}`,
+        `Tempo mínimo = ${tempoFixoMinimo} ms (piso, se o valor calculado pela curva for menor)`
     ];
 
-    let titulo, equacao, extras;
+    const titulo = `Fórmula ${tipoCurva}`;
+    let algebrica, substituida, extras;
 
     if (constants.padrao === 'IEC') {
         const { K, a } = constants;
-        titulo = 'Fórmula IEC:';
-        equacao = `T = M × ${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')}`;
+        algebrica = `t = M × ${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')}`;
+        substituida = `t = ${multiplicador} × ${fracaoHTML(K, `(${razao})<sup>${a}</sup> - 1`)}`;
         extras = [`K = ${K}`, `a = ${a}`];
     } else if (constants.padrao === 'ANSI') {
         const { A, B, C, D, E } = constants;
-        titulo = 'Fórmula ANSI:';
-        equacao = `T = M × (A + ${fracaoHTML('B', 'I/I<sub>0</sub> - C')} + ${fracaoHTML('D', '(I/I<sub>0</sub> - C)<sup>2</sup>')} + ${fracaoHTML('E', '(I/I<sub>0</sub> - C)<sup>3</sup>')})`;
+        algebrica = `t = M × (A + ${fracaoHTML('B', 'I/I<sub>0</sub> - C')} + ${fracaoHTML('D', '(I/I<sub>0</sub> - C)<sup>2</sup>')} + ${fracaoHTML('E', '(I/I<sub>0</sub> - C)<sup>3</sup>')})`;
+        substituida = `t = ${multiplicador} × (${A} + ${fracaoHTML(B, `${razao} - ${C}`)} + ${fracaoHTML(D, `(${razao} - ${C})<sup>2</sup>`)} + ${fracaoHTML(E, `(${razao} - ${C})<sup>3</sup>`)})`;
         extras = [`A = ${A}`, `B = ${B}`, `C = ${C}`, `D = ${D}`, `E = ${E}`];
     } else if (constants.padrao === 'IEEE') {
         const { K, a, c } = constants;
-        titulo = 'Fórmula IEEE:';
-        equacao = `T = M × (${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')} + c)`;
+        algebrica = `t = M × (${fracaoHTML('K', '(I/I<sub>0</sub>)<sup>a</sup> - 1')} + c)`;
+        substituida = `t = ${multiplicador} × (${fracaoHTML(K, `(${razao})<sup>${a}</sup> - 1`)} + ${c})`;
         extras = [`K = ${K}`, `a = ${a}`, `c = ${c}`];
     } else {
         return '';
     }
 
-    const constantesHTML = [...comuns, ...extras].map(c => `<div class="constant">${c}</div>`).join('');
+    const legendaHTML = '<p><strong>onde:</strong></p>' +
+        [...comuns, ...extras].map(c => `<p>${c}</p>`).join('');
 
-    return `<div class="formula">` +
-        `<div class="formula-title">${titulo}</div>` +
-        linhaEquacaoHTML(equacao) +
-        `<div class="formula-constants"><div class="constants-title">Onde:</div>${constantesHTML}</div>` +
-        `</div>`;
+    // O resultado mostrado aqui é sempre o valor calculado PELA CURVA (sem o
+    // piso) — se o piso do tempo mínimo tiver "cortado" esse valor, mostra um
+    // aviso com o tempo de atuação real (maior que o calculado) em vez de
+    // simplesmente trocar o resultado, o que esconderia o que a curva deu.
+    const linhasEquacao = [linhaEquacaoHTML(algebrica), linhaEquacaoHTML(substituida)];
+    linhasEquacao.push(`<p class="resultado-valor text-center">t = ${tempoCalculado.toFixed(3)} s</p>`);
+    if (limitadoPeloMinimo) {
+        linhasEquacao.push(`<p class="formula-nota" style="color: #cc0000;">Tempo de atuação limitado pelo tempo mínimo: t = ${tempoAtuacao.toFixed(3)} s</p>`);
+    }
+
+    return '<div class="cards-lado-a-lado formula-legenda">' +
+        formulaBoxHTML({ titulo, linhas: linhasEquacao }) +
+        boxResultadoHTML(legendaHTML, 'legenda-onde') +
+        '</div>';
 }
 
 // Formata uma potência de dez (expoente inteiro) como número comum: -2 -> "0.01", 2 -> "100"

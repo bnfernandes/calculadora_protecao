@@ -723,6 +723,16 @@ input[readonly] {
   margin-bottom: 30px;
 }
 
+/* Espaço antes de "Equação Utilizada" (Função 51) — #equacoes é um <div>
+   estático fora do HTML injetado em #resultados, então não herda o
+   margin-bottom que uma .resultado-secao anterior teria. Seletor por ID:
+   especificidade maior que .resultado-titulo (classe), então não corre o
+   risco de uma classe utilitária tipo .mt-4 no mesmo elemento perder por
+   ordem de declaração no arquivo (era o que acontecia antes). */
+#equacoes {
+  margin-top: 30px;
+}
+
 .resultado-titulo {
   color: #e30613;
   font-weight: 600;
@@ -794,6 +804,30 @@ input[readonly] {
 
 .fase-box {
   border-left: 4px solid #e30613;
+}
+
+/* Equação + legenda "Onde:" lado a lado (Função 51, js/calc_51.js) — min-width
+   no card da equação evita que a fórmula ANSI (a mais larga, 3 frações)
+   esprema a ponto de uma fração quebrar no meio (numerador e denominador
+   cada um em sua própria linha); min-width na legenda evita que ela fique
+   espremida numa coluna estreita demais (linhas como "I0 = ajuste de
+   intensidade de arranque" quebrando em 4-5 linhas) enquanto sobra largura
+   pro card da equação. Abaixo da soma dos dois, .cards-lado-a-lado já
+   empilha 1 por linha sozinho (flex-wrap, ver acima). */
+.formula-legenda > .formula {
+  min-width: 360px;
+}
+
+.formula-legenda > .resultado-box {
+  min-width: 220px;
+}
+
+/* Legenda "onde" (Função 51): cada símbolo é seu próprio <p>, então sem isto
+   herdam a margem padrão do navegador (~1em = ~16px cada lado, ~16px de vão
+   entre linhas depois de colapsar) — bem mais espaçado do que o card da
+   equação ao lado, que usa .formula-equation (margin controlada). */
+.legenda-onde p {
+  margin: 6px 0;
 }
 
 /* Idif/Ifren de uma mesma fase: CSS Grid + subgrid alinha não só os
@@ -1019,6 +1053,10 @@ input[readonly] {
     margin-bottom: 12px;
   }
 
+  #equacoes {
+    margin-top: 12px;
+  }
+
   .resultado-titulo {
     /* margin-top:0 já vem da regra base (styles.css, fora do @media print) —
        aqui só os ajustes específicos de impressão */
@@ -1052,11 +1090,16 @@ input[readonly] {
      de propósito: a 51 tem um <div id="grafico-container"> que embrulha
      <div id="grafico-curva">, e um seletor por prefixo bateria nos dois
      níveis (o container por fora E o gráfico de verdade por dentro),
-     alargando um elemento que não deveria mudar. Restrito às 3 divs que a
-     87 realmente passa pro echarts.init(), sem afetar 51/67. */
+     alargando um elemento que não deveria mudar. Restrito às divs que
+     realmente são passadas pro echarts.init() (3 na 87 + grafico-curva na
+     51 + grafico-ia/ib/ic na 67), nunca aos containers que só embrulham elas. */
   #grafico-diferencial > div,
   #grafico-ponto-teste > div,
-  #grafico-lista-pontos > div {
+  #grafico-lista-pontos > div,
+  #grafico-curva > div,
+  #grafico-ia > div,
+  #grafico-ib > div,
+  #grafico-ic > div {
     width: 100% !important;
     max-width: 100% !important;
     /* a altura fixa (herdada da tela) também precisa ceder — sem isso, sobra
@@ -1068,7 +1111,11 @@ input[readonly] {
 
   #grafico-diferencial canvas,
   #grafico-ponto-teste canvas,
-  #grafico-lista-pontos canvas {
+  #grafico-lista-pontos canvas,
+  #grafico-curva canvas,
+  #grafico-ia canvas,
+  #grafico-ib canvas,
+  #grafico-ic canvas {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -1076,7 +1123,11 @@ input[readonly] {
 
   #grafico-diferencial,
   #grafico-ponto-teste,
-  #grafico-lista-pontos {
+  #grafico-lista-pontos,
+  #grafico-curva,
+  #grafico-ia,
+  #grafico-ib,
+  #grafico-ic {
     height: auto !important;
     /* O gráfico é um único canvas rasterizado — cortado ao meio na quebra de
        página, ele sai visualmente partido (metade numa folha, metade na

@@ -43,7 +43,7 @@
                 <button type="button" class="btn btn-secondary" id="btnGerarPdf">🖨️ Gerar PDF</button>
             </div>
             
-            <div class="card mb-4">
+            <div class="card mb-4 oculto-impressao">
                 <div class="card-body">
                     <h5 class="card-title">Descrição da Função</h5>
                     <p class="card-text">
@@ -59,7 +59,7 @@
                     <h5 class="card-title">Parâmetros de Entrada</h5>
                 </div>
                 <div class="card-body">
-                    <form class="calc-form" id="form-51">
+                    <form class="calc-form" id="form-51" data-sem-coluna-unidade>
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
@@ -157,14 +157,14 @@
                     </div>
                     
                     <!-- Área para equações -->
-                    <div id="equacoes" style="display: none;">
-                        <h6 class="mt-4 mb-2">Equação Utilizada:</h6>
-                        <div id="equacao-html" class="text-center p-3"></div>
+                    <div id="equacoes" class="resultado-secao" style="display: none;">
+                        <h6 class="resultado-titulo">Equação Utilizada</h6>
+                        <div id="equacao-html"></div>
                     </div>
-                    
+
                     <!-- Área para gráfico -->
-                    <div id="grafico-container" style="display: none;">
-                        <h6 class="mt-4 mb-2">Curva Característica:</h6>
+                    <div id="grafico-container" class="resultado-secao" style="display: none;">
+                        <h6 class="resultado-titulo">Curva Característica</h6>
                         <div id="grafico-curva" style="width: 100%; max-width: 550px; height: 800px; margin: 20px auto;"></div>
                     </div>
                 </div>
@@ -215,7 +215,9 @@
             // Botão limpar
             document.getElementById('btnLimpar').addEventListener('click', function() {
                 document.getElementById('form-51').reset();
-                document.getElementById('resultados').innerHTML = '<p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>';
+                const resultados = document.getElementById('resultados');
+                resultados.style.display = '';
+                resultados.innerHTML = '<p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>';
                 document.getElementById('equacoes').style.display = 'none';
                 document.getElementById('grafico-container').style.display = 'none';
             });
@@ -255,43 +257,43 @@
                     
                     // Executa o cálculo
                     const resultado = calcularFuncao51(parametros);
-                    
-                    // Exibe os resultados
-                    let parametrosCalculados = `<p><strong>Corrente de Partida:</strong> ${parametros.correntePartida} A</p>`;
-                    if (parametros.correnteFalta) {
-                        parametrosCalculados += `<p><strong>Corrente de Falta:</strong> ${parametros.correnteFalta} A</p>`;
-                    }
-                    parametrosCalculados += `<p><strong>I/I<sub>0</sub>:</strong> ${resultado.fatorCalculado.toFixed(3)}</p>`;
 
-                    let configProtecao = `<p><strong>Tipo de Curva:</strong> ${parametros.tipoCurva}</p>`;
-                    configProtecao += `<p><strong>Multiplicador:</strong> ${parametros.indiceTempo}</p>`;
-                    if (parametros.tempoFixoMinimo > 0) {
-                        configProtecao += `<p><strong>Tempo Mínimo:</strong> ${parametros.tempoFixoMinimo} ms</p>`;
-                    }
+                    // Corrente de partida, corrente de falta, I/I0, multiplicador,
+                    // tipo de curva e o próprio resultado (Tempo de Atuação) não
+                    // têm mais cards à parte: já aparecem todos dentro do card da
+                    // equação — o tipo no título ("Fórmula X"), os valores na
+                    // legenda "Onde" e o resultado em vermelho junto da
+                    // substituição dos valores. #resultados fica sem conteúdo
+                    // próprio nesse caso — só é usado pra mostrar erro.
+                    document.getElementById('resultados').style.display = 'none';
 
-                    let html = boxResultadoHTML(`<p class="resultado-valor">Tempo de Atuação = ${resultado.tempoAtuacao.toFixed(3)} s</p>`);
-                    html += '<div class="row">';
-                    html += `<div class="col-6">${boxResultadoHTML('<p><strong>Parâmetros Calculados</strong></p>' + parametrosCalculados)}</div>`;
-                    html += `<div class="col-6">${boxResultadoHTML('<p><strong>Configuração da Proteção</strong></p>' + configProtecao)}</div>`;
-                    html += '</div>';
-
-                    document.getElementById('resultados').innerHTML = html;
-                    
                     // Rolagem suave para a seção de resultados
-                    document.getElementById('resultados').scrollIntoView({
+                    document.getElementById('resultados').closest('.card').scrollIntoView({
                         behavior: 'smooth'
                     });
 
                     // Exibe a equação em HTML
-                    const equacaoHTML = formatarEquacaoHTML(parametros.tipoCurva, parametros.indiceTempo);
+                    const equacaoHTML = formatarEquacaoHTML({
+                        tipoCurva: parametros.tipoCurva,
+                        multiplicador: parametros.indiceTempo,
+                        correntePartida: parametros.correntePartida,
+                        correnteFalta: resultado.correnteFaltaCalculada,
+                        razaoCorrente: resultado.fatorCalculado,
+                        tempoCalculado: resultado.tempoCalculado,
+                        tempoAtuacao: resultado.tempoAtuacao,
+                        limitadoPeloMinimo: resultado.limitadoPeloMinimo,
+                        tempoFixoMinimo: parametros.tempoFixoMinimo
+                    });
                     document.getElementById('equacao-html').innerHTML = equacaoHTML;
                     document.getElementById('equacoes').style.display = 'block';
-                    
+
                     // Cria o gráfico
                     document.getElementById('grafico-container').style.display = 'block';
                     criarGrafico('grafico-curva', resultado.pontosCurva, resultado);
                 } catch (error) {
-                    document.getElementById('resultados').innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}</div>`;
+                    const resultados = document.getElementById('resultados');
+                    resultados.style.display = '';
+                    resultados.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}</div>`;
                     document.getElementById('equacoes').style.display = 'none';
                     document.getElementById('grafico-container').style.display = 'none';
                 }
