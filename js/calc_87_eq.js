@@ -137,10 +137,38 @@ function filtroHomopolarHTML(info, nomeEnrol) {
     return formulaBoxHTML({ titulo: `Filtro Homopolar — ${nomeEnrol}`, linhas });
 }
 
+// Tabela Fase × Enrolamento com as correntes exatamente como lidas do
+// formulário no momento do cálculo (sem polaridade/filtro/giro aplicados) —
+// é o "print" do que foi injetado, então some seguro que o usuário mude os
+// campos depois: os resultados abaixo continuam correspondendo a esses
+// valores, não aos que estão na tela agora.
+function correntesInjetadasHTML(enrolamentos, config) {
+    let html = '<div class="table-responsive tabela-correntes-injetadas"><table class="tabela-pontos-teste">';
+    html += '<thead><tr><th>Fase</th>';
+    for (let i = 0; i < config.numEnrolamentos; i++) {
+        html += `<th>${enrolamentos[i].nome}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+    ['A', 'B', 'C'].forEach((letra, idx) => {
+        html += `<tr><td>${letra}</td>`;
+        for (let i = 0; i < config.numEnrolamentos; i++) {
+            const c = enrolamentos[i].correntes[idx];
+            html += `<td>I<sub>${letra}${i + 1}</sub> = ${fmtPolar(c.mag, c.ang)} A</td>`;
+        }
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    return html;
+}
+
 // --- Montagem dos resultados ---------------------------------------------
 
 function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomopolarInfo = []) {
     let html = '<div class="resultados-87">';
+
+    // Correntes injetadas: primeira coisa exibida, propositalmente antes de
+    // qualquer valor calculado (ver comentário em correntesInjetadasHTML)
+    html += secaoResultadoHTML('Correntes Injetadas', correntesInjetadasHTML(enrolamentos, config));
 
     // Seção de TAPs calculados — a fórmula genérica entra na mesma fileira dos
     // cards por enrolamento (cards-lado-a-lado estica todos pra mesma altura)

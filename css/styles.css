@@ -900,7 +900,8 @@ input[readonly] {
   .resultado-box,
   .fase-box,
   .form-section,
-  .form-subsection {
+  .form-subsection,
+  .tabela-correntes-injetadas {
     break-inside: avoid;
   }
 
@@ -918,6 +919,10 @@ input[readonly] {
     margin-top: 0;
     margin-bottom: 8px;
     padding-bottom: 4px;
+    /* Sem isto, um título de seção pode ficar sozinho no fim de uma página,
+       com o conteúdo dele todo na página seguinte (viúva de título) — visto
+       com "Correntes Injetadas" quando cai perto do fim da 1ª página. */
+    break-after: avoid;
   }
 
   .resultado-box,
