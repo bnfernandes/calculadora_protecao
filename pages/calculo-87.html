@@ -624,6 +624,19 @@
                     <h5 class="card-title">Sugestão de Pontos de Teste (Comissionamento)</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Sugestão de correntes de injeção só existe pra relé de 2
+                         enrolamentos (mesma limitação da planilha original, ver
+                         calc_87_pontos_teste.js). Com 3, o card fica reduzido só à
+                         mensagem abaixo — nada de campos/botões/gráfico pra
+                         funcionalidade que não se aplica. Alternado em
+                         atualizarVisibilidadeTestePontos87() (script no fim da página). -->
+                    <p id="avisoTeste3Enrolamentos87" class="text-muted" style="display: none;">
+                        Sugestão de correntes de injeção disponível apenas para relé de 2 enrolamentos.
+                        Para 3 enrolamentos, uma alternativa é injetar corrente em apenas 2 deles por vez,
+                        deixando o terceiro em zero, e repetir o teste trocando o par escolhido.
+                    </p>
+
+                    <div id="testePontosInterativo87">
                     <p class="card-text oculto-impressao">
                         Informe um ponto de I<sub>fren</sub> e um fator sobre a curva característica (1 = exatamente
                         sobre a fronteira de disparo, &gt;1 = região de disparo, &lt;1 = região de restrição). O site
@@ -720,6 +733,7 @@
                     </div>
 
                     <div id="pontosTesteResultado" class="results-area mt-4"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -742,13 +756,22 @@
     <script src="../js/calc_87_pontos_teste.js"></script>
     <script src="../js/main.js"></script>
     <script>
+        // Sugestão de Pontos de Teste: correntes de injeção só existem pra
+        // relé de 2 enrolamentos (calc_87_pontos_teste.js). Com 3, reduz o
+        // card à mensagem de aviso, escondendo campos/botões/gráfico/resultado.
+        function atualizarVisibilidadeTestePontos87(numEnrolamentos) {
+            const tresEnrolamentos = numEnrolamentos === '3';
+            document.getElementById('avisoTeste3Enrolamentos87').style.display = tresEnrolamentos ? '' : 'none';
+            document.getElementById('testePontosInterativo87').style.display = tresEnrolamentos ? 'none' : '';
+        }
+
         // Controlar visibilidade do enrolamento 3
         document.getElementById('numEnrolamentos').addEventListener('change', function() {
             const enrol3Elements = [
-                'rowKv3', 'rowRtc3', 'rowConexao3', 'colCodHor3', 
+                'rowKv3', 'rowRtc3', 'rowConexao3', 'colCodHor3',
                 'rowFiltroHom3', 'rowTap3', 'rowPolaridade3', 'enrolamento3Section'
             ];
-            
+
             const mostrar = this.value === '3';
             enrol3Elements.forEach(id => {
                 const elem = document.getElementById(id);
@@ -765,6 +788,8 @@
             // O mesmo para os ângulos do 3º enrolamento (Sequência de Fases,
             // polaridade e código horário já configurados antes da troca)
             if (mostrar) autoPreencherAngulosEnrolamento(3);
+
+            atualizarVisibilidadeTestePontos87(this.value);
         });
 
         // Inicializar com 2 enrolamentos (ocultar enrolamento 3)
