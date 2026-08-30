@@ -9,6 +9,13 @@
 // As correntes de injeção só são calculadas para relé de 2 enrolamentos, em ambos
 // os modos (mesma limitação da planilha original).
 
+// Indica se algum ponto de teste (único ou lista) já foi gerado no modo atual —
+// consultado na impressão (pages/calculo-87.html) pra decidir se o card
+// Sugestão de Pontos de Teste entra no PDF: só o que o usuário efetivamente
+// pediu pra ver. Zerado ao trocar de modo (ponto único <-> lista), já que
+// gerar num modo não conta como ter gerado no outro.
+let pontosTesteGerados87 = false;
+
 // Ângulo (graus, sem normalizar) da corrente de teste para um enrolamento/fase,
 // assumindo injeção trifásica equilibrada (Preencher_Ang_Trif do VBA)
 function anguloTesteBase(dev, faseIdx, mp1, mp2, msf, codigoRaw2) {
@@ -134,7 +141,14 @@ function gerarPontoTeste() {
     }
 
     exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, ifrenAjustado, atua, suportaInjecao, injecao });
+
+    // Reaparece antes de criarGraficoPontoTeste: começa oculto (ver HTML) pra
+    // não reservar 500px vazios antes do 1º ponto gerado — mas o ECharts
+    // precisa medir um container já visível pra inicializar com o tamanho certo
+    document.getElementById('grafico-ponto-teste').style.display = '';
     criarGraficoPontoTeste(ifren, idifAlvo, atua, config);
+
+    pontosTesteGerados87 = true;
 }
 
 // Avança/recua o campo Ifren pelo passo informado e recalcula o ponto de teste.
@@ -175,11 +189,11 @@ function exibirPontoTeste({ fator, ifren, idifCurva, idifAlvo, avisoNegativo, if
             'e repetir o teste trocando o par escolhido.</p>';
     } else {
         html += '<div class="table-responsive"><table class="tabela-pontos-teste">';
-        html += '<thead><tr><th>Fase</th><th>Enrolamento 1</th><th>Enrolamento 2</th></tr></thead><tbody>';
+        html += '<thead><tr><th>Enrolamento 1</th><th>Enrolamento 2</th></tr></thead><tbody>';
         injecao.forEach(inj => {
-            html += `<tr><td>${inj.fase}</td>` +
-                `<td>I<sub>1</sub> = ${inj.i1.mag.toFixed(3)}∠${inj.i1.ang.toFixed(1)}° A</td>` +
-                `<td>I<sub>2</sub> = ${inj.i2.mag.toFixed(3)}∠${inj.i2.ang.toFixed(1)}° A</td></tr>`;
+            html += '<tr>' +
+                `<td>I<sub>${inj.fase}1</sub> = ${inj.i1.mag.toFixed(3)}∠${inj.i1.ang.toFixed(1)}° A</td>` +
+                `<td>I<sub>${inj.fase}2</sub> = ${inj.i2.mag.toFixed(3)}∠${inj.i2.ang.toFixed(1)}° A</td></tr>`;
         });
         html += '</tbody></table></div>';
     }
@@ -356,7 +370,12 @@ function gerarListaPontosTeste() {
     });
 
     exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInjecao, linhas);
+
+    // Idem grafico-ponto-teste: reaparece só quando há pontos de fato pra desenhar
+    document.getElementById('grafico-lista-pontos').style.display = '';
     criarGraficoListaPontos(linhas, fator >= 1, config);
+
+    pontosTesteGerados87 = true;
 }
 
 function exibirListaPontosTeste(fator, ifrenD, ifrenDAjustado, qtd3, suportaInjecao, linhas) {

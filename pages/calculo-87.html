@@ -613,7 +613,7 @@
                 </div>
             </div>
             
-            <div class="card">
+            <div class="card" id="cardResultados87">
                 <div class="card-header">
                     <h5 class="card-title">Resultados</h5>
                 </div>
@@ -622,12 +622,15 @@
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
                     </div>
                     
-                    <!-- Gráfico Diferencial -->
-                    <div id="grafico-diferencial" style="width: 100%; height: 500px; margin-top: 30px;"></div>
+                    <!-- Gráfico Diferencial: começa oculto (senão os 500px de altura
+                         reservada ficam vazios antes do 1º cálculo, empurrando pra
+                         baixo os cards seguintes) — reaparece em calcularDiferencial87
+                         (calc_87.js), junto com resultadosGerados87 -->
+                    <div id="grafico-diferencial" style="width: 100%; height: 500px; margin-top: 30px; display: none;"></div>
                 </div>
             </div>
 
-            <div class="card mt-4">
+            <div class="card mt-4" id="cardPontosTeste87">
                 <div class="card-header">
                     <h5 class="card-title">Sugestão de Pontos de Teste (Comissionamento)</h5>
                 </div>
@@ -729,7 +732,9 @@
                             <button type="button" class="btn btn-secondary" id="btnAvancarIfren">Avançar ▶</button>
                         </div>
 
-                        <div id="grafico-ponto-teste" style="width: 100%; height: 500px; margin-top: 20px;"></div>
+                        <!-- Começa oculto (mesmo motivo do #grafico-diferencial): reaparece
+                             em gerarPontoTeste (calc_87_pontos_teste.js) -->
+                        <div id="grafico-ponto-teste" style="width: 100%; height: 500px; margin-top: 20px; display: none;"></div>
                     </div>
 
                     <div id="secaoListaPontosAcoes" style="display: none;">
@@ -737,7 +742,8 @@
                             <button type="button" class="btn btn-primary" id="btnGerarLista">Gerar Lista de Pontos de Teste</button>
                         </div>
 
-                        <div id="grafico-lista-pontos" style="width: 100%; height: 500px; margin-top: 20px;"></div>
+                        <!-- Idem: reaparece em gerarListaPontosTeste (calc_87_pontos_teste.js) -->
+                        <div id="grafico-lista-pontos" style="width: 100%; height: 500px; margin-top: 20px; display: none;"></div>
                     </div>
 
                     <div id="pontosTesteResultado" class="results-area mt-4"></div>
@@ -818,7 +824,30 @@
             document.getElementById('secaoListaPontosCampos').style.display = lista ? '' : 'none';
             document.getElementById('secaoListaPontosAcoes').style.display = lista ? '' : 'none';
             document.getElementById('pontosTesteResultado').innerHTML = '';
+            // Trocar de modo não conta como ter gerado nada no modo recém-selecionado —
+            // oculta os dois gráficos de novo (o que ficar visível reaparece ao gerar)
+            document.getElementById('grafico-ponto-teste').style.display = 'none';
+            document.getElementById('grafico-lista-pontos').style.display = 'none';
+            pontosTesteGerados87 = false;
         });
+
+        // O PDF deve refletir só o que o usuário efetivamente pediu pra ver
+        // (resultadosGerados87/pontosTesteGerados87, calc_87.js/calc_87_pontos_teste.js):
+        // card Resultados só entra se "Calcular" já foi usado; card Sugestão de
+        // Pontos de Teste só entra se algum ponto já foi gerado — e, com 3
+        // enrolamentos, nunca entra (o site não gera correntes de injeção pra
+        // esse caso, então não há nada de fato pra mostrar no PDF ali).
+        function ajustarCardsResultadoImpressao87() {
+            const numEnrolamentos = document.getElementById('numEnrolamentos').value;
+
+            document.getElementById('cardResultados87')
+                .classList.toggle('oculto-impressao', !resultadosGerados87);
+
+            const ocultarPontosTeste = numEnrolamentos === '3' || !pontosTesteGerados87;
+            document.getElementById('cardPontosTeste87')
+                .classList.toggle('oculto-impressao', ocultarPontosTeste);
+        }
+        window.addEventListener('beforeprint', ajustarCardsResultadoImpressao87);
     </script>
 </body>
 </html>

@@ -42,20 +42,25 @@ function giroExplicacaoHTML(t) {
     const nomeFonte = f => `I<sub>${f.letra}${t.dev + 1}</sub>`;
     // Idif usa o fasor (mag∠ang); Ifren usa só o módulo da corrente resultante
     const resultado = t.mag !== undefined ? fmtPolar(t.mag, t.ang) : fmt(t.mod);
+    const nota = linhaEquacaoHTML('<span class="formula-nota">(compensação por código horário)</span>');
 
+    // .giro-explicacao (equations.css) aproxima o espaçamento entre essas 3
+    // linhas — bem menor que o das linhas "principais" da fórmula ao redor
+    // (algébrica/substituída), já que aqui são 3 passos de uma mesma derivação
+    let linhas;
     if (t.giro.tipo === 'neg') {
         const f1 = t.giro.fonte1;
-        return linhaEquacaoHTML(
-            `${nomeI(t)} = -${nomeFonte(f1)} = -(${fmtPolar(f1.mag, f1.ang)}) = ${resultado}` +
-            ' <span class="formula-nota">(compensação por código horário)</span>'
-        );
+        linhas = linhaEquacaoHTML(`${nomeI(t)} = -${nomeFonte(f1)}`) +
+            linhaEquacaoHTML(`${nomeI(t)} = -(${fmtPolar(f1.mag, f1.ang)}) = ${resultado}`) +
+            nota;
+    } else {
+        const f1 = t.giro.fonte1;
+        const f2 = t.giro.fonte2;
+        linhas = linhaEquacaoHTML(`${nomeI(t)} = ${nomeFonte(f1)} - ${nomeFonte(f2)}`) +
+            linhaEquacaoHTML(`${nomeI(t)} = (${fmtPolar(f1.mag, f1.ang)}) - (${fmtPolar(f2.mag, f2.ang)}) = ${resultado}`) +
+            nota;
     }
-    const f1 = t.giro.fonte1;
-    const f2 = t.giro.fonte2;
-    return linhaEquacaoHTML(
-        `${nomeI(t)} = ${nomeFonte(f1)} - ${nomeFonte(f2)} = (${fmtPolar(f1.mag, f1.ang)}) - (${fmtPolar(f2.mag, f2.ang)}) = ${resultado}` +
-        ' <span class="formula-nota">(compensação por código horário)</span>'
-    );
+    return `<div class="giro-explicacao">${linhas}</div>`;
 }
 
 function giroExplicacoesHTML(termos) {
@@ -144,13 +149,13 @@ function filtroHomopolarHTML(info, nomeEnrol) {
 // valores, não aos que estão na tela agora.
 function correntesInjetadasHTML(enrolamentos, config) {
     let html = '<div class="table-responsive tabela-correntes-injetadas"><table class="tabela-pontos-teste">';
-    html += '<thead><tr><th>Fase</th>';
+    html += '<thead><tr>';
     for (let i = 0; i < config.numEnrolamentos; i++) {
         html += `<th>${enrolamentos[i].nome}</th>`;
     }
     html += '</tr></thead><tbody>';
     ['A', 'B', 'C'].forEach((letra, idx) => {
-        html += `<tr><td>${letra}</td>`;
+        html += '<tr>';
         for (let i = 0; i < config.numEnrolamentos; i++) {
             const c = enrolamentos[i].correntes[idx];
             html += `<td>I<sub>${letra}${i + 1}</sub> = ${fmtPolar(c.mag, c.ang)} A</td>`;
@@ -233,15 +238,10 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
         const dif = resultados[faseKey].dif;
         const fren = resultados[faseKey].fren;
 
-        let conteudo = '<div class="linha-fase-resumo">';
-        conteudo += `<h6>Fase ${fase} ` +
+        // Idif/Ifren não se repetem aqui: já aparecem em destaque (vermelho)
+        // dentro dos próprios cards de fórmula logo abaixo
+        let conteudo = `<h6>Fase ${fase} ` +
             `<span class="badge-atuacao ${atua ? 'badge-atua' : 'badge-nao-atua'}">${atua ? 'ATUA' : 'NÃO ATUA'}</span></h6>`;
-
-        conteudo += '<div class="resumo-idif-ifren">';
-        conteudo += `<span><strong>I<sub>dif</sub>:</strong> ${dif.valor.toFixed(4)} A</span>`;
-        conteudo += `<span><strong>I<sub>fren</sub>:</strong> ${fren.valor.toFixed(4)} A</span>`;
-        conteudo += '</div>';
-        conteudo += '</div>';
 
         conteudo += '<div class="cards-lado-a-lado">';
 

@@ -6,6 +6,16 @@
   box-sizing: border-box;
 }
 
+/* Reset: elimina a margem padrão do navegador para <h1>-<h6> (varia por nível,
+   ex: h6 é ~2.33em do PRÓPRIO font-size — passa de 40px com os overrides de
+   font-size do site), causa raiz do mesmo bug corrigido várias vezes em regras
+   isoladas (.resultado-titulo, .fase-box h6, .card-title...). Cada seletor que
+   precisa de espaçamento define seu próprio valor explícito (mb-*, mt-*, ou
+   margin direto na regra) — nunca conta com o padrão do navegador. */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
 /* Estilos gerais */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -571,7 +581,10 @@ body {
 
 /* Resultados */
 .results-area {
-  min-height: 150px;
+  /* Sem min-height fixo: no estado vazio (só o parágrafo de placeholder,
+     antes de calcular) a caixa acompanha a altura do próprio texto + padding
+     em vez de sobrar bastante espaço em branco abaixo dele. Com resultados
+     de verdade dentro, o conteúdo já ultrapassa de sobra qualquer mínimo. */
   padding: 15px;
   background-color: #f8f9fa;
   border-radius: 4px;
@@ -739,8 +752,93 @@ input[readonly] {
   margin-bottom: 15px;
 }
 
+/* Cards lado a lado (TAPs, Constantes C, Idif/Ifren de uma mesma fase) —
+   flex-wrap deixa a quantidade por linha se ajustar sozinha à largura
+   disponível (da tela ou da página impressa), caindo pro card seguinte pra
+   baixo em vez de espremer/sobrepor texto. Setores diferentes (TAP,
+   Constantes C, ...) nunca dividem a mesma linha entre si — cada um é seu
+   próprio container flex, empilhados como qualquer bloco normal. Era só de
+   impressão (@media print); passou a valer pra tela também. */
+.cards-lado-a-lado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cards-lado-a-lado > .resultado-box,
+.cards-lado-a-lado > .formula {
+  /* flex-basis:0 (não "auto") é o que importa aqui: o flexbox só quebra
+     linha quando a largura PREFERIDA de cada card (o conteúdo todo numa
+     linha só, sem quebrar nada) não cabe — com "auto" um card de 3 linhas
+     de fórmula (ex: Filtro Homopolar) "prefere" ~320px, e dois deles juntos
+     (640px) nunca eram sequer considerados pra mesma linha mesmo cabendo
+     perfeitamente ao encolher só um pouco (2×291px = 582px, dentro dos
+     ~590px reais). Com flex-basis:0, essa decisão passa a usar o mínimo
+     seguro de cada card (min-width:auto = min-content, o padrão do
+     flexbox — a largura da maior palavra/token que não pode quebrar, nunca
+     menor que isso) em vez do preferido, deixando mais cards coexistirem na
+     mesma linha sem cortar/sobrepor nada. flex-grow:1 ainda estica os
+     cards de uma linha pra preencher o espaço sobrando — inclusive um card
+     sozinho que caiu pra própria linha. Substitui um número fixo calibrado
+     à mão pra um caso específico (era 180px, pensado só nos 3 cards de
+     TAP). */
+  flex: 1 1 0;
+  margin: 0;
+  /* align-items:stretch (padrão do flex) já iguala a altura de todos os
+     cards de uma mesma linha ao mais alto — centraliza o conteúdo dentro
+     do espaço extra em vez de deixá-lo colado no topo */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .fase-box {
   border-left: 4px solid #e30613;
+}
+
+/* Idif/Ifren de uma mesma fase: CSS Grid + subgrid alinha não só os
+   títulos, mas TODA linha correspondente entre os dois cards (equação
+   algébrica, cada bloco de compensação por código horário, equação
+   substituída, resultado em vermelho). Um alinhamento simples pelo topo
+   não bastava: a fórmula de Ifren tem uma camada de fração a mais (÷2 no
+   fim) que a de Idif não tem, então a partir da equação algébrica cada
+   linha seguinte já nasce em alturas diferentes nos dois cards — subgrid
+   sincroniza a altura de cada linha (row) entre os dois ao mesmo tempo,
+   deixando a mais curta das duas simplesmente ocupar o espaço sobrando
+   dessa linha em vez de desalinhar a próxima.
+
+   Cada filho direto de .formula vira uma linha do grid, na ordem em que
+   já são inseridos: 1 título, 1 equação algébrica, até 3 blocos de
+   compensação (1 por enrolamento com código horário != 0 — sempre a MESMA
+   quantidade em Idif e Ifren, já que é o mesmo enrolamento/código nos
+   dois), 1 equação substituída, 1 resultado = até 7 linhas no pior caso
+   (3 enrolamentos, todos com compensação). repeat(7, auto) cobre esse
+   caso; quando há menos, as linhas de sobra ficam com altura 0 nos dois
+   cards igualmente, sem efeito colateral.
+
+   >=700px (tela) ou impressão: lado a lado com subgrid. Abaixo de 700px
+   (tela): empilha 1 por linha (a mesma faixa em que os cards ficariam
+   espremidos demais lado a lado, com fração quebrando no meio) — nesse
+   caso volta ao fluxo de bloco normal, sem grid nem alinhamento por
+   linha (irrelevante com só 1 card por linha). */
+@media screen and (min-width: 700px), print {
+  .fase-box .cards-lado-a-lado {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(7, auto);
+  }
+
+  .fase-box .cards-lado-a-lado > .formula {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: 1 / -1;
+  }
+}
+
+@media screen and (max-width: 699px) {
+  .fase-box .cards-lado-a-lado {
+    display: block;
+  }
 }
 
 .fase-box h6 {
@@ -752,6 +850,10 @@ input[readonly] {
   /* mesmo nível de título de seção que .resultado-titulo — ver ESCALA DE
      TEXTO em equations.css */
   font-size: 1.125rem;
+  /* Sem isto, herda a margem padrão do navegador pra <h6> (~2.33em do
+     próprio font-size, ~42px aqui) — mesmo problema já corrigido em
+     .resultado-titulo, mas esse título é um <h6> à parte */
+  margin: 0 0 15px;
 }
 
 .resumo-idif-ifren {
@@ -934,45 +1036,6 @@ input[readonly] {
     margin-bottom: 8px;
   }
 
-  /* Cards lado a lado (TAPs, Constantes C, Idif/Ifren de uma mesma fase) —
-     flex-wrap deixa a quantidade por linha se ajustar sozinha à largura
-     disponível da página impressa, caindo pro card seguinte pra baixo em vez
-     de espremer/sobrepor texto. Setores diferentes (TAP, Constantes C, ...)
-     nunca dividem a mesma linha entre si — cada um é seu próprio container
-     flex, empilhados como qualquer bloco normal. */
-  .cards-lado-a-lado {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .cards-lado-a-lado > .resultado-box,
-  .cards-lado-a-lado > .formula {
-    /* flex-basis:0 (não "auto") é o que importa aqui: o flexbox só quebra
-       linha quando a largura PREFERIDA de cada card (o conteúdo todo numa
-       linha só, sem quebrar nada) não cabe — com "auto" um card de 3 linhas
-       de fórmula (ex: Filtro Homopolar) "prefere" ~320px, e dois deles juntos
-       (640px) nunca eram sequer considerados pra mesma linha mesmo cabendo
-       perfeitamente ao encolher só um pouco (2×291px = 582px, dentro dos
-       ~590px reais). Com flex-basis:0, essa decisão passa a usar o mínimo
-       seguro de cada card (min-width:auto = min-content, o padrão do
-       flexbox — a largura da maior palavra/token que não pode quebrar,
-       nunca menor que isso) em vez do preferido, deixando mais cards
-       coexistirem na mesma linha sem cortar/sobrepor nada. flex-grow:1
-       ainda estica os cards de uma linha pra preencher o espaço sobrando —
-       inclusive um card sozinho que caiu pra própria linha. Substitui um
-       número fixo calibrado à mão pra um caso específico (era 180px,
-       pensado só nos 3 cards de TAP). */
-    flex: 1 1 0;
-    margin: 0;
-    /* align-items:stretch (padrão do flex) já iguala a altura de todos os
-       cards de uma mesma linha ao mais alto — centraliza o conteúdo dentro
-       do espaço extra em vez de deixá-lo colado no topo */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
   /* O ECharts cria uma DIV própria dentro do container (largura fixa em
      pixels, calculada a partir da tela — mais larga que a página impressa)
      e o canvas fica "position:absolute" dentro dela. Como nunca se pode
@@ -1028,24 +1091,10 @@ input[readonly] {
     margin: 6px 0 8px;
   }
 
-  /* Fase + badge de atuação e os valores de Idif/Ifren, cada um sua própria
-     linha na tela, viram uma linha só na impressão (economiza espaço
-     vertical) — flex ignora o display de bloco original do <h6> e do
-     .resumo-idif-ifren, colocando os dois lado a lado. */
-  .linha-fase-resumo {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-  }
-
-  .linha-fase-resumo h6,
-  .linha-fase-resumo .resumo-idif-ifren {
-    margin: 0;
-  }
-
   /* Enrolamento (+ conexão) e o valor de C, cada um seu próprio <p> na tela,
-     viram uma linha só na impressão — mesma ideia de .linha-fase-resumo. */
+     viram uma linha só na impressão (economiza espaço vertical) — flex
+     ignora o display de bloco original dos dois <p>, colocando-os lado a
+     lado. */
   .linha-constante-c {
     display: flex;
     align-items: baseline;

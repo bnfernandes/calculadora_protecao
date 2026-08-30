@@ -104,6 +104,11 @@ function lerFormulario87() {
     return { config, enrolamentos };
 }
 
+// Indica se "Calcular" já foi usado (e ainda não foi desfeito por "Limpar") —
+// consultado na impressão (pages/calculo-87.html) pra decidir se o card
+// Resultados entra no PDF: só o que o usuário efetivamente pediu pra ver.
+let resultadosGerados87 = false;
+
 // Função principal de cálculo
 function calcularDiferencial87() {
     const { config, enrolamentos } = lerFormulario87();
@@ -230,8 +235,15 @@ function calcularDiferencial87() {
     // Exibir resultados (função em calc_87_eq.js)
     exibirResultados(config, enrolamentos, taps, constantesC, resultados, filtroHomopolarInfo);
 
+    // Reaparece antes de criarGraficoDiferencial: começa oculto (ver HTML) pra
+    // não reservar 500px vazios antes do 1º cálculo — mas o ECharts precisa
+    // medir um container já visível pra inicializar com o tamanho certo
+    document.getElementById('grafico-diferencial').style.display = '';
+
     // Criar gráfico (função em calc_87_grafico.js)
     criarGraficoDiferencial(resultados, config);
+
+    resultadosGerados87 = true;
 }
 
 // Calcula o TAP de cada enrolamento (TD_Tap do VBA)
@@ -665,6 +677,8 @@ document.getElementById('form-87').addEventListener('submit', function(e) {
 document.getElementById('btnLimpar').addEventListener('click', function() {
     document.getElementById('form-87').reset();
     document.getElementById('resultados').innerHTML = '<p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>';
+    document.getElementById('grafico-diferencial').style.display = 'none';
+    resultadosGerados87 = false;
 });
 
 // Botões "E" (Equilibrar): a partir da fase clicada de um enrolamento,

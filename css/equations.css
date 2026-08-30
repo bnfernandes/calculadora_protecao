@@ -49,6 +49,15 @@
     line-height: 1.6;
 }
 
+/* Explicação da compensação por código horário (calc_87_eq.js,
+   giroExplicacaoHTML): 3 linhas de uma mesma derivação (simbólica,
+   substituída, nota) — mais próximas entre si que o espaçamento padrão de
+   15px entre as linhas "principais" da fórmula ao redor, senão o bloco
+   inteiro fica desproporcionalmente esparso */
+.giro-explicacao .formula-equation {
+    margin: 4px 0;
+}
+
 .fraction {
     display: inline-block;
     vertical-align: middle;
