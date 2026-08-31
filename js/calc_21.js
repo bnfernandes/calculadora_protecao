@@ -6,9 +6,30 @@
 
 // Inicialização quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
+    configurarVersaoExperimental21();
     inicializarFormulario21();
     configurarEventosFormulario21();
 });
+
+/**
+ * Liga o checkbox "Usar versão experimental" aos 3 cards que ele revela
+ * (Descrição, Parâmetros de Entrada, Resultados). Nunca lembra a escolha entre
+ * visitas — de propósito: a página não está totalmente validada ainda (falta
+ * testar contra outros softwares e o equipamento real), então cada visita
+ * precisa marcar de novo, sem estado salvo em localStorage/sessionStorage.
+ */
+function configurarVersaoExperimental21() {
+    const checkbox = document.getElementById('usarVersaoExperimental21');
+    if (!checkbox) return;
+
+    const cards = ['cardDescricao21', 'cardParametros21', 'cardResultados21']
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+
+    checkbox.addEventListener('change', () => {
+        cards.forEach(card => { card.style.display = checkbox.checked ? '' : 'none'; });
+    });
+}
 
 /**
  * Inicializa o formulário com valores padrão e configurações
@@ -22,8 +43,7 @@ function inicializarFormulario21() {
     
     // Configurar visibilidade para todas as zonas
     for (let i = 1; i <= 5; i++) {
-        atualizarVisibilidadeZonaFase(i);
-        atualizarVisibilidadeZonaTerra(i);
+        atualizarVisibilidadeZona(i);
     }
 }
 
@@ -47,13 +67,29 @@ function configurarEventosFormulario21() {
     for (let i = 1; i <= 5; i++) {
         const habFase = document.getElementById(`z${i}HabilitacaoFase`);
         const habTerra = document.getElementById(`z${i}HabilitacaoTerra`);
-        
+        const usaZona = document.getElementById(`z${i}UsaZona`);
+        const direcao = document.getElementById(`z${i}Direcao`);
+
         if (habFase) {
-            habFase.addEventListener('change', () => atualizarVisibilidadeZonaFase(i));
+            habFase.addEventListener('change', () => {
+                atualizarVisibilidadeZonaFase(i);
+                atualizarVisibilidadeDirecaoZona(i);
+            });
         }
-        
+
         if (habTerra) {
-            habTerra.addEventListener('change', () => atualizarVisibilidadeZonaTerra(i));
+            habTerra.addEventListener('change', () => {
+                atualizarVisibilidadeZonaTerra(i);
+                atualizarVisibilidadeDirecaoZona(i);
+            });
+        }
+
+        if (usaZona) {
+            usaZona.addEventListener('change', () => atualizarVisibilidadeZona(i));
+        }
+
+        if (direcao) {
+            direcao.addEventListener('change', () => atualizarVisibilidadeDirecaoZona(i));
         }
     }
     
@@ -152,6 +188,76 @@ function atualizarVisibilidadeZonaTerra(zona) {
 }
 
 /**
+ * Mostra/oculta os ajustes de uma zona inteira (Direção, Ângulo Característico e as
+ * subseções Fase/Terra) a partir do checkbox "Zona N" — não é um gate novo de
+ * cálculo, é o que já existe hoje (Habilitação fase/Habilitação terra) só que numa
+ * camada acima: desmarcar o checkbox força fase e terra pra "inativo" (deixando de
+ * aparecer nos resultados) e reaplica atualizarVisibilidadeZonaFase/Terra, que já
+ * cuidam do disabled/enabled dos campos internos a partir desse valor.
+ * @param {number} zona - Número da zona (1-5)
+ */
+function atualizarVisibilidadeZona(zona) {
+    const checkbox = document.getElementById(`z${zona}UsaZona`);
+    if (!checkbox) return;
+    const usaZona = checkbox.checked;
+
+    document.querySelectorAll(`.campos-zona-${zona}`).forEach(campo => {
+        campo.style.display = usaZona ? '' : 'none';
+    });
+
+    if (!usaZona) {
+        const habFase = document.getElementById(`z${zona}HabilitacaoFase`);
+        const habTerra = document.getElementById(`z${zona}HabilitacaoTerra`);
+        if (habFase) habFase.value = 'inativo';
+        if (habTerra) habTerra.value = 'inativo';
+    }
+
+    atualizarVisibilidadeZonaFase(zona);
+    atualizarVisibilidadeZonaTerra(zona);
+    atualizarVisibilidadeDirecaoZona(zona);
+}
+
+/**
+ * Mostra só o Alcance X relevante pra direção da zona (Frente ou Reverso) — o
+ * outro não entra no cálculo dessa direção (prepararRetasFaseFaseFrente só usa
+ * alcanceXFrente, prepararRetasFaseFaseReverso só usa alcanceXReverso, e o
+ * mesmo vale pras versões fase-terra), então preenchê-lo não muda nada; ocultar
+ * evita confusão. Recalcula a partir de Habilitação fase/terra + Direção toda
+ * vez (em vez de assumir a ordem de chamada com atualizarVisibilidadeZonaFase/
+ * Terra), pra nunca reexibir um campo que deveria continuar oculto por a zona
+ * (ou fase/terra dela) estar inativa.
+ * @param {number} zona - Número da zona (1-5)
+ */
+function atualizarVisibilidadeDirecaoZona(zona) {
+    const direcaoEl = document.getElementById(`z${zona}Direcao`);
+    if (!direcaoEl) return;
+    const frente = direcaoEl.value === 'frente';
+
+    const habFaseEl = document.getElementById(`z${zona}HabilitacaoFase`);
+    const habTerraEl = document.getElementById(`z${zona}HabilitacaoTerra`);
+    const faseAtiva = !!habFaseEl && habFaseEl.value === 'ativo';
+    const terraAtiva = !!habTerraEl && habTerraEl.value === 'ativo';
+
+    const aplicar = (id, visivel) => {
+        const campo = document.getElementById(id);
+        if (!campo) return;
+        const grupo = campo.closest('.form-group');
+        if (!grupo) return;
+        grupo.style.display = visivel ? '' : 'none';
+        if (visivel) {
+            campo.removeAttribute('disabled');
+        } else {
+            campo.setAttribute('disabled', 'disabled');
+        }
+    };
+
+    aplicar(`z${zona}AlcanceXFrenteFase`, faseAtiva && frente);
+    aplicar(`z${zona}AlcanceXReversoFase`, faseAtiva && !frente);
+    aplicar(`z${zona}AlcanceXFrenteTerra`, terraAtiva && frente);
+    aplicar(`z${zona}AlcanceXReversoTerra`, terraAtiva && !frente);
+}
+
+/**
  * Limpa todos os campos do formulário e restaura valores padrão
  */
 function limparFormulario21() {
@@ -242,14 +348,6 @@ function coletarDadosFormulario21() {
 // ============================================================================
 
 /**
- * Converte uma reta em formato polar para cartesiano (versão estável)
- * @param {number} R0 - Coordenada R do ponto por onde a reta passa
- * @param {number} X0 - Coordenada X do ponto por onde a reta passa
- * @param {number} thetaGraus - Ângulo de inclinação em graus
- * @returns {Object} Reta no formato {a, b, c} onde a*R + b*X + c = 0
- */
-
-/**
  * Calcula o ângulo de compensação homopolar alpha = arg(1 + kn)
  * @param {number} moduloKn - Módulo de kn
  * @param {number} anguloKnGraus - Ângulo de kn em graus
@@ -272,38 +370,6 @@ function calcularAlpha(moduloKn, anguloKnGraus) {
     
     return alphaGraus;
 }
-
-/**
- * Calcula a intersecção entre duas retas
- * @param {Object} reta1 - Primeira reta {a, b, c}
- * @param {Object} reta2 - Segunda reta {a, b, c}
- * @returns {Object|null} Ponto de intersecção {R, X} ou null se paralelas
- */
-function calcularInterseccao(reta1, reta2) {
-    const {a: a1, b: b1, c: c1} = reta1;
-    const {a: a2, b: b2, c: c2} = reta2;
-    
-    const determinante = a1 * b2 - a2 * b1;
-    
-    if (Math.abs(determinante) < 1e-10) {
-        return null; // Retas paralelas
-    }
-    
-    const R = (b1 * c2 - b2 * c1) / determinante;
-    const X = (a2 * c1 - a1 * c2) / determinante;
-    
-    return {R, X};
-}
-
-// ============================================================================
-// FUNÇÕES DE CÁLCULO DAS RETAS PARA CADA CASO DE FALTA
-// ============================================================================
-
-/**
- * Calcula as 6 retas para falta fase-fase frente (delante)
- * @param {Object} params - Parâmetros de entrada
- * @returns {Array} Array com 6 retas no formato {nome, a, b, c}
- */
 
 // ============================================================================
 // FUNÇÃO PRINCIPAL DE CÁLCULO
@@ -354,17 +420,19 @@ function calcularProtecao21() {
                 // Calcular FRENTE se direção for "frente"
                 if (zona.direcao === 'frente') {
                     const linesPolar = prepararRetasFaseFaseFrente(paramsFase);
-                    const theta1 = paramsFase.anguloFaseFase - paramsFase.amplitudeFaseFase / 2;
-                    const theta6 = paramsFase.anguloFaseFase + paramsFase.amplitudeFaseFase / 2;
-                    const bounds = calcularBounds(paramsFase);
-                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
-                    
+                    const bounds = calcularBounds(linesPolar, paramsFase);
+                    const vertices = calcularVerticesRegiao(linesPolar, bounds);
+
                     // Converter retas polares para cartesianas (para debug)
                     const retas = linesPolar.map(lp => ({
                         nome: lp.nome,
+                        R0: lp.R0,
+                        X0: lp.X0,
+                        thetaDeg: lp.thetaDeg,
+                        keepSide: lp.keepSide,
                         ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
                     }));
-                    
+
                     resultadoZona.faseFase.frente = {
                         retas: retas,
                         vertices: vertices
@@ -374,17 +442,19 @@ function calcularProtecao21() {
                 // Calcular REVERSO se direção for "reverso"
                 if (zona.direcao === 'reverso') {
                     const linesPolar = prepararRetasFaseFaseReverso(paramsFase);
-                    const theta1 = paramsFase.anguloFaseFase - paramsFase.amplitudeFaseFase / 2 + 180;
-                    const theta6 = paramsFase.anguloFaseFase + paramsFase.amplitudeFaseFase / 2 + 180;
-                    const bounds = calcularBounds(paramsFase);
-                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
-                    
+                    const bounds = calcularBounds(linesPolar, paramsFase);
+                    const vertices = calcularVerticesRegiao(linesPolar, bounds);
+
                     // Converter retas polares para cartesianas (para debug)
                     const retas = linesPolar.map(lp => ({
                         nome: lp.nome,
+                        R0: lp.R0,
+                        X0: lp.X0,
+                        thetaDeg: lp.thetaDeg,
+                        keepSide: lp.keepSide,
                         ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
                     }));
-                    
+
                     resultadoZona.faseFase.reverso = {
                         retas: retas,
                         vertices: vertices
@@ -419,17 +489,19 @@ function calcularProtecao21() {
                 // Calcular FRENTE se direção for "frente"
                 if (zona.direcao === 'frente') {
                     const linesPolar = prepararRetasFaseTerraFrente(paramsTerra);
-                    const theta1 = paramsTerra.anguloFaseTerra - paramsTerra.amplitudeFaseTerra / 2 - alpha;
-                    const theta6 = paramsTerra.anguloFaseTerra + paramsTerra.amplitudeFaseTerra / 2 - alpha;
-                    const bounds = calcularBounds(paramsTerra);
-                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
-                    
+                    const bounds = calcularBounds(linesPolar, paramsTerra);
+                    const vertices = calcularVerticesRegiao(linesPolar, bounds);
+
                     // Converter retas polares para cartesianas (para debug)
                     const retas = linesPolar.map(lp => ({
                         nome: lp.nome,
+                        R0: lp.R0,
+                        X0: lp.X0,
+                        thetaDeg: lp.thetaDeg,
+                        keepSide: lp.keepSide,
                         ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
                     }));
-                    
+
                     resultadoZona.faseTerra.frente = {
                         retas: retas,
                         vertices: vertices
@@ -439,17 +511,19 @@ function calcularProtecao21() {
                 // Calcular REVERSO se direção for "reverso"
                 if (zona.direcao === 'reverso') {
                     const linesPolar = prepararRetasFaseTerraReverso(paramsTerra);
-                    const theta1 = paramsTerra.anguloFaseTerra - paramsTerra.amplitudeFaseTerra / 2 - alpha + 180;
-                    const theta6 = paramsTerra.anguloFaseTerra + paramsTerra.amplitudeFaseTerra / 2 - alpha + 180;
-                    const bounds = calcularBounds(paramsTerra);
-                    const vertices = calcularVerticesRegiao(linesPolar, theta1, theta6, bounds);
-                    
+                    const bounds = calcularBounds(linesPolar, paramsTerra);
+                    const vertices = calcularVerticesRegiao(linesPolar, bounds);
+
                     // Converter retas polares para cartesianas (para debug)
                     const retas = linesPolar.map(lp => ({
                         nome: lp.nome,
+                        R0: lp.R0,
+                        X0: lp.X0,
+                        thetaDeg: lp.thetaDeg,
+                        keepSide: lp.keepSide,
                         ...polarParaCartesianoEstavel(lp.R0, lp.X0, lp.thetaDeg)
                     }));
-                    
+
                     resultadoZona.faseTerra.reverso = {
                         retas: retas,
                         vertices: vertices
@@ -479,52 +553,4 @@ function calcularProtecao21() {
     }
 }
 
-// ============================================================================
-// FUNÇÃO DE EXIBIÇÃO DE RESULTADOS
-// ============================================================================
-
-/**
- * Exibe os resultados calculados na interface
- * @param {Object} resultados - Resultados calculados
- */
-function exibirResultados21(resultados) {
-    const areaResultados = document.getElementById('resultados');
-    if (!areaResultados) return;
-    
-    let html = '<div class="resultado-secao">';
-    html += '<h6 class="resultado-titulo">Resultados do Cálculo</h6>';
-    
-    resultados.zonas.forEach(zona => {
-        if (zona.faseFase || zona.faseTerra) {
-            html += `<div class="resultado-zona mb-3">`;
-            html += `<h6 class="text-primary">Zona ${zona.numero} - Direção: ${zona.direcao}</h6>`;
-            
-            // Resultados Fase-Fase
-            if (zona.faseFase) {
-                if (zona.faseFase.frente) {
-                    html += `<p><strong>Fase-Fase Frente:</strong> ${zona.faseFase.frente.vertices.length} vértices calculados</p>`;
-                }
-                if (zona.faseFase.reverso) {
-                    html += `<p><strong>Fase-Fase Reverso:</strong> ${zona.faseFase.reverso.vertices.length} vértices calculados</p>`;
-                }
-            }
-            
-            // Resultados Fase-Terra
-            if (zona.faseTerra) {
-                html += `<p><strong>Compensação Homopolar (α):</strong> ${zona.faseTerra.alpha.toFixed(4)}°</p>`;
-                if (zona.faseTerra.frente) {
-                    html += `<p><strong>Fase-Terra Frente:</strong> ${zona.faseTerra.frente.vertices.length} vértices calculados</p>`;
-                }
-                if (zona.faseTerra.reverso) {
-                    html += `<p><strong>Fase-Terra Reverso:</strong> ${zona.faseTerra.reverso.vertices.length} vértices calculados</p>`;
-                }
-            }
-            
-            html += `</div>`;
-        }
-    });
-    
-    html += '</div>';
-    areaResultados.innerHTML = html;
-}
 

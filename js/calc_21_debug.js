@@ -1,7 +1,10 @@
 // ============================================================================
 // FUNÇÃO 21 - PROTEÇÃO DE DISTÂNCIA
 // Arquivo: calc_21_debug.js
-// Descrição: Funções de debug para análise das retas calculadas
+// Descrição: Painel de debug com as retas calculadas (fonte única de verdade: o
+// array `retas` já montado em calc_21.js) e invariantes geométricos do polígono
+// resultante — serve também de ferramenta informal de regressão, já que o projeto
+// não tem suíte de testes.
 // ============================================================================
 
 /**
@@ -12,103 +15,104 @@
 function exibirDebugRetas(dados, resultados) {
     const areaResultados = document.getElementById('resultados');
     if (!areaResultados) return;
-    
+
     let html = '<div class="resultado-secao mb-4" style="background-color: #fff3cd; border: 2px solid #ffc107;">';
     html += '<h6 class="resultado-titulo" style="color: #856404;">🔍 DEBUG - Análise das Retas</h6>';
     html += '<div class="resultado-conteudo">';
-    
+
     resultados.zonas.forEach((zona, idx) => {
         const dadosZona = dados.zonas[idx];
-        
+
         if (!zona.faseFase && !zona.faseTerra) return;
-        
+
         html += `<div class="mb-4" style="border-left: 4px solid #007bff; padding-left: 15px;">`;
         html += `<h6 style="color: #007bff;">Zona ${zona.numero} - Direção: ${zona.direcao}</h6>`;
-        
+
         // Debug Fase-Fase Frente
         if (zona.faseFase && zona.faseFase.frente) {
             html += '<div class="mb-3">';
             html += '<h6 style="color: #28a745; font-size: 14px;">📊 Fase-Fase FRENTE</h6>';
             html += gerarTabelaRetasDebug(
                 zona.faseFase.frente.retas,
+                zona.faseFase.frente.vertices,
                 dadosZona,
-                dados.supervisaoDirecional,
                 'fase',
                 'frente',
                 null
             );
             html += '</div>';
         }
-        
+
         // Debug Fase-Fase Reverso
         if (zona.faseFase && zona.faseFase.reverso) {
             html += '<div class="mb-3">';
             html += '<h6 style="color: #dc3545; font-size: 14px;">📊 Fase-Fase REVERSO</h6>';
             html += gerarTabelaRetasDebug(
                 zona.faseFase.reverso.retas,
+                zona.faseFase.reverso.vertices,
                 dadosZona,
-                dados.supervisaoDirecional,
                 'fase',
                 'reverso',
                 null
             );
             html += '</div>';
         }
-        
+
         // Debug Fase-Terra Frente
         if (zona.faseTerra && zona.faseTerra.frente) {
             html += '<div class="mb-3">';
             html += '<h6 style="color: #28a745; font-size: 14px;">📊 Fase-Terra FRENTE (α = ' + zona.faseTerra.alpha.toFixed(4) + '°)</h6>';
             html += gerarTabelaRetasDebug(
                 zona.faseTerra.frente.retas,
+                zona.faseTerra.frente.vertices,
                 dadosZona,
-                dados.supervisaoDirecional,
                 'terra',
                 'frente',
                 zona.faseTerra.alpha
             );
             html += '</div>';
         }
-        
+
         // Debug Fase-Terra Reverso
         if (zona.faseTerra && zona.faseTerra.reverso) {
             html += '<div class="mb-3">';
             html += '<h6 style="color: #dc3545; font-size: 14px;">📊 Fase-Terra REVERSO (α = ' + zona.faseTerra.alpha.toFixed(4) + '°)</h6>';
             html += gerarTabelaRetasDebug(
                 zona.faseTerra.reverso.retas,
+                zona.faseTerra.reverso.vertices,
                 dadosZona,
-                dados.supervisaoDirecional,
                 'terra',
                 'reverso',
                 zona.faseTerra.alpha
             );
             html += '</div>';
         }
-        
+
         html += '</div>';
     });
-    
+
     html += '</div>';
     html += '</div>';
-    
+
     areaResultados.insertAdjacentHTML('beforeend', html);
 }
 
 /**
- * Gera tabela com informações das retas em formato polar e cartesiano
- * @param {Array} retas - Array de retas calculadas
+ * Gera tabela com informações das retas em formato polar e cartesiano, a partir do
+ * array `retas` já calculado por calcularProtecao21() (calc_21.js) — nunca recalcula
+ * a geometria de forma independente, só formata o que já foi calculado.
+ * @param {Array} retas - Retas já calculadas {nome, R0, X0, thetaDeg, keepSide, a, b, c}
+ * @param {Array} vertices - Vértices do polígono já calculado {R, X}
  * @param {Object} dadosZona - Dados da zona
- * @param {Object} supervisao - Dados de supervisão direcional
  * @param {string} tipo - 'fase' ou 'terra'
  * @param {string} direcao - 'frente' ou 'reverso'
- * @param {number} alpha - Ângulo de compensação homopolar (null para fase-fase)
- * @returns {string} HTML da tabela
+ * @param {number|null} alpha - Ângulo de compensação homopolar (null para fase-fase)
+ * @returns {string} HTML da tabela + resumo de invariantes
  */
-function gerarTabelaRetasDebug(retas, dadosZona, supervisao, tipo, direcao, alpha) {
+function gerarTabelaRetasDebug(retas, vertices, dadosZona, tipo, direcao, alpha) {
     const params = tipo === 'fase' ? dadosZona.fase : dadosZona.terra;
-    const anguloSup = tipo === 'fase' ? supervisao.anguloFaseFase : supervisao.anguloFaseTerra;
-    const amplitudeSup = tipo === 'fase' ? supervisao.amplitudeFaseFase : supervisao.amplitudeFaseTerra;
-    
+    const temBasculamento = dadosZona.numero === 1;
+
     let html = '<table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px;">';
     html += '<thead>';
     html += '<tr style="background-color: #e9ecef;">';
@@ -117,34 +121,28 @@ function gerarTabelaRetasDebug(retas, dadosZona, supervisao, tipo, direcao, alph
     html += '<th style="border: 1px solid #dee2e6; padding: 8px;">Ponto (R₀, X₀)</th>';
     html += '<th style="border: 1px solid #dee2e6; padding: 8px;">Ângulo θ</th>';
     html += '<th style="border: 1px solid #dee2e6; padding: 8px;">Cartesiano (a, b, c)</th>';
+    html += '<th style="border: 1px solid #dee2e6; padding: 8px;">keepSide</th>';
     html += '</tr>';
     html += '</thead>';
     html += '<tbody>';
-    
-    retas.forEach((reta, idx) => {
-        const info = calcularInfoPolarReta(
-            reta.nome,
-            dadosZona,
-            supervisao,
-            tipo,
-            direcao,
-            alpha
-        );
-        
+
+    retas.forEach(reta => {
+        const formula = formulaTextoReta(reta.nome, tipo, direcao, temBasculamento);
         html += '<tr>';
         html += `<td style="border: 1px solid #dee2e6; padding: 8px; font-weight: bold;">${reta.nome}</td>`;
-        html += `<td style="border: 1px solid #dee2e6; padding: 8px; font-family: monospace;">${info.formula}</td>`;
-        html += `<td style="border: 1px solid #dee2e6; padding: 8px;">(${info.R0.toFixed(4)}, ${info.X0.toFixed(4)})</td>`;
-        html += `<td style="border: 1px solid #dee2e6; padding: 8px;">${info.theta.toFixed(4)}°</td>`;
+        html += `<td style="border: 1px solid #dee2e6; padding: 8px; font-family: monospace;">${formula}</td>`;
+        html += `<td style="border: 1px solid #dee2e6; padding: 8px;">(${reta.R0.toFixed(4)}, ${reta.X0.toFixed(4)})</td>`;
+        html += `<td style="border: 1px solid #dee2e6; padding: 8px;">${reta.thetaDeg.toFixed(4)}°</td>`;
         html += `<td style="border: 1px solid #dee2e6; padding: 8px; font-family: monospace;">`;
         html += `a=${reta.a.toFixed(6)}<br>b=${reta.b.toFixed(6)}<br>c=${reta.c.toFixed(6)}`;
         html += `</td>`;
+        html += `<td style="border: 1px solid #dee2e6; padding: 8px; font-family: monospace;">${reta.keepSide}</td>`;
         html += '</tr>';
     });
-    
+
     html += '</tbody>';
     html += '</table>';
-    
+
     // Adicionar parâmetros de referência
     html += '<div style="font-size: 11px; color: #6c757d; margin-top: 5px;">';
     html += '<strong>Parâmetros:</strong> ';
@@ -160,165 +158,138 @@ function gerarTabelaRetasDebug(retas, dadosZona, supervisao, tipo, direcao, alph
         html += `, α = ${alpha.toFixed(4)}°`;
     }
     html += '</div>';
-    
+
+    html += gerarResumoInvariantes(vertices);
+
     return html;
 }
 
 /**
- * Calcula informações polares de uma reta específica
- * @param {string} nomeReta - Nome da reta (r1, r2, etc)
- * @param {Object} dadosZona - Dados da zona
- * @param {Object} supervisao - Dados de supervisão direcional
+ * Texto simbólico (sem números embutidos) da fórmula polar de cada reta, só para
+ * exibição — derivado diretamente de js/calc_21_region.js. Os valores numéricos da
+ * tabela vêm sempre do array `retas` já calculado, nunca deste texto.
+ * @param {string} nomeReta - 'r1'..'r6'
  * @param {string} tipo - 'fase' ou 'terra'
  * @param {string} direcao - 'frente' ou 'reverso'
- * @param {number} alpha - Ângulo de compensação homopolar (null para fase-fase)
- * @returns {Object} Informações polares {formula, R0, X0, theta}
+ * @param {boolean} temBasculamento
+ * @returns {string}
  */
-function calcularInfoPolarReta(nomeReta, dadosZona, supervisao, tipo, direcao, alpha) {
-    const params = tipo === 'fase' ? dadosZona.fase : dadosZona.terra;
-    const anguloSup = tipo === 'fase' ? supervisao.anguloFaseFase : supervisao.anguloFaseTerra;
-    const amplitudeSup = tipo === 'fase' ? supervisao.amplitudeFaseFase : supervisao.amplitudeFaseTerra;
-    const alcanceXFrente = params.alcanceXFrente;
-    const alcanceXReverso = params.alcanceXReverso;
-    const alcanceR = params.alcanceR;
-    const anguloBlinderR = params.anguloBlinderR;
-    const anguloCaracteristico = dadosZona.anguloCaracteristico;
-    const anguloBasculamento = params.anguloBasculamento || 0;
-    const temBasculamento = dadosZona.numero === 1;
-    const alphaVal = alpha || 0;
-    
-    const offset = direcao === 'reverso' ? 180 : 0;
-    
-    let info = { formula: '', R0: 0, X0: 0, theta: 0 };
-    
+function formulaTextoReta(nomeReta, tipo, direcao, temBasculamento) {
+    const off = direcao === 'reverso' ? ' + 180' : '';
+    const alfa = tipo === 'terra' ? ' − α' : '';
+    const frente = direcao === 'frente';
+
     switch (nomeReta) {
         case 'r1':
-            if (tipo === 'fase') {
-                info.theta = anguloSup - amplitudeSup / 2 + offset;
-                info.formula = `(0,0)<${anguloSup} - ${amplitudeSup}/2 ${offset > 0 ? '+ 180' : ''}`;
-            } else {
-                info.theta = anguloSup - amplitudeSup / 2 - alphaVal + offset;
-                info.formula = `(0,0)<${anguloSup} - ${amplitudeSup}/2 - α ${offset > 0 ? '+ 180' : ''}`;
-            }
-            break;
-            
+            return `(0,0) < ∠sup − amp/2${alfa}${off}`;
+        case 'r6':
+            return `(0,0) < ∠sup + amp/2${alfa}${off}`;
+        case 'r3':
+            return frente ? '(Rzona, 0) < θblinder' : '(−Rzona, 0) < θblinder';
+        case 'r5':
+            return frente ? '(−Rzona, 0) < 90' : '(Rzona, 0) < 90';
         case 'r2':
             if (tipo === 'fase') {
-                if (direcao === 'frente') {
-                    info.X0 = -alcanceXFrente;
-                    info.theta = 0;
-                    info.formula = `(0, -${alcanceXFrente.toFixed(4)})<0`;
-                } else {
-                    info.X0 = alcanceXReverso;
-                    info.theta = 0;
-                    info.formula = `(0, ${alcanceXReverso.toFixed(4)})<0`;
-                }
-            } else {
-                const tanAlpha = Math.tan((alphaVal * Math.PI) / 180);
-                const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-                if (direcao === 'frente') {
-                    info.X0 = -alcanceXFrente * (1 + tanAlpha / tanCarac);
-                    info.theta = -alphaVal;
-                    info.formula = `(0, -${alcanceXFrente.toFixed(4)}*(1+tan(α)/tan(θc)))<-α`;
-                } else {
-                    info.X0 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
-                    info.theta = -alphaVal;
-                    info.formula = `(0, -${alcanceXReverso.toFixed(4)}*(1+tan(α)/tan(θc)))<-α`;
-                }
+                return frente ? '(0, −Xf) < 0' : '(0, Xr) < 0';
             }
-            break;
-            
-        case 'r3':
-            if (direcao === 'frente') {
-                info.R0 = alcanceR;
-                info.theta = anguloBlinderR;
-                info.formula = `(${alcanceR.toFixed(4)}, 0)<${anguloBlinderR.toFixed(2)}`;
-            } else {
-                info.R0 = -alcanceR;
-                info.theta = anguloBlinderR;
-                info.formula = `(-${alcanceR.toFixed(4)}, 0)<${anguloBlinderR.toFixed(2)}`;
-            }
-            break;
-            
+            return frente
+                ? '(0, −Xf·(1+tan(α)/tan(θc))) < −α'
+                : '(0, −Xr·(1+tan(α)/tan(θc))) < −α';
         case 'r4':
             if (tipo === 'fase') {
                 if (temBasculamento) {
-                    const tanBasc = Math.tan((-anguloBasculamento * Math.PI) / 180);
-                    const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-                    if (direcao === 'frente') {
-                        info.X0 = alcanceXFrente * (1 + tanBasc / tanCarac);
-                        info.theta = anguloBasculamento;
-                        info.formula = `(0, ${alcanceXFrente.toFixed(4)}*(1+tan(-θb)/tan(θc)))<${anguloBasculamento.toFixed(2)}`;
-                    } else {
-                        info.X0 = -alcanceXReverso * (1 + tanBasc / tanCarac);
-                        info.theta = anguloBasculamento;
-                        info.formula = `(0, -${alcanceXReverso.toFixed(4)}*(1+tan(-θb)/tan(θc)))<${anguloBasculamento.toFixed(2)}`;
-                    }
-                } else {
-                    if (direcao === 'frente') {
-                        info.X0 = alcanceXFrente;
-                        info.theta = 0;
-                        info.formula = `(0, ${alcanceXFrente.toFixed(4)})<0`;
-                    } else {
-                        info.X0 = -alcanceXReverso;
-                        info.theta = 0;
-                        info.formula = `(0, -${alcanceXReverso.toFixed(4)})<0`;
-                    }
+                    return frente
+                        ? '(0, Xf·(1+tan(−θb)/tan(θc))) < θb'
+                        : '(0, −Xr·(1+tan(−θb)/tan(θc))) < θb';
                 }
-            } else {
-                const tanCarac = Math.tan((anguloCaracteristico * Math.PI) / 180);
-                if (temBasculamento) {
-                    const tanBasc = Math.tan(((-anguloBasculamento + alphaVal) * Math.PI) / 180);
-                    if (direcao === 'frente') {
-                        info.X0 = alcanceXFrente * (1 + tanBasc / tanCarac);
-                        info.theta = anguloBasculamento - alphaVal;
-                        info.formula = `(0, ${alcanceXFrente.toFixed(4)}*(1+tan(-θb+α)/tan(θc)))<θb-α`;
-                    } else {
-                        info.X0 = -alcanceXReverso * (1 + tanBasc / tanCarac);
-                        info.theta = anguloBasculamento - alphaVal;
-                        info.formula = `(0, -${alcanceXReverso.toFixed(4)}*(1+tan(-θb+α)/tan(θc)))<θb-α`;
-                    }
-                } else {
-                    const tanAlpha = Math.tan((alphaVal * Math.PI) / 180);
-                    if (direcao === 'frente') {
-                        info.X0 = alcanceXFrente * (1 + tanAlpha / tanCarac);
-                        info.theta = -alphaVal;
-                        info.formula = `(0, ${alcanceXFrente.toFixed(4)}*(1+tan(α)/tan(θc)))<-α`;
-                    } else {
-                        info.X0 = -alcanceXReverso * (1 + tanAlpha / tanCarac);
-                        info.theta = -alphaVal;
-                        info.formula = `(0, -${alcanceXReverso.toFixed(4)}*(1+tan(α)/tan(θc)))<-α`;
-                    }
-                }
+                return frente ? '(0, Xf) < 0' : '(0, −Xr) < 0';
             }
-            break;
-            
-        case 'r5':
-            if (direcao === 'frente') {
-                info.R0 = -alcanceR;
-                info.theta = 90;
-                info.formula = `(-${alcanceR.toFixed(4)}, 0)<90`;
-            } else {
-                info.R0 = alcanceR;
-                info.theta = 90;
-                info.formula = `(${alcanceR.toFixed(4)}, 0)<90`;
+            if (temBasculamento) {
+                return frente
+                    ? '(0, Xf·(1+tan(−θb+α)/tan(θc))) < θb − α'
+                    : '(0, −Xr·(1+tan(−θb+α)/tan(θc))) < θb − α';
             }
-            break;
-            
-        case 'r6':
-            if (tipo === 'fase') {
-                info.theta = anguloSup + amplitudeSup / 2 + offset;
-                info.formula = `(0,0)<${anguloSup} + ${amplitudeSup}/2 ${offset > 0 ? '+ 180' : ''}`;
-            } else {
-                info.theta = anguloSup + amplitudeSup / 2 - alphaVal + offset;
-                info.formula = `(0,0)<${anguloSup} + ${amplitudeSup}/2 - α ${offset > 0 ? '+ 180' : ''}`;
-            }
-            break;
+            return frente
+                ? '(0, Xf·(1+tan(α)/tan(θc))) < −α'
+                : '(0, −Xr·(1+tan(α)/tan(θc))) < −α';
+        default:
+            return '';
     }
-    
-    return info;
+}
+
+/**
+ * Testa se a origem (0,0) está dentro do polígono convexo — invariante físico
+ * esperado sempre (a origem, impedância zero, é o próprio relé): testa se ela fica
+ * do mesmo lado de todas as arestas, usando o produto vetorial de vértices
+ * consecutivos relativos à origem.
+ * @param {Array} vertices - Array de vértices {R, X}
+ * @returns {boolean}
+ */
+function polygonContemOrigem(vertices) {
+    if (!vertices || vertices.length < 3) return false;
+    let sinal = 0;
+    for (let i = 0; i < vertices.length; i++) {
+        const A = vertices[i];
+        const B = vertices[(i + 1) % vertices.length];
+        const cross = A.R * B.X - A.X * B.R;
+        if (Math.abs(cross) > 1e-9) {
+            const s = Math.sign(cross);
+            if (sinal === 0) sinal = s;
+            else if (s !== sinal) return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Testa a convexidade do polígono: o produto vetorial de arestas consecutivas deve
+ * manter o mesmo sinal em toda a volta. Mesmo princípio já usado em dedupCollinear
+ * (calc_21_geom.js) para detectar pontos colineares.
+ * @param {Array} vertices - Array de vértices {R, X}
+ * @returns {boolean}
+ */
+function polygonConvexo(vertices) {
+    if (!vertices || vertices.length < 3) return false;
+    let sinal = 0;
+    const n = vertices.length;
+    for (let i = 0; i < n; i++) {
+        const A = vertices[i];
+        const B = vertices[(i + 1) % n];
+        const C = vertices[(i + 2) % n];
+        const v1 = { R: B.R - A.R, X: B.X - A.X };
+        const v2 = { R: C.R - B.R, X: C.X - B.X };
+        const cross = v1.R * v2.X - v1.X * v2.R;
+        if (Math.abs(cross) > 1e-9) {
+            const s = Math.sign(cross);
+            if (sinal === 0) sinal = s;
+            else if (s !== sinal) return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Resumo visual dos invariantes geométricos esperados para qualquer ajuste legal:
+ * 3 a 6 vértices, polígono convexo, e origem sempre dentro (relé em Z=0). Serve como
+ * checagem de regressão informal, já que o projeto não tem suíte de testes.
+ * @param {Array} vertices - Array de vértices {R, X}
+ * @returns {string}
+ */
+function gerarResumoInvariantes(vertices) {
+    const n = vertices ? vertices.length : 0;
+    const origemDentro = polygonContemOrigem(vertices);
+    const convexo = polygonConvexo(vertices);
+    const nOk = n >= 3 && n <= 6;
+    const tudoOk = origemDentro && convexo && nOk;
+    const cor = tudoOk ? '#155724' : '#721c24';
+    const fundo = tudoOk ? '#d4edda' : '#f8d7da';
+
+    return `<div style="font-size: 11px; margin-top: 4px; padding: 4px 8px; background-color: ${fundo}; color: ${cor}; border-radius: 3px;">` +
+        `${tudoOk ? '✓' : '⚠'} ${n} vértice(s)` +
+        ` · origem ${origemDentro ? 'dentro' : 'FORA'}` +
+        ` · ${convexo ? 'convexo' : 'NÃO convexo'}` +
+        `</div>`;
 }
 
 // Exportar funções
 window.exibirDebugRetas = exibirDebugRetas;
-

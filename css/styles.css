@@ -353,6 +353,119 @@ body {
   gap: 6px;
 }
 
+/* Zona da função 21: ajustes de fase e terra lado a lado quando a largura
+   permite, cada ajuste alinhado com seu equivalente na outra coluna (ex.:
+   Alcance X Frente Fase ao lado de Alcance X Frente Terra). Módulo/Ângulo kn
+   não têm equivalente em fase, então dividem uma linha só entre eles. Em
+   telas estreitas vira uma coluna, com TODOS os ajustes de fase primeiro e os
+   de terra depois na ordem real do HTML — por isso o reposicionamento pro
+   modo largo é feito via grid-template-areas (só reordena a apresentação
+   visual) em vez de reordenar o HTML, que já está na ordem certa pro modo
+   estreito. Mesmo ponto de corte (769px) do resto do site (.col-6 etc, ver
+   @media max-width:768px). */
+.grid-fase-terra {
+  display: grid;
+  position: relative;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "f-tit"
+    "f-hab" "f-tipo" "f-alcr" "f-alcxf" "f-alcxr" "f-blind"
+    "t-tit"
+    "t-hab" "t-tipo" "t-modkn" "t-angkn" "t-alcr" "t-alcxf" "t-alcxr" "t-blind";
+}
+
+.grid-fase-terra.tem-basculamento {
+  grid-template-areas:
+    "f-tit"
+    "f-hab" "f-tipo" "f-alcr" "f-alcxf" "f-alcxr" "f-blind" "f-basc"
+    "t-tit"
+    "t-hab" "t-tipo" "t-modkn" "t-angkn" "t-alcr" "t-alcxf" "t-alcxr" "t-blind" "t-basc";
+}
+
+@media (min-width: 769px) {
+  .grid-fase-terra {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    /* Módulo/Ângulo kn não têm equivalente em fase — em vez de dividir uma
+       linha com a fase (o que os fazia parecer ajustes de fase por estarem
+       na coluna esquerda), cada um fica na coluna de terra, numa linha só
+       dele, com a coluna de fase vazia (".") nessas duas linhas. */
+    grid-template-areas:
+      "f-tit t-tit"
+      "f-hab t-hab"
+      "f-tipo t-tipo"
+      ". t-modkn"
+      ". t-angkn"
+      "f-alcr t-alcr"
+      "f-alcxf t-alcxf"
+      "f-alcxr t-alcxr"
+      "f-blind t-blind";
+  }
+
+  .grid-fase-terra.tem-basculamento {
+    grid-template-areas:
+      "f-tit t-tit"
+      "f-hab t-hab"
+      "f-tipo t-tipo"
+      ". t-modkn"
+      ". t-angkn"
+      "f-alcr t-alcr"
+      "f-alcxf t-alcxf"
+      "f-alcxr t-alcxr"
+      "f-blind t-blind"
+      "f-basc t-basc";
+  }
+}
+
+/* Supervisão Direcional: mesmo esquema de duas colunas dos ajustes de zona —
+   coluna esquerda = ajustes fase-fase, coluna direita = ajustes fase-terra,
+   cada um alinhado com seu equivalente (Ângulo com Ângulo, Amplitude com
+   Amplitude). Em telas estreitas, os dois ajustes de fase-fase primeiro,
+   depois os dois de fase-terra — que já é a ordem real no HTML. */
+.grid-supervisao-direcional {
+  display: grid;
+  position: relative;
+  grid-template-columns: 1fr;
+  grid-template-areas: "f-ang" "f-amp" "t-ang" "t-amp";
+}
+
+@media (min-width: 769px) {
+  .grid-supervisao-direcional {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    grid-template-areas:
+      "f-ang t-ang"
+      "f-amp t-amp";
+  }
+}
+
+/* Linha divisória entre as colunas de fase e terra — só faz sentido no modo
+   lado a lado (769px+); um pseudo-elemento (em vez de borda nos campos da
+   coluna de terra) porque campo a campo a linha ficaria cortada pela margem
+   entre eles, sem formar um traço contínuo. Fica exatamente no centro do
+   column-gap porque as duas colunas têm a mesma largura (1fr 1fr). */
+@media (min-width: 769px) {
+  .grid-fase-terra::before,
+  .grid-supervisao-direcional::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background-color: #ddd;
+  }
+}
+
+/* Linha horizontal entre subgrupos da página 21 (Supervisão Direcional /
+   Zona 1 / Zona 2 / ...) — só entre .form-section consecutivas, nunca antes
+   da primeira. .form-section é exclusivo desta página, não afeta as outras. */
+.form-section + .form-section {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid #ddd;
+}
+
 .campo-com-equilibrar .input-group {
   flex: 1;
 }

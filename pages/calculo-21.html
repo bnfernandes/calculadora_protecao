@@ -41,15 +41,20 @@
             <h1 class="page-title">Função 21 - Proteção de Distância</h1>
 
             <div class="card mb-4">
-                <div class="card-body text-center" style="padding: 3rem 1.5rem;">
-                    <h5 class="card-title">🚧 Página em manutenção</h5>
+                <div class="card-body text-center" style="padding: 2rem 1.5rem;">
+                    <h5 class="card-title">🧪 Versão experimental</h5>
                     <p class="card-text text-muted">
-                        Esta calculadora está passando por ajustes. Novidades em breve!
+                        Os cálculos e gráficos desta página já estão implementados, mas ainda serão validados com
+                        outras ferramentas e com o equipamento real antes de serem considerados definitivos.
                     </p>
+                    <div class="form-group form-check" style="display: inline-flex; align-items: center; gap: 8px; justify-content: center; margin: 10px 0 0;">
+                        <input type="checkbox" class="form-check-input" id="usarVersaoExperimental21">
+                        <label class="form-check-label" for="usarVersaoExperimental21">Usar versão experimental (habilita formulário e resultados)</label>
+                    </div>
                 </div>
             </div>
 
-            <div class="card mb-4" style="display: none;">
+            <div class="card mb-4" id="cardDescricao21" style="display: none;">
                 <div class="card-body">
                     <h5 class="card-title">Descrição da Função</h5>
                     <p class="card-text">
@@ -60,7 +65,7 @@
                 </div>
             </div>
 
-            <div class="card mb-4" style="display: none;">
+            <div class="card mb-4" id="cardParametros21" style="display: none;">
                 <div class="card-header">
                     <h5 class="card-title">Parâmetros de Entrada</h5>
                 </div>
@@ -70,50 +75,40 @@
                         <!-- Supervisão Direcional -->
                         <div class="form-section">
                             <h6 class="form-section-title">Supervisão Direcional</h6>
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="anguloFaseFase" class="form-label">Ângulo fase-fase [º]</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="anguloFaseFase" placeholder="Ex: 45" min="0" max="90" step="1">
-                                            <span class="input-group-text">º</span>
-                                        </div>
+                            <div class="grid-supervisao-direcional">
+                                <div class="form-group" style="grid-area: f-ang;">
+                                    <label for="anguloFaseFase" class="form-label">Ângulo fase-fase [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="anguloFaseFase" placeholder="Ex: 45" min="0" max="90" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="amplitudeFaseFase" class="form-label">Amplitude fase-fase [º]</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="amplitudeFaseFase" placeholder="Ex: 170" min="90" max="170" step="1">
-                                            <span class="input-group-text">º</span>
-                                        </div>
+                                <div class="form-group" style="grid-area: f-amp;">
+                                    <label for="amplitudeFaseFase" class="form-label">Amplitude fase-fase [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="amplitudeFaseFase" placeholder="Ex: 170" min="90" max="170" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="anguloFaseTerra" class="form-label">Ângulo fase-terra [º]</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="anguloFaseTerra" placeholder="Ex: 45" min="0" max="90" step="1">
-                                            <span class="input-group-text">º</span>
-                                        </div>
+                                <div class="form-group" style="grid-area: t-ang;">
+                                    <label for="anguloFaseTerra" class="form-label">Ângulo fase-terra [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="anguloFaseTerra" placeholder="Ex: 45" min="0" max="90" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="amplitudeFaseTerra" class="form-label">Amplitude fase-terra [º]</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="amplitudeFaseTerra" placeholder="Ex: 170" min="90" max="170" step="1">
-                                            <span class="input-group-text">º</span>
-                                        </div>
+                                <div class="form-group" style="grid-area: t-amp;">
+                                    <label for="amplitudeFaseTerra" class="form-label">Amplitude fase-terra [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="amplitudeFaseTerra" placeholder="Ex: 170" min="90" max="170" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Supervisão I fase-fase -->
-                        <div class="form-section">
+                        <!-- Supervisão I fase-fase: oculta por ora (ajustes coletados mas ainda não usados no cálculo) -->
+                        <div class="form-section" style="display: none;">
                             <h6 class="form-section-title">Supervisão I fase-fase</h6>
                             <div class="row">
                                 <div class="col-6">
@@ -142,8 +137,8 @@
                             </div>
                         </div>
 
-                        <!-- Supervisão I fase-terra -->
-                        <div class="form-section">
+                        <!-- Supervisão I fase-terra: oculta por ora (ajustes coletados mas ainda não usados no cálculo) -->
+                        <div class="form-section" style="display: none;">
                             <h6 class="form-section-title">Supervisão I fase-terra</h6>
                             <div class="row">
                                 <div class="col-6">
@@ -188,8 +183,13 @@
 
                         <!-- Zona 1 -->
                         <div class="form-section">
-                            <h6 class="form-section-title">Zona 1</h6>
-                            <div class="row">
+                            <h6 class="form-section-title">
+                                <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="form-check-input" id="z1UsaZona" checked>
+                                    Zona 1
+                                </label>
+                            </h6>
+                            <div class="row campos-zona-1">
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label for="z1Direcao" class="form-label">Direção</label>
@@ -210,151 +210,93 @@
                                 </div>
                             </div>
 
-                            <!-- Zona 1 - Fase -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 1 - Fase</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z1HabilitacaoFase" class="form-label">Habilitação fase</label>
-                                            <select class="form-select" id="z1HabilitacaoFase">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z1-fase">
-                                        <div class="form-group">
-                                            <label for="z1TipoFase" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z1TipoFase" value="Quadrilateral" readonly>
-                                        </div>
+                            <div class="grid-fase-terra tem-basculamento campos-zona-1">
+                                <h6 class="form-subsection-title" style="grid-area: f-tit;">Zona 1 - Fase</h6>
+                                <div class="form-group" style="grid-area: f-hab;">
+                                    <label for="z1HabilitacaoFase" class="form-label">Habilitação fase</label>
+                                    <select class="form-select" id="z1HabilitacaoFase">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-tipo;">
+                                    <label for="z1TipoFase" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z1TipoFase" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-alcr;">
+                                    <label for="z1AlcanceRFase" class="form-label">Alcance R (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceRFase" placeholder="Ex: 0.77" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-alcxf;">
+                                    <label for="z1AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceXFrenteFase" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-alcxr;">
+                                    <label for="z1AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceXReversoFase" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-blind;">
+                                    <label for="z1AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z1AnguloBlinderRFase" placeholder="Ex: 58" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z1-fase">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceRFase" class="form-label">Alcance R (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceRFase" placeholder="Ex: 0.77" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceXFrenteFase" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceXReversoFase" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z1AnguloBlinderRFase" placeholder="Ex: 58" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AnguloBasculamentoFase" class="form-label">Ângulo basculamento (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z1AnguloBasculamentoFase" placeholder="Ex: -10" min="-30" max="30" step="1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z1-fase" style="grid-area: f-basc;">
+                                    <label for="z1AnguloBasculamentoFase" class="form-label">Ângulo basculamento (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z1AnguloBasculamentoFase" placeholder="Ex: -10" min="-30" max="30" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Zona 1 - Terra -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 1 - Terra</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z1HabilitacaoTerra" class="form-label">Habilitação terra</label>
-                                            <select class="form-select" id="z1HabilitacaoTerra">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z1-terra">
-                                        <div class="form-group">
-                                            <label for="z1TipoTerra" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z1TipoTerra" value="Quadrilateral" readonly>
-                                        </div>
+                                <h6 class="form-subsection-title" style="grid-area: t-tit;">Zona 1 - Terra</h6>
+                                <div class="form-group" style="grid-area: t-hab;">
+                                    <label for="z1HabilitacaoTerra" class="form-label">Habilitação terra</label>
+                                    <select class="form-select" id="z1HabilitacaoTerra">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-tipo;">
+                                    <label for="z1TipoTerra" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z1TipoTerra" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-modkn;">
+                                    <label for="z1ModuloKn" class="form-label">Módulo kn</label>
+                                    <input type="number" class="form-control form-control-short" id="z1ModuloKn" placeholder="Ex: 0.78" min="0" max="10" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-angkn;">
+                                    <label for="z1AnguloKn" class="form-label">Ângulo kn [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z1AnguloKn" placeholder="Ex: 24" min="0" max="359.9" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z1-terra">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1ModuloKn" class="form-label">Módulo kn</label>
-                                                <input type="number" class="form-control form-control-short" id="z1ModuloKn" placeholder="Ex: 0.78" min="0" max="10" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AnguloKn" class="form-label">Ângulo kn [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z1AnguloKn" placeholder="Ex: 24" min="0" max="359.9" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-alcr;">
+                                    <label for="z1AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceRTerra" placeholder="Ex: 1.16" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-alcxf;">
+                                    <label for="z1AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceXFrenteTerra" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-alcxr;">
+                                    <label for="z1AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z1AlcanceXReversoTerra" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-blind;">
+                                    <label for="z1AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z1AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceRTerra" placeholder="Ex: 1.16" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceXFrenteTerra" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z1AlcanceXReversoTerra" placeholder="Ex: 0.31" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z1AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z1AnguloBasculamentoTerra" class="form-label">Ângulo basculamento (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z1AnguloBasculamentoTerra" placeholder="Ex: -10" min="-30" max="30" step="1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                </div>
+                                <div class="form-group campos-z1-terra" style="grid-area: t-basc;">
+                                    <label for="z1AnguloBasculamentoTerra" class="form-label">Ângulo basculamento (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z1AnguloBasculamentoTerra" placeholder="Ex: -10" min="-30" max="30" step="1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
@@ -362,8 +304,13 @@
 
                         <!-- Zona 2 -->
                         <div class="form-section">
-                            <h6 class="form-section-title">Zona 2</h6>
-                            <div class="row">
+                            <h6 class="form-section-title">
+                                <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="form-check-input" id="z2UsaZona" checked>
+                                    Zona 2
+                                </label>
+                            </h6>
+                            <div class="row campos-zona-2">
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label for="z2Direcao" class="form-label">Direção</label>
@@ -384,133 +331,79 @@
                                 </div>
                             </div>
 
-                            <!-- Zona 2 - Fase -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 2 - Fase</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z2HabilitacaoFase" class="form-label">Habilitação fase</label>
-                                            <select class="form-select" id="z2HabilitacaoFase">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z2-fase">
-                                        <div class="form-group">
-                                            <label for="z2TipoFase" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z2TipoFase" value="Quadrilateral" readonly>
-                                        </div>
+                            <div class="grid-fase-terra campos-zona-2">
+                                <h6 class="form-subsection-title" style="grid-area: f-tit;">Zona 2 - Fase</h6>
+                                <div class="form-group" style="grid-area: f-hab;">
+                                    <label for="z2HabilitacaoFase" class="form-label">Habilitação fase</label>
+                                    <select class="form-select" id="z2HabilitacaoFase">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z2-fase" style="grid-area: f-tipo;">
+                                    <label for="z2TipoFase" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z2TipoFase" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z2-fase" style="grid-area: f-alcr;">
+                                    <label for="z2AlcanceRFase" class="form-label">Alcance R (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceRFase" placeholder="Ex: 0.9" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-fase" style="grid-area: f-alcxf;">
+                                    <label for="z2AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceXFrenteFase" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-fase" style="grid-area: f-alcxr;">
+                                    <label for="z2AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceXReversoFase" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-fase" style="grid-area: f-blind;">
+                                    <label for="z2AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z2AnguloBlinderRFase" placeholder="Ex: 58" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z2-fase">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceRFase" class="form-label">Alcance R (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceRFase" placeholder="Ex: 0.9" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceXFrenteFase" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceXReversoFase" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z2AnguloBlinderRFase" placeholder="Ex: 58" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Zona 2 - Terra -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 2 - Terra</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z2HabilitacaoTerra" class="form-label">Habilitação terra</label>
-                                            <select class="form-select" id="z2HabilitacaoTerra">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z2-terra">
-                                        <div class="form-group">
-                                            <label for="z2TipoTerra" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z2TipoTerra" value="Quadrilateral" readonly>
-                                        </div>
+                                <h6 class="form-subsection-title" style="grid-area: t-tit;">Zona 2 - Terra</h6>
+                                <div class="form-group" style="grid-area: t-hab;">
+                                    <label for="z2HabilitacaoTerra" class="form-label">Habilitação terra</label>
+                                    <select class="form-select" id="z2HabilitacaoTerra">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-tipo;">
+                                    <label for="z2TipoTerra" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z2TipoTerra" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-modkn;">
+                                    <label for="z2ModuloKn" class="form-label">Módulo kn</label>
+                                    <input type="number" class="form-control form-control-short" id="z2ModuloKn" placeholder="Ex: 0.78" min="0" max="10" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-angkn;">
+                                    <label for="z2AnguloKn" class="form-label">Ângulo kn [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z2AnguloKn" placeholder="Ex: 24" min="0" max="359.9" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z2-terra">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2ModuloKn" class="form-label">Módulo kn</label>
-                                                <input type="number" class="form-control form-control-short" id="z2ModuloKn" placeholder="Ex: 0.78" min="0" max="10" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AnguloKn" class="form-label">Ângulo kn [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z2AnguloKn" placeholder="Ex: 24" min="0" max="359.9" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceRTerra" placeholder="Ex: 1.3" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceXFrenteTerra" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z2AlcanceXReversoTerra" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z2AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z2AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-alcr;">
+                                    <label for="z2AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceRTerra" placeholder="Ex: 1.3" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-alcxf;">
+                                    <label for="z2AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceXFrenteTerra" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-alcxr;">
+                                    <label for="z2AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z2AlcanceXReversoTerra" placeholder="Ex: 0.4" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z2-terra" style="grid-area: t-blind;">
+                                    <label for="z2AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z2AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
@@ -518,8 +411,13 @@
 
                         <!-- Zona 3 -->
                         <div class="form-section">
-                            <h6 class="form-section-title">Zona 3</h6>
-                            <div class="row">
+                            <h6 class="form-section-title">
+                                <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="form-check-input" id="z3UsaZona" checked>
+                                    Zona 3
+                                </label>
+                            </h6>
+                            <div class="row campos-zona-3">
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label for="z3Direcao" class="form-label">Direção</label>
@@ -540,133 +438,79 @@
                                 </div>
                             </div>
 
-                            <!-- Zona 3 - Fase -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 3 - Fase</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z3HabilitacaoFase" class="form-label">Habilitação fase</label>
-                                            <select class="form-select" id="z3HabilitacaoFase">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z3-fase">
-                                        <div class="form-group">
-                                            <label for="z3TipoFase" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z3TipoFase" value="Quadrilateral" readonly>
-                                        </div>
+                            <div class="grid-fase-terra campos-zona-3">
+                                <h6 class="form-subsection-title" style="grid-area: f-tit;">Zona 3 - Fase</h6>
+                                <div class="form-group" style="grid-area: f-hab;">
+                                    <label for="z3HabilitacaoFase" class="form-label">Habilitação fase</label>
+                                    <select class="form-select" id="z3HabilitacaoFase">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z3-fase" style="grid-area: f-tipo;">
+                                    <label for="z3TipoFase" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z3TipoFase" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z3-fase" style="grid-area: f-alcr;">
+                                    <label for="z3AlcanceRFase" class="form-label">Alcance R (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceRFase" placeholder="Ex: 0.36" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-fase" style="grid-area: f-alcxf;">
+                                    <label for="z3AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceXFrenteFase" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-fase" style="grid-area: f-alcxr;">
+                                    <label for="z3AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceXReversoFase" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-fase" style="grid-area: f-blind;">
+                                    <label for="z3AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z3AnguloBlinderRFase" placeholder="Ex: 68" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z3-fase">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceRFase" class="form-label">Alcance R (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceRFase" placeholder="Ex: 0.36" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceXFrenteFase" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceXReversoFase" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z3AnguloBlinderRFase" placeholder="Ex: 68" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Zona 3 - Terra -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 3 - Terra</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z3HabilitacaoTerra" class="form-label">Habilitação terra</label>
-                                            <select class="form-select" id="z3HabilitacaoTerra">
-                                                <option value="inativo">Inativo</option>
-                                                <option value="ativo" selected>Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z3-terra">
-                                        <div class="form-group">
-                                            <label for="z3TipoTerra" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z3TipoTerra" value="Quadrilateral" readonly>
-                                        </div>
+                                <h6 class="form-subsection-title" style="grid-area: t-tit;">Zona 3 - Terra</h6>
+                                <div class="form-group" style="grid-area: t-hab;">
+                                    <label for="z3HabilitacaoTerra" class="form-label">Habilitação terra</label>
+                                    <select class="form-select" id="z3HabilitacaoTerra">
+                                        <option value="inativo">Inativo</option>
+                                        <option value="ativo" selected>Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-tipo;">
+                                    <label for="z3TipoTerra" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z3TipoTerra" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-modkn;">
+                                    <label for="z3ModuloKn" class="form-label">Módulo kn</label>
+                                    <input type="number" class="form-control form-control-short" id="z3ModuloKn" placeholder="Ex: 0.94" min="0" max="10" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-angkn;">
+                                    <label for="z3AnguloKn" class="form-label">Ângulo kn [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z3AnguloKn" placeholder="Ex: 5.1" min="0" max="359.9" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z3-terra">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3ModuloKn" class="form-label">Módulo kn</label>
-                                                <input type="number" class="form-control form-control-short" id="z3ModuloKn" placeholder="Ex: 0.94" min="0" max="10" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AnguloKn" class="form-label">Ângulo kn [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z3AnguloKn" placeholder="Ex: 5.1" min="0" max="359.9" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceRTerra" placeholder="Ex: 0.56" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceXFrenteTerra" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z3AlcanceXReversoTerra" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z3AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z3AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-alcr;">
+                                    <label for="z3AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceRTerra" placeholder="Ex: 0.56" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-alcxf;">
+                                    <label for="z3AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceXFrenteTerra" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-alcxr;">
+                                    <label for="z3AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z3AlcanceXReversoTerra" placeholder="Ex: 0.15" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z3-terra" style="grid-area: t-blind;">
+                                    <label for="z3AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z3AnguloBlinderRTerra" placeholder="Ex: 58" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
@@ -674,8 +518,13 @@
 
                         <!-- Zona 4 -->
                         <div class="form-section">
-                            <h6 class="form-section-title">Zona 4</h6>
-                            <div class="row">
+                            <h6 class="form-section-title">
+                                <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="form-check-input" id="z4UsaZona">
+                                    Zona 4
+                                </label>
+                            </h6>
+                            <div class="row campos-zona-4" style="display: none;">
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label for="z4Direcao" class="form-label">Direção</label>
@@ -696,133 +545,79 @@
                                 </div>
                             </div>
 
-                            <!-- Zona 4 - Fase -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 4 - Fase</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z4HabilitacaoFase" class="form-label">Habilitação fase</label>
-                                            <select class="form-select" id="z4HabilitacaoFase">
-                                                <option value="inativo" selected>Inativo</option>
-                                                <option value="ativo">Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z4-fase" style="display: none;">
-                                        <div class="form-group">
-                                            <label for="z4TipoFase" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z4TipoFase" value="Quadrilateral" readonly>
-                                        </div>
+                            <div class="grid-fase-terra campos-zona-4" style="display: none;">
+                                <h6 class="form-subsection-title" style="grid-area: f-tit;">Zona 4 - Fase</h6>
+                                <div class="form-group" style="grid-area: f-hab;">
+                                    <label for="z4HabilitacaoFase" class="form-label">Habilitação fase</label>
+                                    <select class="form-select" id="z4HabilitacaoFase">
+                                        <option value="inativo" selected>Inativo</option>
+                                        <option value="ativo">Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z4-fase" style="grid-area: f-tipo; display: none;">
+                                    <label for="z4TipoFase" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z4TipoFase" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z4-fase" style="grid-area: f-alcr; display: none;">
+                                    <label for="z4AlcanceRFase" class="form-label">Alcance R (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceRFase" placeholder="Ex: 1.0" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-fase" style="grid-area: f-alcxf; display: none;">
+                                    <label for="z4AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceXFrenteFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-fase" style="grid-area: f-alcxr; display: none;">
+                                    <label for="z4AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceXReversoFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-fase" style="grid-area: f-blind; display: none;">
+                                    <label for="z4AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z4AnguloBlinderRFase" placeholder="Ex: 60" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z4-fase" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceRFase" class="form-label">Alcance R (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceRFase" placeholder="Ex: 1.0" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceXFrenteFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceXReversoFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z4AnguloBlinderRFase" placeholder="Ex: 60" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Zona 4 - Terra -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 4 - Terra</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z4HabilitacaoTerra" class="form-label">Habilitação terra</label>
-                                            <select class="form-select" id="z4HabilitacaoTerra">
-                                                <option value="inativo" selected>Inativo</option>
-                                                <option value="ativo">Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z4-terra" style="display: none;">
-                                        <div class="form-group">
-                                            <label for="z4TipoTerra" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z4TipoTerra" value="Quadrilateral" readonly>
-                                        </div>
+                                <h6 class="form-subsection-title" style="grid-area: t-tit;">Zona 4 - Terra</h6>
+                                <div class="form-group" style="grid-area: t-hab;">
+                                    <label for="z4HabilitacaoTerra" class="form-label">Habilitação terra</label>
+                                    <select class="form-select" id="z4HabilitacaoTerra">
+                                        <option value="inativo" selected>Inativo</option>
+                                        <option value="ativo">Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-tipo; display: none;">
+                                    <label for="z4TipoTerra" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z4TipoTerra" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-modkn; display: none;">
+                                    <label for="z4ModuloKn" class="form-label">Módulo kn</label>
+                                    <input type="number" class="form-control form-control-short" id="z4ModuloKn" placeholder="Ex: 1.0" min="0" max="10" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-angkn; display: none;">
+                                    <label for="z4AnguloKn" class="form-label">Ângulo kn [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z4AnguloKn" placeholder="Ex: 0" min="0" max="359.9" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z4-terra" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4ModuloKn" class="form-label">Módulo kn</label>
-                                                <input type="number" class="form-control form-control-short" id="z4ModuloKn" placeholder="Ex: 1.0" min="0" max="10" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AnguloKn" class="form-label">Ângulo kn [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z4AnguloKn" placeholder="Ex: 0" min="0" max="359.9" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceRTerra" placeholder="Ex: 1.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceXFrenteTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z4AlcanceXReversoTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z4AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z4AnguloBlinderRTerra" placeholder="Ex: 60" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-alcr; display: none;">
+                                    <label for="z4AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceRTerra" placeholder="Ex: 1.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-alcxf; display: none;">
+                                    <label for="z4AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceXFrenteTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-alcxr; display: none;">
+                                    <label for="z4AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z4AlcanceXReversoTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z4-terra" style="grid-area: t-blind; display: none;">
+                                    <label for="z4AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z4AnguloBlinderRTerra" placeholder="Ex: 60" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
@@ -830,8 +625,13 @@
 
                         <!-- Zona 5 -->
                         <div class="form-section">
-                            <h6 class="form-section-title">Zona 5</h6>
-                            <div class="row">
+                            <h6 class="form-section-title">
+                                <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                                    <input type="checkbox" class="form-check-input" id="z5UsaZona">
+                                    Zona 5
+                                </label>
+                            </h6>
+                            <div class="row campos-zona-5" style="display: none;">
                                 <div class="col-6">
                                     <div class="form-group">
                                         <label for="z5Direcao" class="form-label">Direção</label>
@@ -852,133 +652,79 @@
                                 </div>
                             </div>
 
-                            <!-- Zona 5 - Fase -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 5 - Fase</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z5HabilitacaoFase" class="form-label">Habilitação fase</label>
-                                            <select class="form-select" id="z5HabilitacaoFase">
-                                                <option value="inativo" selected>Inativo</option>
-                                                <option value="ativo">Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z5-fase" style="display: none;">
-                                        <div class="form-group">
-                                            <label for="z5TipoFase" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z5TipoFase" value="Quadrilateral" readonly>
-                                        </div>
+                            <div class="grid-fase-terra campos-zona-5" style="display: none;">
+                                <h6 class="form-subsection-title" style="grid-area: f-tit;">Zona 5 - Fase</h6>
+                                <div class="form-group" style="grid-area: f-hab;">
+                                    <label for="z5HabilitacaoFase" class="form-label">Habilitação fase</label>
+                                    <select class="form-select" id="z5HabilitacaoFase">
+                                        <option value="inativo" selected>Inativo</option>
+                                        <option value="ativo">Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z5-fase" style="grid-area: f-tipo; display: none;">
+                                    <label for="z5TipoFase" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z5TipoFase" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z5-fase" style="grid-area: f-alcr; display: none;">
+                                    <label for="z5AlcanceRFase" class="form-label">Alcance R (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceRFase" placeholder="Ex: 1.0" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-fase" style="grid-area: f-alcxf; display: none;">
+                                    <label for="z5AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceXFrenteFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-fase" style="grid-area: f-alcxr; display: none;">
+                                    <label for="z5AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceXReversoFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-fase" style="grid-area: f-blind; display: none;">
+                                    <label for="z5AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z5AnguloBlinderRFase" placeholder="Ex: 60" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z5-fase" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceRFase" class="form-label">Alcance R (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceRFase" placeholder="Ex: 1.0" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceXFrenteFase" class="form-label">Alcance X - Frente (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceXFrenteFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceXReversoFase" class="form-label">Alcance X - Reverso (Fase)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceXReversoFase" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AnguloBlinderRFase" class="form-label">Ângulo blinder R (Fase) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z5AnguloBlinderRFase" placeholder="Ex: 60" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Zona 5 - Terra -->
-                            <div class="form-subsection">
-                                <h6 class="form-subsection-title">Zona 5 - Terra</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <label for="z5HabilitacaoTerra" class="form-label">Habilitação terra</label>
-                                            <select class="form-select" id="z5HabilitacaoTerra">
-                                                <option value="inativo" selected>Inativo</option>
-                                                <option value="ativo">Ativo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-6 campos-z5-terra" style="display: none;">
-                                        <div class="form-group">
-                                            <label for="z5TipoTerra" class="form-label">Tipo</label>
-                                            <input type="text" class="form-control form-control-short" id="z5TipoTerra" value="Quadrilateral" readonly>
-                                        </div>
+                                <h6 class="form-subsection-title" style="grid-area: t-tit;">Zona 5 - Terra</h6>
+                                <div class="form-group" style="grid-area: t-hab;">
+                                    <label for="z5HabilitacaoTerra" class="form-label">Habilitação terra</label>
+                                    <select class="form-select" id="z5HabilitacaoTerra">
+                                        <option value="inativo" selected>Inativo</option>
+                                        <option value="ativo">Ativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-tipo; display: none;">
+                                    <label for="z5TipoTerra" class="form-label">Tipo</label>
+                                    <input type="text" class="form-control form-control-short" id="z5TipoTerra" value="Quadrilateral" readonly>
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-modkn; display: none;">
+                                    <label for="z5ModuloKn" class="form-label">Módulo kn</label>
+                                    <input type="number" class="form-control form-control-short" id="z5ModuloKn" placeholder="Ex: 1.0" min="0" max="10" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-angkn; display: none;">
+                                    <label for="z5AnguloKn" class="form-label">Ângulo kn [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z5AnguloKn" placeholder="Ex: 0" min="0" max="359.9" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
-                                <div class="campos-z5-terra" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5ModuloKn" class="form-label">Módulo kn</label>
-                                                <input type="number" class="form-control form-control-short" id="z5ModuloKn" placeholder="Ex: 1.0" min="0" max="10" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AnguloKn" class="form-label">Ângulo kn [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z5AnguloKn" placeholder="Ex: 0" min="0" max="359.9" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceRTerra" placeholder="Ex: 1.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceXFrenteTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
-                                                <input type="number" class="form-control form-control-short" id="z5AlcanceXReversoTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <label for="z5AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="z5AnguloBlinderRTerra" placeholder="Ex: 60" min="45" max="90" step="0.1">
-                                                    <span class="input-group-text">º</span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-alcr; display: none;">
+                                    <label for="z5AlcanceRTerra" class="form-label">Alcance R (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceRTerra" placeholder="Ex: 1.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-alcxf; display: none;">
+                                    <label for="z5AlcanceXFrenteTerra" class="form-label">Alcance X - Frente (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceXFrenteTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-alcxr; display: none;">
+                                    <label for="z5AlcanceXReversoTerra" class="form-label">Alcance X - Reverso (Terra)</label>
+                                    <input type="number" class="form-control form-control-short" id="z5AlcanceXReversoTerra" placeholder="Ex: 0.5" min="0.05" max="500" step="0.01">
+                                </div>
+                                <div class="form-group campos-z5-terra" style="grid-area: t-blind; display: none;">
+                                    <label for="z5AnguloBlinderRTerra" class="form-label">Ângulo blinder R (Terra) [º]</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="z5AnguloBlinderRTerra" placeholder="Ex: 60" min="45" max="90" step="0.1">
+                                        <span class="input-group-text">º</span>
                                     </div>
                                 </div>
                             </div>
@@ -992,7 +738,7 @@
                 </div>
             </div>
             
-            <div class="card" style="display: none;">
+            <div class="card" id="cardResultados21" style="display: none;">
                 <div class="card-header">
                     <h5 class="card-title">Resultados</h5>
                 </div>

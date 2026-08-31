@@ -172,10 +172,13 @@ function initialBox(Rmin, Rmax, Xmin, Xmax) {
 function buildRegionFromPolarLines(lines, bounds) {
     let poly = initialBox(bounds.Rmin, bounds.Rmax, bounds.Xmin, bounds.Xmax);
     const used = [];
-    
+
     for (const Lp of lines) {
+        if (!Lp.keepSide) {
+            throw new Error(`Reta "${Lp.nome || '?'}" sem keepSide definido — bug em prepararRetas*.`);
+        }
         const L = polarParaCartesianoEstavel(Lp.R0, Lp.X0, Lp.thetaDeg);
-        const newPoly = clipPolygonWithHalfPlane(poly, L, Lp.keepSide || "left");
+        const newPoly = clipPolygonWithHalfPlane(poly, L, Lp.keepSide);
         
         if (!newPoly.length) {
             return { polygon: [], usedLines: used };
@@ -231,63 +234,45 @@ function clipLineToBox(L, Rmin, Rmax, Xmin, Xmax) {
 }
 
 /**
- * Normaliza ângulo para o intervalo [0, 360)
- * @param {number} a - Ângulo em graus
- * @returns {number} Ângulo normalizado
+ * Calcula os limites do box inicial de clipping a partir das intersecções par-a-par
+ * das retas cartesianas fornecidas, mais a origem. Substitui um box de tamanho fixo
+ * (que não cobre o polígono quando os alcances R e X têm ordens de grandeza muito
+ * diferentes) por um dimensionado a partir dos candidatos a vértice reais.
+ * Intersecções que estouram um teto (múltiplo de naturalScale) são descartadas antes
+ * de entrar no cálculo — pares de retas quase paralelas (determinante pequeno, mas
+ * acima do EPS de intersectLines) geram pontos numericamente absurdos que, se
+ * usados, inflacionariam o box a ponto de prejudicar a precisão do clipping.
+ * @param {Array} cartesianLines - Array de retas {a, b, c}
+ * @param {number} naturalScale - Escala natural do problema (ex.: maior alcance da zona)
+ * @returns {Object} Limites {Rmin, Rmax, Xmin, Xmax}
  */
-function normDeg(a) {
-    a %= 360;
-    if (a < 0) a += 360;
-    return a;
-}
+function computeBoundsFromLines(cartesianLines, naturalScale) {
+    const scale = naturalScale > 0 ? naturalScale : 1;
+    const cap = 50 * scale;
+    const margem = 1.5;
+    const piso = scale * margem;
 
-/**
- * Calcula a menor diferença angular entre dois ângulos
- * @param {number} a - Primeiro ângulo em graus
- * @param {number} b - Segundo ângulo em graus
- * @returns {number} Diferença angular no intervalo (-180, 180]
- */
-function signedSmallestDeltaDeg(a, b) {
-    let d = normDeg(b) - normDeg(a);
-    if (d > 180) d -= 360;
-    if (d <= -180) d += 360;
-    return d;
-}
-
-/**
- * Calcula o ponto âncora para seleção automática de lado das retas
- * @param {number} theta1 - Ângulo da reta r1 em graus
- * @param {number} theta6 - Ângulo da reta r6 em graus
- * @param {Object} bounds - Limites {Rmin, Rmax, Xmin, Xmax}
- * @returns {Object} Ponto âncora {R, X}
- */
-function computeAnchor(theta1, theta6, bounds) {
-    const d = signedSmallestDeltaDeg(theta1, theta6);
-    const beta = theta1 + d / 2; // Bissetriz do menor ângulo entre r1 e r6
-    const span = Math.max(bounds.Rmax - bounds.Rmin, bounds.Xmax - bounds.Xmin);
-    const eps = 0.01 * span; // 1% da escala
-    const t = beta * Math.PI / 180;
-    return { R: eps * Math.cos(t), X: eps * Math.sin(t) };
-}
-
-/**
- * Determina automaticamente o lado a manter para cada reta
- * @param {Array} lines - Array de retas {R0, X0, thetaDeg}
- * @param {Object} anchor - Ponto âncora {R, X}
- * @returns {Array} Array de retas com campo keepSide adicionado
- */
-function autoSides(lines, anchor) {
-    return lines.map(l => {
-        const L = polarParaCartesianoEstavel(l.R0, l.X0, l.thetaDeg);
-        let s = lineEval(L, anchor.R, anchor.X);
-        
-        // Se ancorou exatamente na linha, perturba um pouco
-        if (Math.abs(s) < 1e-12) {
-            s = lineEval(L, anchor.R + 1e-6, anchor.X + 2e-6);
+    const pts = [{ R: 0, X: 0 }];
+    for (let i = 0; i < cartesianLines.length; i++) {
+        for (let j = i + 1; j < cartesianLines.length; j++) {
+            const P = intersectLines(cartesianLines[i], cartesianLines[j]);
+            if (P && Math.abs(P.R) <= cap && Math.abs(P.X) <= cap) {
+                pts.push(P);
+            }
         }
-        
-        return { ...l, keepSide: (s >= 0 ? 'left' : 'right') };
-    });
+    }
+
+    const RminCand = Math.min(...pts.map(p => p.R));
+    const RmaxCand = Math.max(...pts.map(p => p.R));
+    const XminCand = Math.min(...pts.map(p => p.X));
+    const XmaxCand = Math.max(...pts.map(p => p.X));
+
+    return {
+        Rmin: Math.min(RminCand * margem, -piso),
+        Rmax: Math.max(RmaxCand * margem, piso),
+        Xmin: Math.min(XminCand * margem, -piso),
+        Xmax: Math.max(XmaxCand * margem, piso)
+    };
 }
 
 // Exportar funções para uso global
@@ -300,8 +285,5 @@ window.clipPolygonWithHalfPlane = clipPolygonWithHalfPlane;
 window.initialBox = initialBox;
 window.buildRegionFromPolarLines = buildRegionFromPolarLines;
 window.clipLineToBox = clipLineToBox;
-window.normDeg = normDeg;
-window.signedSmallestDeltaDeg = signedSmallestDeltaDeg;
-window.computeAnchor = computeAnchor;
-window.autoSides = autoSides;
+window.computeBoundsFromLines = computeBoundsFromLines;
 
