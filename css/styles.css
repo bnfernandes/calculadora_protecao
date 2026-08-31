@@ -507,6 +507,39 @@ body {
   color: #fff;
 }
 
+/* Botões "Z1".."Z5" (ponto de teste da função 21) — mesma linguagem visual
+   do .btn-equilibrar, só mais largo (rótulo de 2 caracteres em vez de 1) e
+   com estado disabled: zona desmarcada ou sem fase-terra habilitada não tem
+   kn de fato pra oferecer, então o botão fica inoperante e visualmente
+   apagado em vez de simplesmente não fazer nada ao clicar. */
+.btn-preencher-zona {
+  flex-shrink: 0;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  color: #495057;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-preencher-zona:hover:not(:disabled) {
+  background-color: #e30613;
+  border-color: #e30613;
+  color: #fff;
+}
+
+.btn-preencher-zona:disabled {
+  background-color: #f0f0f0;
+  border-color: #e5e5e5;
+  color: #bbb;
+  cursor: not-allowed;
+}
+
 /* Utilitários */
 .text-center {
   text-align: center;

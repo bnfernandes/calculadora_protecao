@@ -546,7 +546,12 @@ function calcularProtecao21() {
         
         // Criar gráficos separados
         criarGraficosFaseFaseFaseTerra(resultados);
-        
+
+        // Formulário de ponto de teste (Módulo/Ângulo ou R/X) abaixo dos gráficos
+        if (typeof garantirFormularioPontoTeste21 === 'function') {
+            garantirFormularioPontoTeste21();
+        }
+
     } catch (erro) {
         console.error('Erro no cálculo:', erro);
         alert('Erro ao calcular: ' + erro.message);
