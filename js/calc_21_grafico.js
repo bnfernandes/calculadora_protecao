@@ -471,8 +471,7 @@ function garantirFormularioPontoTeste21() {
     div.innerHTML = `
         <h6 class="resultado-titulo">Ponto de Teste (plano Z)</h6>
         <p class="text-muted" style="font-size: 13px; margin-bottom: 15px;">
-            Informe o módulo e ângulo da impedância, ou diretamente R e X — preencher um par calcula o outro.
-            O ponto é desenhado nos dois gráficos acima.
+            Informe o módulo e ângulo da impedância, ou diretamente R e X.
         </p>
         <div class="row">
             <div class="col-3">
@@ -501,9 +500,7 @@ function garantirFormularioPontoTeste21() {
             </div>
         </div>
         <p class="text-muted" style="font-size: 13px; margin: 15px 0;">
-            Informando também uma corrente I, calcula as tensões e correntes de teste que reproduzem esse Z —
-            trifásico (Z=V/I) e monofásico (Z=V<sub>a</sub>/(I<sub>a</sub>·(1+k<sub>n</sub>))), esse último
-            precisando do k<sub>n</sub> (mesma compensação homopolar usada nas zonas).
+            Informando também uma corrente I, calcula as tensões e correntes de teste que reproduzem esse Z.
         </p>
         <div class="row">
             <div class="col-4">
@@ -696,8 +693,18 @@ function exibirVICalculadas21() {
     html += '<h6 class="resultado-titulo">Falta monofásica</h6>';
     html += '<div class="table-responsive"><table class="tabela-pontos-teste">';
     html += '<thead><tr><th>Corrente</th><th>Tensão</th></tr></thead><tbody>';
-    html += `<tr><td>I<sub>a</sub> = ${corrente.toFixed(3)}∠0.0° A</td>` +
-        `<td>V<sub>a</sub> = ${moduloVa.toFixed(3)}∠${anguloVa.toFixed(1)}° V</td></tr>`;
+    // Só a fase A participa da falta monofásica — B e C entram com magnitude
+    // zero no ângulo nominal da fase (mesma referência 0°/240°/120° da tabela
+    // trifásica), pra dar uma tabela completa de injeção (A/B/C, letras
+    // maiúsculas iguais à trifásica) em vez de só a fase que atua.
+    [
+        ['A', corrente, 0, moduloVa, anguloVa],
+        ['B', 0, 240, 0, 240],
+        ['C', 0, 120, 0, 120]
+    ].forEach(([fase, magI, angI, magV, angV]) => {
+        html += `<tr><td>I<sub>${fase}</sub> = ${magI.toFixed(3)}∠${angI.toFixed(1)}° A</td>` +
+            `<td>V<sub>${fase}</sub> = ${magV.toFixed(3)}∠${angV.toFixed(1)}° V</td></tr>`;
+    });
     html += '</tbody></table></div>';
     html += `<p class="text-muted" style="font-size: 12px; margin-top: 8px;">1+k<sub>n</sub> = ${moduloSoma.toFixed(4)}∠${anguloSoma.toFixed(2)}°</p>`;
     html += '</div>';
