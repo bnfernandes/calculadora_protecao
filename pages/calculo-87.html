@@ -618,15 +618,16 @@
                     <h5 class="card-title">Resultados</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Gráfico Diferencial primeiro — mais importante que as contas
+                         pra uma leitura rápida do resultado. Começa oculto (senão os
+                         500px de altura reservada ficam vazios antes do 1º cálculo,
+                         empurrando pra baixo os cards seguintes) — reaparece em
+                         calcularDiferencial87 (calc_87.js), junto com resultadosGerados87 -->
+                    <div id="grafico-diferencial" style="width: 100%; height: 500px; margin-bottom: 30px; display: none;"></div>
+
                     <div class="results-area" id="resultados">
                         <p class="text-center text-muted">Os resultados do cálculo aparecerão aqui após o processamento.</p>
                     </div>
-                    
-                    <!-- Gráfico Diferencial: começa oculto (senão os 500px de altura
-                         reservada ficam vazios antes do 1º cálculo, empurrando pra
-                         baixo os cards seguintes) — reaparece em calcularDiferencial87
-                         (calc_87.js), junto com resultadosGerados87 -->
-                    <div id="grafico-diferencial" style="width: 100%; height: 500px; margin-top: 30px; display: none;"></div>
                 </div>
             </div>
 
