@@ -529,20 +529,34 @@ function calcularProtecao21() {
             resultados.zonas.push(resultadoZona);
         });
 
-        // Exibir resultados
-        exibirResultados21(dados, resultados);
-        
-        // Exibir debug das retas (se função existir)
-        if (typeof exibirDebugRetas === 'function') {
-            exibirDebugRetas(dados, resultados);
-        }
-        
-        // Criar gráficos separados
+        // Captura ANTES de limpar #resultados — senão o checkbox já não
+        // existe mais quando criarAreaDebug21 for procurar seu estado anterior
+        const debugEstavaMarcado = document.getElementById('mostrarDebug21')?.checked || false;
+
+        // Monta a área de resultados do zero a cada cálculo (snapshot), na
+        // ordem visual pedida: gráficos, formulário de ponto de teste (Z/kn/I)
+        // e só então — atrás do checkbox "debug" — os números detalhados
+        // (título, Supervisão Direcional, zonas, equações, retas), já que o
+        // usuário comum só precisa dos gráficos e do ponto de teste.
+        const areaResultados = document.getElementById('resultados');
+        if (areaResultados) areaResultados.innerHTML = '';
+
+        // Gráficos
         criarGraficosFaseFaseFaseTerra(resultados);
 
         // Formulário de ponto de teste (Módulo/Ângulo ou R/X) abaixo dos gráficos
         if (typeof garantirFormularioPontoTeste21 === 'function') {
             garantirFormularioPontoTeste21();
+        }
+
+        // Checkbox "debug" + área de detalhes (oculta por padrão) abaixo do
+        // formulário de ponto de teste
+        if (typeof criarAreaDebug21 === 'function') {
+            criarAreaDebug21(debugEstavaMarcado);
+        }
+        exibirResultados21(dados, resultados);
+        if (typeof exibirDebugRetas === 'function') {
+            exibirDebugRetas(dados, resultados);
         }
 
     } catch (erro) {

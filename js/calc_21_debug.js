@@ -8,12 +8,61 @@
 // ============================================================================
 
 /**
+ * Cria o checkbox "debug" e o container (#detalhesDebug21, oculto por padrão)
+ * onde exibirResultados21 (calc_21_eq.js) e exibirDebugRetas (abaixo) colocam
+ * o título, Supervisão Direcional, resultados numéricos por zona, equações e
+ * as tabelas de retas — tudo o que não é gráfico nem o formulário de ponto de
+ * teste, então só interessa a quem está de fato depurando/validando a conta.
+ * Chamado a cada "Calcular", depois dos gráficos e do formulário de ponto de
+ * teste (ordem visual: gráficos -> ponto de teste -> checkbox -> detalhes).
+ * @param {boolean} estavaMarcado - Estado do checkbox antes de #resultados
+ * ser limpo pra este novo cálculo (calc_21.js captura isso ANTES de limpar,
+ * já que por aqui o checkbox anterior já não existe mais). Diferente do
+ * formulário de ponto de teste (que reseta a cada "Calcular"), aqui o
+ * usuário normalmente está comparando números enquanto ajusta os
+ * parâmetros, faz sentido a área de debug continuar aberta se já estava.
+ */
+function criarAreaDebug21(estavaMarcado) {
+    const areaResultados = document.getElementById('resultados');
+    if (!areaResultados) return;
+
+    const areaCheckboxAnterior = document.getElementById('areaCheckboxDebug21');
+    if (areaCheckboxAnterior) areaCheckboxAnterior.remove();
+    const detalhesAnteriores = document.getElementById('detalhesDebug21');
+    if (detalhesAnteriores) detalhesAnteriores.remove();
+
+    const areaCheckbox = document.createElement('div');
+    areaCheckbox.className = 'resultado-secao mt-4';
+    areaCheckbox.id = 'areaCheckboxDebug21';
+    areaCheckbox.innerHTML = `
+        <label class="form-check-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" class="form-check-input" id="mostrarDebug21" style="margin: 0;">
+            🔍 Exibir detalhes de depuração
+        </label>
+    `;
+    areaResultados.appendChild(areaCheckbox);
+
+    const detalhes = document.createElement('div');
+    detalhes.id = 'detalhesDebug21';
+    detalhes.style.display = estavaMarcado ? '' : 'none';
+    areaResultados.appendChild(detalhes);
+
+    const checkbox = document.getElementById('mostrarDebug21');
+    checkbox.checked = estavaMarcado;
+    checkbox.addEventListener('change', () => {
+        detalhes.style.display = checkbox.checked ? '' : 'none';
+    });
+}
+
+/**
  * Adiciona seção de debug aos resultados mostrando as retas em formato polar e cartesiano
  * @param {Object} dados - Dados de entrada do formulário
  * @param {Object} resultados - Resultados calculados
  */
 function exibirDebugRetas(dados, resultados) {
-    const areaResultados = document.getElementById('resultados');
+    // Mesma área de debug usada por exibirResultados21 (calc_21_eq.js) —
+    // ver criarAreaDebug21 logo abaixo.
+    const areaResultados = document.getElementById('detalhesDebug21');
     if (!areaResultados) return;
 
     let html = '<div class="resultado-secao mb-4" style="background-color: #fff3cd; border: 2px solid #ffc107;">';
@@ -293,3 +342,4 @@ function gerarResumoInvariantes(vertices) {
 
 // Exportar funções
 window.exibirDebugRetas = exibirDebugRetas;
+window.criarAreaDebug21 = criarAreaDebug21;

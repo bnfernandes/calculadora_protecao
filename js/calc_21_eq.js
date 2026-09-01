@@ -10,7 +10,11 @@
  * @param {Object} resultados - Resultados calculados
  */
 function exibirResultados21(dados, resultados) {
-    const areaResultados = document.getElementById('resultados');
+    // Vai dentro da área de debug (atrás do checkbox "debug", criada por
+    // criarAreaDebug21 em calc_21_debug.js) — não mais direto em #resultados,
+    // já que gráficos e formulário de ponto de teste ficam sempre visíveis
+    // acima, fora dessa área.
+    const areaResultados = document.getElementById('detalhesDebug21');
     if (!areaResultados) return;
     
     let html = '<div class="resultados-21">';
