@@ -50,10 +50,16 @@ document.addEventListener('DOMContentLoaded', function() {
         btnPdf.addEventListener('click', function() {
             // Esconde as barras de zoom ANTES do print (nunca durante o
             // beforeprint — ver nota logo abaixo) e dá tempo do gráfico
-            // redesenhar sem elas antes de abrir o diálogo de impressão
+            // redesenhar sem elas antes de abrir o diálogo de impressão.
+            // 250ms bastava pro caso simples (só a barra de zoom), mas a 51
+            // também reposiciona legenda/toolbox e muda as margens do grid
+            // (ver ajustarLegendaToolboxImpressao51 em calc_51.js) — um
+            // recálculo de layout mais pesado, que não terminava a tempo com
+            // 250ms (título e eixo saíam desalinhados no PDF, capturado no
+            // meio do redesenho). 500ms cobre com folga os dois casos.
             alternarBarrasZoomImpressao(false);
             ajustarProporcaoGraficosImpressao();
-            setTimeout(function() { window.print(); }, 250);
+            setTimeout(function() { window.print(); }, 500);
         });
     }
 

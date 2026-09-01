@@ -282,16 +282,57 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Limites dos eixos (em log10) — usados tanto na config dos eixos quanto
-    // nas linhas-guia do ponto de atuação, que precisam terminar exatamente
-    // na borda do gráfico
-    const xMin = -0.2, xMax = 2;
-    const yMin = -2, yMax = 4;
+    // Altura responsiva (proporcional à largura real do container) em vez de
+    // fixa — antes 800px, o que (a) cortava em monitores comuns (a tela é
+    // quase sempre paisagem, sobra pouca altura de viewport) e (b) numa tela
+    // de celular a largura encolhe mas a altura continuava travada em 800px,
+    // deixando o gráfico espremido e desproporcional. ×1.2 mantém a
+    // orientação vertical (mais alto que largo) em qualquer largura; piso e
+    // teto evitam ficar baixo demais numa tela minúscula ou alto demais.
+    container.style.height = Math.max(380, Math.min(660, container.offsetWidth * 1.2)) + 'px';
 
     const dadosValidos = pontosCurva.correntes.map((corrente, i) => [
         Math.log10(pontoAtuacao ? corrente / pontoAtuacao.parametrosUsados.correntePartida : corrente),
         Math.log10(pontosCurva.tempos[i])
     ]).filter(([, logTempo]) => Number.isFinite(logTempo));
+
+    // Corrente/tempo fora da faixa de atuação da curva (ex: I/I0 abaixo do
+    // pickup) resultam em tempoAtuacao = Infinity — log10 disso não é um
+    // número finito, e um ponto/markLine assim não deve ser desenhado (o
+    // ECharts não lida bem com coordenadas Infinity/NaN).
+    const pontoValido = pontoAtuacao
+        && Number.isFinite(Math.log10(pontoAtuacao.fatorCalculado))
+        && Number.isFinite(Math.log10(pontoAtuacao.tempoAtuacao));
+
+    // Limites dos eixos (em log10) — calculados a partir dos pontos de fato
+    // desenhados (curva + ponto de atuação, quando válido), não fixos: uma
+    // curva extremamente inversa com M pequeno (tempo bem alto perto do
+    // pickup) ou um ponto de atuação fora da faixa usual de I/I0 ficavam
+    // cortados fora da área visível.
+    //
+    // A margem é aditiva em log10 (não arredondada pra fora até a próxima
+    // década inteira) — como o eixo já é log10 convertido pra escala linear
+    // (ver comentário da função), uma margem fixa aqui tem SEMPRE o mesmo
+    // tamanho visual, não importa se o extremo da curva cai perto do início
+    // de uma década (onde as marcas 2,3,4... ficam bem espaçadas) ou perto
+    // do fim (onde ficam espremidas). Arredondar pra fora até a década
+    // inteira mais próxima (floor-1/ceil+1) dava uma folga inconsistente —
+    // de pouco mais de 1 até quase 2 décadas, dependendo de onde o ponto
+    // caía dentro da década — e visualmente parecia folga demais. 0.3
+    // década ~ um pouco mais que 1 oitava (fator ×2).
+    const MARGEM_EIXO_DECADAS = 0.3;
+    const valoresX = dadosValidos.map(([x]) => x);
+    const valoresY = dadosValidos.map(([, y]) => y);
+    if (pontoValido) {
+        valoresX.push(Math.log10(pontoAtuacao.fatorCalculado));
+        valoresY.push(Math.log10(pontoAtuacao.tempoAtuacao));
+    }
+    if (valoresX.length === 0) valoresX.push(0); // caso degenerado: nenhum ponto finito
+    if (valoresY.length === 0) valoresY.push(0);
+    const xMin = Math.min(...valoresX) - MARGEM_EIXO_DECADAS;
+    const xMax = Math.max(...valoresX) + MARGEM_EIXO_DECADAS;
+    const yMin = Math.min(...valoresY) - MARGEM_EIXO_DECADAS;
+    const yMax = Math.max(...valoresY) + MARGEM_EIXO_DECADAS;
 
     // Grades bem fracas em 2,3,4...9 de cada década (x: 1-100, y: 0.01-10000),
     // imitando as marcações menores de um eixo log clássico. As da própria
@@ -339,14 +380,6 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         smooth: false,
         zlevel: 1
     }];
-
-    // Corrente/tempo fora da faixa de atuação da curva (ex: I/I0 abaixo do
-    // pickup) resultam em tempoAtuacao = Infinity — log10 disso não é um
-    // número finito, e um ponto/markLine assim não deve ser desenhado (o
-    // ECharts não lida bem com coordenadas Infinity/NaN).
-    const pontoValido = pontoAtuacao
-        && Number.isFinite(Math.log10(pontoAtuacao.fatorCalculado))
-        && Number.isFinite(Math.log10(pontoAtuacao.tempoAtuacao));
 
     if (pontoValido) {
         const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
@@ -420,7 +453,16 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             right: 90,
             top: 95,
             bottom: 90,
-            containLabel: true
+            containLabel: true,
+            // Borda nos 4 lados da área plotada — antes só ficavam visíveis
+            // as linhas dos próprios eixos (embaixo e à esquerda) e, na
+            // tela, as barras de zoom (embaixo e à direita) davam a
+            // impressão de uma borda parcial e inconsistente. Mesma cor das
+            // grades de década (estiloDecada), pra parecer uma extensão da
+            // própria grade em vez de um elemento novo destoante.
+            show: true,
+            borderColor: '#ccc',
+            borderWidth: 1
         },
         xAxis: {
             type: 'value',
@@ -438,7 +480,13 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             max: xMax,
             // Sem isso, o eixo tipo 'value' gruda a linha do eixo X onde Y=0
             // (Tempo=1s) em vez de na base do gráfico, destacando essa grade
-            axisLine: { onZero: false },
+            // Cor igual à borda do grid (borderColor) — por padrão o ECharts
+            // desenha a linha do eixo mais escura que isso, e como X fica
+            // embaixo e Y fica à esquerda (posição padrão), só esses 2 lados
+            // ficavam com uma linha dupla/mais escura sobre a borda, enquanto
+            // topo e direita (só a borda do grid, sem linha de eixo) ficavam
+            // mais claros — dava a impressão de borda desigual nos 4 lados.
+            axisLine: { onZero: false, lineStyle: { color: '#ccc' } },
             // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
             // limite do zoom que não cai numa potência de dez — como as
             // grades menores já marcam a régua toda, essas ficam desativadas
@@ -462,7 +510,13 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             // no conjunto de ticks disponíveis, mesmo com zoom aplicado.
             min: yMin,
             max: yMax,
-            axisLine: { onZero: false },
+            // Cor igual à borda do grid (borderColor) — por padrão o ECharts
+            // desenha a linha do eixo mais escura que isso, e como X fica
+            // embaixo e Y fica à esquerda (posição padrão), só esses 2 lados
+            // ficavam com uma linha dupla/mais escura sobre a borda, enquanto
+            // topo e direita (só a borda do grid, sem linha de eixo) ficavam
+            // mais claros — dava a impressão de borda desigual nos 4 lados.
+            axisLine: { onZero: false, lineStyle: { color: '#ccc' } },
             // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
             // limite do zoom que não cai numa potência de dez — como as
             // grades menores já marcam a régua toda, essas ficam desativadas
@@ -532,7 +586,32 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     }
 }
 
+// Legenda ("Curva de Proteção"/"Ponto de Atuação"/"Projeção do Ponto") e
+// toolbox (ícones de zoom/restaurar/salvar imagem) não servem pra nada no
+// papel — nada clicável, e a curva/marcador já são claros sem o rótulo. A
+// barra de zoom em si já é tratada à parte por alternarBarrasZoomImpressao
+// (main.js). Chamada do clique em "Gerar PDF" (antes do print) e do evento
+// afterprint (restaura o estado interativo normal da tela) — nunca do
+// beforeprint, mesmo motivo já documentado em main.js: setOption ali
+// corrompe o snapshot de impressão.
+function ajustarLegendaToolboxImpressao51(paraImpressao) {
+    const chart = echarts.getInstanceByDom(document.getElementById('grafico-curva'));
+    if (!chart) return;
+    chart.setOption({
+        legend: { show: !paraImpressao },
+        toolbox: { show: !paraImpressao },
+        // Sem legenda/toolbox/barra de zoom, o espaço reservado pra eles
+        // (topo e direita) e pra barra de zoom horizontal (embaixo) sobra em
+        // branco — aperta as margens só nesse estado; containLabel:true
+        // ainda expande automaticamente se algum rótulo não couber.
+        grid: paraImpressao
+            ? { top: 40, right: 20, bottom: 55 }
+            : { top: 95, right: 90, bottom: 90 }
+    });
+}
+
 // Exporta as funções para uso global
 window.calcularFuncao51 = calcularFuncao51;
 window.criarGrafico = criarGrafico;
 window.formatarEquacaoHTML = formatarEquacaoHTML;
+window.ajustarLegendaToolboxImpressao51 = ajustarLegendaToolboxImpressao51;

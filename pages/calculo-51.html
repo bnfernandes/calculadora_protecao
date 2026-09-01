@@ -165,7 +165,7 @@
                     <!-- Área para gráfico -->
                     <div id="grafico-container" class="resultado-secao" style="display: none;">
                         <h6 class="resultado-titulo">Curva Característica</h6>
-                        <div id="grafico-curva" style="width: 100%; max-width: 550px; height: 800px; margin: 20px auto;"></div>
+                        <div id="grafico-curva" style="width: 100%; max-width: 550px; margin: 20px auto;"></div>
                     </div>
                 </div>
             </div>
@@ -202,6 +202,17 @@
                 }
             });
             
+            // Gerar PDF: além da barra de zoom (já tratada em main.js), some
+            // também com a legenda e o toolbox do gráfico — nenhum dos dois
+            // serve pra nada no papel. Mesma ordem/timing do handler
+            // genérico em main.js (nunca no beforeprint).
+            document.getElementById('btnGerarPdf').addEventListener('click', function() {
+                ajustarLegendaToolboxImpressao51(true);
+            });
+            window.addEventListener('afterprint', function() {
+                ajustarLegendaToolboxImpressao51(false);
+            });
+
             // Botão limpar
             document.getElementById('btnLimpar').addEventListener('click', function() {
                 document.getElementById('form-51').reset();

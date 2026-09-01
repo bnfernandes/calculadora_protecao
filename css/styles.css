@@ -1159,8 +1159,13 @@ input[readonly] {
     margin-bottom: 12px;
   }
 
+  /* #resultados (.results-area) fica display:none quando há um cálculo
+     válido pra mostrar (calc_51.js) — #equacoes é sempre a 1ª seção
+     realmente visível nesse caso, então segue a mesma conta de
+     .results-area acima: 2px + os 10px de padding-top do card-body somam
+     os mesmos 12px do resto do ritmo de espaçamento da impressão. */
   #equacoes {
-    margin-top: 12px;
+    margin-top: 2px;
   }
 
   .resultado-titulo {
