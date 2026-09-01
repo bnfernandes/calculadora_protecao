@@ -192,7 +192,7 @@ sub {
    espaçamento — o objetivo é caber mais conteúdo por página, mantendo
    legível. Fonte NÃO é reduzida aqui elemento por elemento — a escala
    inteira (ESCALA DE TEXTO, topo do arquivo) já encolhe sozinha, junto,
-   quando a impressão redefine html{font-size:12px} em styles.css. */
+   quando a impressão redefine html{font-size:10px} em styles.css. */
 @media print {
     .formula {
         padding: 6px 10px;

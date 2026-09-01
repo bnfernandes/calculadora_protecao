@@ -137,10 +137,10 @@
                         
                         <div class="d-flex justify-content-end mt-4">
                             <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnLimpar">
-                                <i class="fas fa-eraser"></i> Limpar
+                                Limpar
                             </button>
                             <button type="submit" class="btn btn-primary" id="btnCalcular">
-                                <i class="fas fa-calculator"></i> Calcular
+                                Calcular
                             </button>
                         </div>
                     </form>
@@ -180,9 +180,6 @@
     </footer>
 
     <script>
-        // Atualiza o ano atual no rodapé
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-        
         // Interação entre os campos de corrente de falta e fator
         document.addEventListener('DOMContentLoaded', function() {
             ativarSanitizacaoFormulario('#form-51');
@@ -195,13 +192,6 @@
             correnteFalta.addEventListener('input', function() {
                 if (this.value && correntePartida.value) {
                     fator.value = (parseFloat(this.value) / parseFloat(correntePartida.value)).toFixed(2);
-                }
-            });
-            
-            // Quando o fator é alterado, calcula a corrente de falta
-            fator.addEventListener('input', function() {
-                if (this.value && correntePartida.value) {
-                    correnteFalta.value = (parseFloat(this.value) * parseFloat(correntePartida.value)).toFixed(2);
                 }
             });
             
@@ -250,9 +240,13 @@
                     if (!parametros.indiceTempo || parametros.indiceTempo <= 0) {
                         throw new Error('Índice de tempo deve ser maior que zero');
                     }
-                    
+
                     if (!parametros.correnteFalta && !parametros.fator) {
                         throw new Error('Forneça a corrente de falta ou o fator');
+                    }
+
+                    if (parametros.tipoCurva === 'TEMPO-FIXO' && parametros.tempoFixoMinimo <= 0) {
+                        throw new Error('Informe o Tempo Fixo/Mínimo para a curva do tipo Tempo Fixo');
                     }
                     
                     // Executa o cálculo
@@ -293,7 +287,7 @@
                 } catch (error) {
                     const resultados = document.getElementById('resultados');
                     resultados.style.display = '';
-                    resultados.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Erro: ${error.message}</div>`;
+                    resultados.innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
                     document.getElementById('equacoes').style.display = 'none';
                     document.getElementById('grafico-container').style.display = 'none';
                 }

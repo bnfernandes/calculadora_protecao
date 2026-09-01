@@ -25,9 +25,7 @@ function anguloTesteBase(dev, faseIdx, mp1, mp2, msf, codigoRaw2) {
     return baseFase + 180 + mp2 * 180 + msfAdd - codigoRaw2 * 30;
 }
 
-function normalizarAngulo(ang) {
-    return ((ang % 360) + 360) % 360;
-}
+// normalizarAngulo(ang) está definida em calc_87.js (carregado antes desta página)
 
 // Um valor de corrente pode sair negativo da fórmula da planilha; convertido aqui
 // para magnitude positiva + 180° no ângulo, mais fácil de configurar numa caixa de teste

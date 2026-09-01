@@ -32,11 +32,7 @@ function keepSideOrigem(R0, X0, thetaDeg) {
  */
 function anguloCaracteristicoSeguro(anguloGraus) {
     const EPS_GRAUS = 0.01;
-    if (Math.abs(anguloGraus) < EPS_GRAUS) {
-        console.warn(`Ângulo característico muito próximo de 0° (${anguloGraus}°) — ajustado para ${EPS_GRAUS}° para evitar divisão por tan(0).`);
-        return EPS_GRAUS;
-    }
-    return anguloGraus;
+    return Math.abs(anguloGraus) < EPS_GRAUS ? EPS_GRAUS : anguloGraus;
 }
 
 /**

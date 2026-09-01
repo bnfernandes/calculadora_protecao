@@ -2,28 +2,11 @@
 // Versão FINAL Corrigida - Indexação [Fase][Dev] como no VBA
 // Funções de exibição e gráfico estão em calc_87_eq.js e calc_87_grafico.js
 
-// Classe para números complexos (mantida para compatibilidade)
-class Complexo {
-    constructor(real, imag) {
-        this.real = real;
-        this.imag = imag;
-    }
-
-    static fromPolar(magnitude, anguloDeg) {
-        const anguloRad = anguloDeg * Math.PI / 180;
-        return new Complexo(
-            magnitude * Math.cos(anguloRad),
-            magnitude * Math.sin(anguloRad)
-        );
-    }
-
-    magnitude() {
-        return Math.sqrt(this.real * this.real + this.imag * this.imag);
-    }
-
-    angulo() {
-        return Math.atan2(this.imag, this.real) * 180 / Math.PI;
-    }
+// Normaliza um ângulo (graus) para o intervalo [0, 360) — usada aqui e em
+// calc_87_pontos_teste.js (script carregado depois, então reaproveita esta
+// definição em vez de ter a própria).
+function normalizarAngulo(ang) {
+    return ((ang % 360) + 360) % 360;
 }
 
 // Lê os campos comuns do formulário (config + enrolamentos), usados tanto pelo
@@ -36,11 +19,17 @@ function lerFormulario87() {
         seqFases: document.getElementById('sequenciaFases').value,
         potencia: parseFloat(document.getElementById('potencia').value) || 0,
         sensibilidade: parseFloat(document.getElementById('sensibilidade').value) || 0.3,
-        pontoInflexao1: parseFloat(document.getElementById('pontoInflexao1').value) || 1.5,
-        pontoInflexao2: parseFloat(document.getElementById('pontoInflexao2').value) || 5.0,
+        pontoInflexao1: parseFloat(document.getElementById('pontoInflexao1').value) || 1.2,
+        pontoInflexao2: parseFloat(document.getElementById('pontoInflexao2').value) || 3,
         inclinacao1: parseFloat(document.getElementById('inclinacao1').value) || 25,
-        inclinacao2: parseFloat(document.getElementById('inclinacao2').value) || 50
+        inclinacao2: parseFloat(document.getElementById('inclinacao2').value) || 60
     };
+
+    // tap/eTap sempre leem o mesmo campo — uma const por enrolamento evita ler
+    // o DOM duas vezes pra guardar o mesmo valor sob dois nomes
+    const tap1 = parseFloat(document.getElementById('tap1').value);
+    const tap2 = parseFloat(document.getElementById('tap2').value);
+    const tap3 = parseFloat(document.getElementById('tap3').value) || 1;
 
     const enrolamentos = [
         {
@@ -48,8 +37,8 @@ function lerFormulario87() {
             rtc: parseFloat(document.getElementById('rtc1').value),
             kv: parseFloat(document.getElementById('kv1').value),
             conexao: document.getElementById('conexao1').value,
-            tap: parseFloat(document.getElementById('tap1').value),
-            eTap: parseFloat(document.getElementById('tap1').value),
+            tap: tap1,
+            eTap: tap1,
             polaridade: document.getElementById('polaridade1').value,
             filtro: document.getElementById('filtroHom1').value,
             codHorario: 0,
@@ -64,8 +53,8 @@ function lerFormulario87() {
             rtc: parseFloat(document.getElementById('rtc2').value),
             kv: parseFloat(document.getElementById('kv2').value),
             conexao: document.getElementById('conexao2').value,
-            tap: parseFloat(document.getElementById('tap2').value),
-            eTap: parseFloat(document.getElementById('tap2').value),
+            tap: tap2,
+            eTap: tap2,
             polaridade: document.getElementById('polaridade2').value,
             filtro: document.getElementById('filtroHom2').value,
             codHorario: parseInt(document.getElementById('codHor2').value) || 0,
@@ -80,8 +69,8 @@ function lerFormulario87() {
             rtc: parseFloat(document.getElementById('rtc3').value) || 1,
             kv: parseFloat(document.getElementById('kv3').value) || 1,
             conexao: document.getElementById('conexao3').value,
-            tap: parseFloat(document.getElementById('tap3').value) || 1,
-            eTap: parseFloat(document.getElementById('tap3').value) || 1,
+            tap: tap3,
+            eTap: tap3,
             polaridade: document.getElementById('polaridade3').value,
             filtro: document.getElementById('filtroHom3').value,
             codHorario: parseInt(document.getElementById('codHor3').value) || 0,
@@ -415,7 +404,7 @@ function giroInfo(codigo, faseAlvo) {
     const ant = (faseAlvo + 2) % 3;
 
     switch (codigo) {
-        case 0: case 12: return { tipo: 'identity', src1: faseAlvo };
+        case 0: return { tipo: 'identity', src1: faseAlvo };
         case 1: return { tipo: 'diff', src1: faseAlvo, src2: prox };
         case 2: return { tipo: 'neg', src1: prox };
         case 3: return { tipo: 'diff', src1: ant, src2: prox };
@@ -466,7 +455,6 @@ function modif(Im_a, Im_jb, If_a, If_jb, dev, codigo) {
 
     switch(codigo) {
         case 0:
-        case 12:
             If_a[0][dev] = a1;
             If_a[1][dev] = a2;
             If_a[2][dev] = a3;

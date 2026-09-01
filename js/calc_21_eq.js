@@ -228,19 +228,6 @@ function gerarSecaoEquacoes() {
     return html;
 }
 
-/**
- * Formata um número para exibição
- * @param {number} valor - Valor a ser formatado
- * @param {number} casas - Número de casas decimais
- * @returns {string} Valor formatado
- */
-function formatarNumero(valor, casas = 4) {
-    if (valor === null || valor === undefined || isNaN(valor)) {
-        return 'N/A';
-    }
-    return valor.toFixed(casas);
-}
-
 // Exportar funções
 window.exibirResultados21 = exibirResultados21;
 window.gerarSecaoEquacoes = gerarSecaoEquacoes;

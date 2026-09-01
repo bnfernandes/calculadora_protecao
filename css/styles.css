@@ -246,12 +246,6 @@ body {
   border-radius: 4px;
 }
 
-.alert-info {
-  color: #0c5460;
-  background-color: #d1ecf1;
-  border-color: #bee5eb;
-}
-
 .alert i {
   margin-right: 8px;
 }
@@ -283,18 +277,6 @@ body {
 .btn-primary:hover {
   background-color: #c50510;
   border-color: #c50510;
-}
-
-.btn-outline {
-  color: #e30613;
-  background-color: transparent;
-  border-color: #e30613;
-}
-
-.btn-outline:hover {
-  color: #fff;
-  background-color: #e30613;
-  border-color: #e30613;
 }
 
 .btn-secondary {
@@ -609,23 +591,11 @@ body {
   margin-bottom: 10px;
 }
 
-.hero-subtitle {
-  font-size: 1.2rem;
-  color: #6c757d;
-  margin-bottom: 30px;
-}
-
 /* Novo layout de cards de proteção */
 .protection-grid {
   display: flex;
   justify-content: space-between;
   gap: 40px;
-  margin-bottom: 40px;
-}
-
-.protection-grid-single {
-  display: flex;
-  justify-content: center;
   margin-bottom: 40px;
 }
 
@@ -643,23 +613,6 @@ body {
 .protection-card:hover {
   transform: translateY(-10px);
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-}
-
-.icon-container {
-  background-color: #f8f9fa;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  border: 2px solid #e30613;
-}
-
-.icon-container i {
-  font-size: 32px;
-  color: #e30613;
 }
 
 .protection-card h4 {
@@ -691,38 +644,6 @@ body {
   background-color: #e30613;
   color: #fff;
   transform: scale(1.05);
-}
-
-.protection-button i {
-  margin-left: 8px;
-  transition: transform 0.3s;
-}
-
-.protection-button:hover i {
-  transform: translateX(5px);
-}
-
-/* Antigos estilos de feature-card mantidos para compatibilidade */
-.feature-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.feature-card .card-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  flex: 1;
-}
-
-.feature-card .card-text {
-  flex-grow: 1;
-}
-
-.feature-card .btn {
-  margin-top: 15px;
-  align-self: flex-start;
 }
 
 /* Resultados */
@@ -902,6 +823,7 @@ input[readonly] {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Seção de resultado — compartilhado entre 51/67/87, não exclusivo da 87 */
 .resultado-secao {
   margin-bottom: 30px;
 }

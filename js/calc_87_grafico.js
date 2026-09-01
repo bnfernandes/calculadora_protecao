@@ -29,11 +29,15 @@ function criarSerieFase(letraFase, ponto, atua, cor) {
     };
 }
 
+let _chartDiferencial = null;
+
 function criarGraficoDiferencial(resultados, config) {
     const container = document.getElementById('grafico-diferencial');
     if (!container) return;
 
-    const chart = echarts.init(container);
+    if (!_chartDiferencial) {
+        _chartDiferencial = echarts.init(container);
+    }
 
     // Pontos das três fases
     const pontoFaseA = [resultados.faseA.ifren, resultados.faseA.idif];
@@ -182,11 +186,10 @@ function criarGraficoDiferencial(resultados, config) {
         ]
     };
 
-    chart.setOption(option);
-
-    // Responsividade
-    window.addEventListener('resize', function() {
-        chart.resize();
-    });
+    _chartDiferencial.setOption(option, true);
 }
+
+window.addEventListener('resize', function() {
+    if (_chartDiferencial) _chartDiferencial.resize();
+});
 

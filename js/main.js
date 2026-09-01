@@ -1,20 +1,29 @@
 // Funções de navegação
 document.addEventListener('DOMContentLoaded', function() {
+    // Ano do rodapé — centralizado aqui em vez de repetido inline em cada
+    // página (uma delas, calculo-87.html, tinha o <span id="current-year">
+    // mas não tinha esse script, ficando sempre em branco)
+    const currentYearEl = document.getElementById('current-year');
+    if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
+
     // Manipulação do menu dropdown
     const dropdowns = document.querySelectorAll('.dropdown');
     
-    // Adiciona funcionalidade de dropdown para dispositivos móveis
-    if (window.innerWidth <= 768) {
-        dropdowns.forEach(dropdown => {
-            const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
-            const dropdownContent = dropdown.querySelector('.dropdown-content');
-            
-            dropdownToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
-            });
+    // Adiciona funcionalidade de dropdown por toque para dispositivos móveis.
+    // A checagem de largura fica DENTRO do handler (não usada para decidir se
+    // o listener é anexado) — senão, uma página carregada larga e depois
+    // redimensionada/girada para menos de 768px nunca ganharia o listener,
+    // deixando o dropdown impossível de abrir por toque até recarregar.
+    dropdowns.forEach(dropdown => {
+        const dropdownToggle = dropdown.querySelector('.dropdown-toggle');
+        const dropdownContent = dropdown.querySelector('.dropdown-content');
+
+        dropdownToggle.addEventListener('click', function(e) {
+            if (window.innerWidth > 768) return; // Telas largas usam :hover (CSS)
+            e.preventDefault();
+            dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
         });
-    }
+    });
     
     // Funções para os formulários de cálculo
     const calcForms = document.querySelectorAll('.calc-form');
@@ -113,6 +122,17 @@ function ajustarProporcaoGraficosImpressao() {
 // aos campos reais de cada página, e respeita o que está oculto no momento
 // (ex: Enrolamento 3 quando numEnrolamentos = 2).
 
+// Escapa texto antes de interpolar em innerHTML — usado só no valor do campo
+// (vem de campo.value/texto de <option>, o único dos 3 pedaços da linha que
+// não é HTML autoral da própria página). label/unidade NÃO passam por aqui:
+// o label de propósito carrega HTML (ex: "I<sub>0</sub>"), vindo do próprio
+// template da página, não de entrada do usuário.
+function escapeHTML(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+}
+
 function valorCampoImpressao(campo) {
     if (campo.type === 'checkbox') {
         return campo.checked ? 'Sim' : 'Não';
@@ -161,7 +181,7 @@ function construirTabelaParametrosHTML(container) {
             html += '<tr class="tp-subtitulo"><td colspan="' + (semUnidade ? 2 : 3) + '">' + grupo.titulo + '</td></tr>';
         }
         grupo.linhas.forEach(function(l) {
-            html += '<tr><td>' + l.label + '</td><td>' + l.valor + '</td>' + (semUnidade ? '' : '<td>' + l.unidade + '</td>') + '</tr>';
+            html += '<tr><td>' + l.label + '</td><td>' + escapeHTML(l.valor) + '</td>' + (semUnidade ? '' : '<td>' + l.unidade + '</td>') + '</tr>';
         });
     });
 

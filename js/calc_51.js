@@ -84,8 +84,14 @@ function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0) {
     const razoesCorrente = gerarRazoesCorrente();
 
     for (const razaoCorrente of razoesCorrente) {
-        // Se for ANSI, garantir que a razão mínima respeita C+0.1
-        if (padrao === 'ANSI' && constants && constants.C && razaoCorrente <= constants.C) {
+        // Se for ANSI, mantém uma margem de 0.1 acima de C — perto demais da
+        // assíntota (razaoCorrente - C perto de 0), os termos B/D/E divididos
+        // por potências desse valor disparam pra um tempo absurdamente alto,
+        // distorcendo a curva. Hoje nenhuma constante ANSI passa de C=0.8 e o
+        // menor ponto gerado é 1.05 (gerarRazoesCorrente), então esse filtro
+        // nunca dispara na prática — é uma guarda para uma futura curva ANSI
+        // com C mais alto.
+        if (padrao === 'ANSI' && constants && constants.C && razaoCorrente <= constants.C + 0.1) {
             continue;
         }
 
@@ -334,7 +340,15 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         zlevel: 1
     }];
 
-    if (pontoAtuacao) {
+    // Corrente/tempo fora da faixa de atuação da curva (ex: I/I0 abaixo do
+    // pickup) resultam em tempoAtuacao = Infinity — log10 disso não é um
+    // número finito, e um ponto/markLine assim não deve ser desenhado (o
+    // ECharts não lida bem com coordenadas Infinity/NaN).
+    const pontoValido = pontoAtuacao
+        && Number.isFinite(Math.log10(pontoAtuacao.fatorCalculado))
+        && Number.isFinite(Math.log10(pontoAtuacao.tempoAtuacao));
+
+    if (pontoValido) {
         const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
         const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
         const corPonto = '#000000';
@@ -483,7 +497,7 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     // range atualmente visível). Por isso, a cada zoom/pan, recalcula os
     // pontos finais para a borda VISÍVEL no momento, lendo o start/end (%)
     // dos componentes dataZoom e convertendo de volta pra valor no eixo.
-    if (pontoAtuacao) {
+    if (pontoValido) {
         const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
         const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
 
@@ -509,7 +523,13 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         chart.on('datazoom', atualizarLinhasGuia);
     }
 
-    window.addEventListener('resize', () => chart.resize());
+    // Reaproveita a mesma instância entre recálculos (getInstanceByDom acima)
+    // — registra o listener de resize só na primeira vez, senão cada novo
+    // cálculo acumularia mais um listener chamando .resize() na mesma instância
+    if (!container.dataset.resizeListenerRegistrado) {
+        container.dataset.resizeListenerRegistrado = '1';
+        window.addEventListener('resize', () => chart.resize());
+    }
 }
 
 // Exporta as funções para uso global

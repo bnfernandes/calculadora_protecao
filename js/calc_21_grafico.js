@@ -48,8 +48,11 @@ function criarGraficosFaseFaseFaseTerra(resultados) {
 function criarGraficoFaseFase(resultados) {
     const areaGrafico = document.getElementById('grafico-21-fase-fase');
     if (!areaGrafico) return;
-    
-    const chart = echarts.init(areaGrafico);
+
+    // Reaproveita a instância existente (recalcular não deve criar uma nova
+    // instância nem um novo listener de resize a cada clique em "Calcular" —
+    // mesmo bug já corrigido nos gráficos das funções 67 e 87)
+    const chart = echarts.getInstanceByDom(areaGrafico) || echarts.init(areaGrafico);
     const series = [];
     const cores = ['#e30613', '#0066cc', '#00cc66', '#ff9900', '#9933cc'];
     
@@ -230,13 +233,21 @@ function criarGraficoFaseFase(resultados) {
         ]
     };
     
-    chart.setOption(option);
-    
-    // Responsividade
-    window.addEventListener('resize', function() {
-        chart.resize();
-    });
-    
+    // notMerge:true — sem isso, zonas removidas/desabilitadas num recálculo
+    // ficariam "grudadas" na tela (setOption por padrão faz merge com as
+    // séries da chamada anterior, já que a instância agora é reaproveitada)
+    chart.setOption(option, true);
+
+    // Responsividade — só registra o listener na primeira vez que este
+    // container ganha um gráfico; getInstanceByDom já garante reaproveitar a
+    // mesma instância nas chamadas seguintes
+    if (!areaGrafico.dataset.resizeListenerRegistrado) {
+        areaGrafico.dataset.resizeListenerRegistrado = '1';
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    }
+
     // Armazenar instância do gráfico
     window.graficoFaseFaseInstance = chart;
 }
@@ -248,8 +259,9 @@ function criarGraficoFaseFase(resultados) {
 function criarGraficoFaseTerra(resultados) {
     const areaGrafico = document.getElementById('grafico-21-fase-terra');
     if (!areaGrafico) return;
-    
-    const chart = echarts.init(areaGrafico);
+
+    // Reaproveita a instância existente — ver comentário em criarGraficoFaseFase
+    const chart = echarts.getInstanceByDom(areaGrafico) || echarts.init(areaGrafico);
     const series = [];
     const cores = ['#e30613', '#0066cc', '#00cc66', '#ff9900', '#9933cc'];
     
@@ -430,13 +442,15 @@ function criarGraficoFaseTerra(resultados) {
         ]
     };
     
-    chart.setOption(option);
-    
-    // Responsividade
-    window.addEventListener('resize', function() {
-        chart.resize();
-    });
-    
+    chart.setOption(option, true); // notMerge:true — ver comentário em criarGraficoFaseFase
+
+    if (!areaGrafico.dataset.resizeListenerRegistrado) {
+        areaGrafico.dataset.resizeListenerRegistrado = '1';
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    }
+
     // Armazenar instância do gráfico
     window.graficoFaseTerraInstance = chart;
 }

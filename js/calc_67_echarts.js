@@ -151,6 +151,23 @@ function buildSectorPoints(startDeg, endDeg, step = 2) {
     return pts;
 }
 
+// Redimensiona os 3 gráficos fasoriais (ia/ib/ic) num único listener de
+// resize registrado uma vez — em vez de um novo listener a cada chamada de
+// criarGraficoFasorial (chamada 3x por cálculo), que acumulava indefinidamente
+// e podia referenciar instâncias já descartadas por dispose().
+const GRAFICOS_FASORIAIS_67 = ['grafico-ia', 'grafico-ib', 'grafico-ic'];
+let resizeListenerRegistrado67 = false;
+function registrarResizeGraficosFasoriais67() {
+    if (resizeListenerRegistrado67) return;
+    resizeListenerRegistrado67 = true;
+    window.addEventListener('resize', () => {
+        GRAFICOS_FASORIAIS_67.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.chartInstance) el.chartInstance.resize();
+        });
+    });
+}
+
 // Função para criar gráfico fasorial com ECharts
 function criarGraficoFasorial(containerId, fase, resultados) {
     const container = document.getElementById(containerId);
@@ -207,12 +224,13 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     const Vb = Complexo.fromPolar(parametrosUsados.vb.magnitude, parametrosUsados.vb.angulo);
     const Vc = Complexo.fromPolar(parametrosUsados.vc.magnitude, parametrosUsados.vc.angulo);
 
-    // Normalizar tensões (maior tensão = 0.9)
+    // Normalizar tensões (maior tensão = 0.9) — guarda contra divisão por
+    // zero se as 3 tensões forem 0 (o formulário permite magnitude mínima 0)
     const maxTensao = Math.max(Va.magnitude(), Vb.magnitude(), Vc.magnitude());
-    const escala = 0.9 / maxTensao;
+    const escala = maxTensao > 0 ? 0.9 / maxTensao : 0;
 
-    // Normalizar corrente para 0.7
-    const escalaCorrente = 0.7 / corrente.magnitude();
+    // Normalizar corrente para 0.7 — mesma guarda, para corrente de magnitude 0
+    const escalaCorrente = corrente.magnitude() > 0 ? 0.7 / corrente.magnitude() : 0;
 
     // Vpol usa a MESMA escala das tensões de fase (é uma tensão de linha),
     // não uma escala própria — senão a magnitude exibida fica incorreta em
@@ -298,12 +316,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
         animation: true,
         tooltip: {
             trigger: 'item',
-            formatter: function(params) {
-                if (params.seriesName.includes('Região')) {
-                    return `${params.seriesName}`;
-                }
-                return params.seriesName;
-            }
+            formatter: params => params.seriesName
         },
         graphic: [
             {
@@ -374,7 +387,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     container.chartInstance = chart;
 
     // Redimensionar responsivamente
-    window.addEventListener('resize', () => chart.resize());
+    registrarResizeGraficosFasoriais67();
 }
 
 // Monta a seção de resultados de uma fase (Vpol, ângulo de máximo torque,
@@ -492,7 +505,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
 
                 // Validar dados
-                if (isNaN(parametros.angulo) || isNaN(parametros.amplitude)) {
+                const camposNumericos = [
+                    parametros.angulo, parametros.amplitude,
+                    parametros.ia.magnitude, parametros.ia.angulo,
+                    parametros.ib.magnitude, parametros.ib.angulo,
+                    parametros.ic.magnitude, parametros.ic.angulo,
+                    parametros.va.magnitude, parametros.va.angulo,
+                    parametros.vb.magnitude, parametros.vb.angulo,
+                    parametros.vc.magnitude, parametros.vc.angulo
+                ];
+                if (camposNumericos.some(isNaN)) {
                     throw new Error('Por favor, preencha todos os campos de parâmetros.');
                 }
 
@@ -503,11 +525,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const resultadosDiv = document.getElementById('resultados');
                 resultadosDiv.innerHTML = formatarResultadosHTML(resultados);
 
-                // Criar gráficos após o DOM ser atualizado
+                // Criar gráficos após o DOM ser atualizado — em try/catch próprio,
+                // já que o try externo não cobre erros de um callback assíncrono
                 setTimeout(() => {
-                    criarGraficoFasorial('grafico-ia', 'Ia', resultados);
-                    criarGraficoFasorial('grafico-ib', 'Ib', resultados);
-                    criarGraficoFasorial('grafico-ic', 'Ic', resultados);
+                    try {
+                        criarGraficoFasorial('grafico-ia', 'Ia', resultados);
+                        criarGraficoFasorial('grafico-ib', 'Ib', resultados);
+                        criarGraficoFasorial('grafico-ic', 'Ic', resultados);
+                    } catch (error) {
+                        resultadosDiv.innerHTML = `<div class="alert alert-danger">Erro ao desenhar gráficos: ${error.message}</div>`;
+                    }
                 }, 100);
 
             } catch (error) {
@@ -517,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Botão Limpar
-        const btnLimpar = document.getElementById('btn-limpar');
+        const btnLimpar = document.getElementById('btnLimpar');
         if (btnLimpar) {
             btnLimpar.addEventListener('click', function() {
                 form.reset();

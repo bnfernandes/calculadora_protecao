@@ -35,8 +35,6 @@ function configurarVersaoExperimental21() {
  * Inicializa o formulário com valores padrão e configurações
  */
 function inicializarFormulario21() {
-    console.log('Inicializando formulário da Função 21...');
-    
     // Configurar visibilidade inicial dos campos condicionais
     atualizarVisibilidadeIFaseFase();
     atualizarVisibilidadeIFaseTerra();
@@ -299,8 +297,8 @@ function coletarDadosFormulario21() {
             habilitado: document.getElementById('habilitacaoIFaseTerra').value === 'ativo',
             correnteFaseMinimaFrente: parseFloat(document.getElementById('correnteFaseMinimaFrente').value) || 0.5,
             correnteFaseMinimaReverso: parseFloat(document.getElementById('correnteFaseMinimaReverso').value) || 0.5,
-            'correnteTerraMinima Frente': parseFloat(document.getElementById('correnteTerraMinima Frente').value) || 0.5,
-            'correnteTerraMinima Reverso': parseFloat(document.getElementById('correnteTerraMinima Reverso').value) || 0.5
+            'correnteTerraMinimaFrente': parseFloat(document.getElementById('correnteTerraMinimaFrente').value) || 0.5,
+            'correnteTerraMinimaReverso': parseFloat(document.getElementById('correnteTerraMinimaReverso').value) || 0.5
         },
         zonas: []
     };
@@ -380,12 +378,9 @@ function calcularAlpha(moduloKn, anguloKnGraus) {
  * Calcula as regiões para todos os casos de falta respeitando a direção selecionada
  */
 function calcularProtecao21() {
-    console.log('Iniciando cálculo da Função 21...');
-    
     try {
         const dados = coletarDadosFormulario21();
-        console.log('Dados coletados:', dados);
-        
+
         const resultados = {
             zonas: []
         };
@@ -533,9 +528,7 @@ function calcularProtecao21() {
             
             resultados.zonas.push(resultadoZona);
         });
-        
-        console.log('Resultados calculados:', resultados);
-        
+
         // Exibir resultados
         exibirResultados21(dados, resultados);
         
@@ -553,8 +546,10 @@ function calcularProtecao21() {
         }
 
     } catch (erro) {
-        console.error('Erro no cálculo:', erro);
-        alert('Erro ao calcular: ' + erro.message);
+        const resultadosDiv = document.getElementById('resultados');
+        if (resultadosDiv) {
+            resultadosDiv.innerHTML = `<div class="alert alert-danger">Erro ao calcular: ${erro.message}</div>`;
+        }
     }
 }
 
