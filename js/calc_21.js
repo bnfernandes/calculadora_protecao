@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarVersaoExperimental21();
     inicializarFormulario21();
     configurarEventosFormulario21();
+    ativarSanitizacaoFormulario('#form-21');
 });
 
 /**
@@ -379,6 +380,7 @@ function calcularAlpha(moduloKn, anguloKnGraus) {
  */
 function calcularProtecao21() {
     try {
+        sanitizarTodosCampos('#form-21');
         const dados = coletarDadosFormulario21();
 
         const resultados = {

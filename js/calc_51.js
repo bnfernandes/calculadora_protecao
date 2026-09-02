@@ -74,14 +74,22 @@ function gerarRazoesCorrente(min = 1.05, max = 40, quantidade = 80) {
 }
 
 // Função para gerar pontos da curva
-function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0) {
+// razaoPontoAtuacao: I/I0 do ponto de atuação já calculado (fatorCalculado em
+// calcularFuncao51) — quando ultrapassa o teto padrão de 40x, o teto da curva
+// é esticado até cobri-lo (com 20% de folga), senão o ponto ficava
+// "flutuando" fora do traço da curva, sem ela realmente passar perto dele.
+function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0, razaoPontoAtuacao = null) {
     const correntes = [];
     const tempos = [];
 
     const constants = CURVE_CONSTANTS[tipoCurva];
     const padrao = constants ? constants.padrao : null;
 
-    const razoesCorrente = gerarRazoesCorrente();
+    const MAX_PADRAO = 40;
+    const max = razaoPontoAtuacao && razaoPontoAtuacao > MAX_PADRAO
+        ? razaoPontoAtuacao * 1.2
+        : MAX_PADRAO;
+    const razoesCorrente = gerarRazoesCorrente(1.05, max);
 
     for (const razaoCorrente of razoesCorrente) {
         // Se for ANSI, mantém uma margem de 0.1 acima de C — perto demais da
@@ -129,6 +137,8 @@ function calcularFuncao51(parametros) {
         throw new Error('É necessário fornecer a corrente de falta (I) ou o fator, e a corrente de partida (I0)');
     }
 
+    const fatorCalculado = I_calc / correntePartida;
+
     // tempoCalculado: valor bruto da curva, sem o piso do tempo mínimo (null
     // pra TEMPO-FIXO, onde não existe "curva" pra calcular). limitadoPeloMinimo
     // indica se o piso efetivamente "cortou" o resultado da curva — usado pra
@@ -140,10 +150,10 @@ function calcularFuncao51(parametros) {
     const tempoAtuacao = calcularTempoAtuacao(tipoCurva, indiceTempo, I_calc, correntePartida, tempoFixoMinimo);
     const limitadoPeloMinimo = tempoCalculado !== null && (tempoFixoMinimo / 1000) > tempoCalculado;
 
-    const pontosCurva = gerarPontosCurva(tipoCurva, indiceTempo, correntePartida, tempoFixoMinimo);
+    const pontosCurva = gerarPontosCurva(tipoCurva, indiceTempo, correntePartida, tempoFixoMinimo, fatorCalculado);
 
     return {
-        fatorCalculado: I_calc / correntePartida,
+        fatorCalculado,
         correnteFaltaCalculada: I_calc,
         tempoCalculado,
         tempoAtuacao,
