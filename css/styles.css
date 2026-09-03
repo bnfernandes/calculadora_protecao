@@ -159,12 +159,12 @@ body {
 
 /* Formulários */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
@@ -205,8 +205,8 @@ body {
 
 .form-text {
   display: block;
-  margin-top: 5px;
-  font-size: 14px;
+  margin-top: 2px;
+  font-size: 12px;
   color: #6c757d;
 }
 
@@ -477,8 +477,8 @@ body {
    Zona 1 / Zona 2 / ...) — só entre .form-section consecutivas, nunca antes
    da primeira. .form-section é exclusivo desta página, não afeta as outras. */
 .form-section + .form-section {
-  margin-top: 30px;
-  padding-top: 30px;
+  margin-top: 10px;
+  padding-top: 20px;
   border-top: 1px solid #ddd;
 }
 
@@ -594,7 +594,7 @@ body {
 }
 
 .mt-5 {
-  margin-top: 30px;
+  margin-top: 10px;
 }
 
 .d-flex {
