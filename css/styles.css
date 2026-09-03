@@ -439,6 +439,40 @@ body {
   }
 }
 
+/* Linha de entrada de fasor (página de Componentes Simétricas): magnitude e
+   ângulo lado a lado sob um único <label> (A/B/C, Seq0/Seq1/Seq2, Passo) —
+   em vez de duas labels empilhadas, uma por campo. min-width:0 nos filhos
+   flexíveis evita que os number inputs estourem a linha em telas estreitas
+   (comportamento padrão do flexbox sem isso é não encolher abaixo do
+   conteúdo). */
+.fasor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fasor-row .form-control,
+.fasor-row .input-group {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Grade dos 4 diagramas fasoriais da página de Componentes Simétricas (ABC,
+   Seq0, Seq1, Seq2) — 1 coluna no mobile, 2x2 a partir do mesmo ponto de
+   corte (769px) usado pelo resto do site. */
+.grid-graficos-fasoriais-seq {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin: 15px 0;
+}
+
+@media (min-width: 769px) {
+  .grid-graficos-fasoriais-seq {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* Linha horizontal entre subgrupos da página 21 (Supervisão Direcional /
    Zona 1 / Zona 2 / ...) — só entre .form-section consecutivas, nunca antes
    da primeira. .form-section é exclusivo desta página, não afeta as outras. */
@@ -1210,7 +1244,11 @@ input[readonly] {
   #grafico-curva > div,
   #grafico-ia > div,
   #grafico-ib > div,
-  #grafico-ic > div {
+  #grafico-ic > div,
+  #grafico-abc > div,
+  #grafico-seq0 > div,
+  #grafico-seq1 > div,
+  #grafico-seq2 > div {
     width: 100% !important;
     max-width: 100% !important;
     /* a altura fixa (herdada da tela) também precisa ceder — sem isso, sobra
@@ -1226,7 +1264,11 @@ input[readonly] {
   #grafico-curva canvas,
   #grafico-ia canvas,
   #grafico-ib canvas,
-  #grafico-ic canvas {
+  #grafico-ic canvas,
+  #grafico-abc canvas,
+  #grafico-seq0 canvas,
+  #grafico-seq1 canvas,
+  #grafico-seq2 canvas {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -1238,7 +1280,11 @@ input[readonly] {
   #grafico-curva,
   #grafico-ia,
   #grafico-ib,
-  #grafico-ic {
+  #grafico-ic,
+  #grafico-abc,
+  #grafico-seq0,
+  #grafico-seq1,
+  #grafico-seq2 {
     height: auto !important;
     /* O gráfico é um único canvas rasterizado — cortado ao meio na quebra de
        página, ele sai visualmente partido (metade numa folha, metade na

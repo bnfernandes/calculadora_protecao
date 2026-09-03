@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Componentes Simétricas - Proteções Elétricas</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="../img/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../img/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="../img/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="../img/android-chrome-512x512.png">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/equations.css">
+</head>
+<body>
+    <!-- Navegação -->
+    <nav class="navbar">
+        <div class="container navbar-container">
+            <a href="../index.html" class="navbar-brand">Calculadora Proteção</a>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link">Início</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle">Funções de Proteção</a>
+                    <div class="dropdown-content">
+                        <a href="calculo-51.html" class="dropdown-item">Função 51</a>
+                        <a href="calculo-67.html" class="dropdown-item">Função 67</a>
+                        <a href="calculo-21.html" class="dropdown-item">Função 21</a>
+                        <a href="calculo-87.html" class="dropdown-item">Função 87</a>
+                        <a href="calculo-seq.html" class="dropdown-item">Componentes Simétricas</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="sobre.html" class="nav-link">Sobre</a>
+                </li>
+                <li class="nav-item">
+                    <a href="referencias.html" class="nav-link">Referências</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <main class="main-content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center" style="flex-wrap: wrap; gap: 10px;">
+                <h1 class="page-title">Componentes Simétricas</h1>
+                <button type="button" class="btn btn-secondary" id="btnGerarPdf">🖨️ Gerar PDF</button>
+            </div>
+
+            <div class="card mb-4 oculto-impressao">
+                <div class="card-body">
+                    <h5 class="card-title">Descrição da Função</h5>
+                    <p class="card-text">
+                        Decompõe fasores trifásicos desequilibrados em componentes simétricas (sequências zero,
+                        positiva e negativa) via transformada de Fortescue. Serve como base para funções de proteção
+                        na detecção de desequilíbrios e faltas à terra.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card mb-4 oculto-impressao">
+                <div class="card-header">
+                    <h5 class="card-title">Parâmetros de Entrada</h5>
+                </div>
+                <div class="card-body">
+                    <form class="calc-form" id="form-seq">
+                        <h5 class="mb-3">Configuração</h5>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group">
+                                    <label for="sequenciaFases" class="form-label">Sequência de Fases</label>
+                                    <select class="form-select" id="sequenciaFases">
+                                        <option value="ABC">ABC</option>
+                                        <option value="ACB">ACB</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Passo</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="passoR" min="1" step="1" value="1">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="passoTheta" min="1" step="1" value="1">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-5 mb-3">Fases</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">A</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="aMagnitude" min="0" step="0.1" value="1">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="aAngulo" min="-360" max="360" step="1" value="0">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">B</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="bMagnitude" min="0" step="0.1" value="2">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="bAngulo" min="-360" max="360" step="1" value="240">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">C</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="cMagnitude" min="0" step="0.1" value="3">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="cAngulo" min="-360" max="360" step="1" value="120">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mt-5 mb-3">Componentes Simétricas</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Seq0</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="seq0Magnitude" min="0" step="0.1" value="0.577">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="seq0Angulo" min="-360" max="360" step="1" value="150">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Seq1</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="seq1Magnitude" min="0" step="0.1" value="2">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="seq1Angulo" min="-360" max="360" step="1" value="0">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label">Seq2</label>
+                                    <div class="fasor-row">
+                                        <input type="number" class="form-control" id="seq2Magnitude" min="0" step="0.1" value="0.577">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="seq2Angulo" min="-360" max="360" step="1" value="-150">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;">Limpar</button>
+                            <button type="submit" class="btn btn-primary">Calcular</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Resultados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="results-area" id="resultados">
+                        <p class="text-center" id="sequencia-ativa"></p>
+                        <div class="grid-graficos-fasoriais-seq">
+                            <div>
+                                <p class="text-center"><strong>Fases</strong></p>
+                                <div id="grafico-abc"></div>
+                            </div>
+                            <div>
+                                <p class="text-center"><strong>Sequência Zero</strong></p>
+                                <div id="grafico-seq0"></div>
+                            </div>
+                            <div>
+                                <p class="text-center"><strong>Sequência Positiva</strong></p>
+                                <div id="grafico-seq1"></div>
+                            </div>
+                            <div>
+                                <p class="text-center"><strong>Sequência Negativa</strong></p>
+                                <div id="grafico-seq2"></div>
+                            </div>
+                        </div>
+
+                        <div id="tabela-componentes-container"></div>
+
+                        <div id="equacoes-container">
+                            <p class="text-center text-muted">Clique em "Calcular" para ver o detalhamento das equações (matricial e numérico).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="text-muted">© <span id="current-year"></span> - TCC Proteções Elétricas - Baseado nos equipamentos Ingeteam</p>
+        </div>
+    </footer>
+
+    <script src="../js/lib/echarts.min.js"></script>
+    <script src="../js/formula-html.js"></script>
+    <script src="../js/form-sanitize.js"></script>
+    <script src="../js/calc_seq.js"></script>
+    <script src="../js/calc_seq_eq.js"></script>
+    <script src="../js/calc_seq_grafico.js"></script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

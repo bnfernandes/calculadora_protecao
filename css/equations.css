@@ -135,6 +135,50 @@
     font-style: italic;
 }
 
+/* Matriz com colchetes (página de Componentes Simétricas) - colchetes via
+   borda (topo/base/lado) em vez de imagem, pra escalar com o zoom/impressão
+   igual ao resto das fórmulas do site. */
+.matriz {
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+    margin: 10px 5px;
+}
+
+.matriz-colchete {
+    width: 6px;
+    border-top: 2px solid #212529;
+    border-bottom: 2px solid #212529;
+}
+
+.matriz-colchete-esq {
+    border-left: 2px solid #212529;
+    margin-right: 4px;
+}
+
+.matriz-colchete-dir {
+    border-right: 2px solid #212529;
+    margin-left: 4px;
+}
+
+.matriz-corpo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.matriz-linha {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+}
+
+.matriz-celula {
+    min-width: 1.6em;
+    text-align: center;
+}
+
 /* Estilos para sobrescritos e subscritos */
 sup {
     font-size: 0.8em;
@@ -234,6 +278,14 @@ sub {
     .constant {
         font-size: 0.8em;
         margin: 1px 0;
+    }
+
+    .matriz {
+        margin: 4px 3px;
+    }
+
+    .matriz-linha {
+        gap: 8px;
     }
 }
 

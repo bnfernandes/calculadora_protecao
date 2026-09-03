@@ -54,6 +54,15 @@ function boxResultadoHTML(conteudoHTML, classeExtra = '') {
     return `<div class="resultado-box ${classeExtra}">${conteudoHTML}</div>`;
 }
 
+// Matriz com colchetes (usada pela página de Componentes Simétricas).
+// linhas: array de arrays de células HTML, ex: [['1','1','1'],['1','a²','a'],['1','a','a²']]
+function matrizHTML(linhas) {
+    const linhasHTML = linhas.map(linha =>
+        `<span class="matriz-linha">${linha.map(celula => `<span class="matriz-celula">${celula}</span>`).join('')}</span>`
+    ).join('');
+    return `<span class="matriz"><span class="matriz-colchete matriz-colchete-esq"></span><span class="matriz-corpo">${linhasHTML}</span><span class="matriz-colchete matriz-colchete-dir"></span></span>`;
+}
+
 window.fracaoHTML = fracaoHTML;
 window.somaHTML = somaHTML;
 window.absHTML = absHTML;
@@ -61,3 +70,4 @@ window.linhaEquacaoHTML = linhaEquacaoHTML;
 window.formulaBoxHTML = formulaBoxHTML;
 window.secaoResultadoHTML = secaoResultadoHTML;
 window.boxResultadoHTML = boxResultadoHTML;
+window.matrizHTML = matrizHTML;
