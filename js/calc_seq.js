@@ -213,14 +213,6 @@ function recalcularAPartirDasSequencias() {
     renderizarTudo(dados);
 }
 
-function aplicarPasso(prefixos, sufixo, valor) {
-    if (Number.isNaN(valor) || valor <= 0) return;
-    prefixos.forEach(p => {
-        const el = document.getElementById(`${p}${sufixo}`);
-        if (el) el.step = valor;
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('form-seq');
     if (!form) return;
@@ -256,16 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // sequências), que são a grandeza "medida"/primária aqui.
     document.getElementById('sequenciaFases').addEventListener('change', recalcularAPartirDasFases);
 
-    const passoR = document.getElementById('passoR');
-    const passoTheta = document.getElementById('passoTheta');
-    function atualizarPassos() {
-        aplicarPasso([...todosPrefixosFase, ...todosPrefixosSeq], 'Magnitude', parseFloat(passoR.value));
-        aplicarPasso([...todosPrefixosFase, ...todosPrefixosSeq], 'Angulo', parseFloat(passoTheta.value));
-    }
-    passoR.addEventListener('input', atualizarPassos);
-    passoTheta.addEventListener('input', atualizarPassos);
-    atualizarPassos();
-
     // "Limpar" é tratado de forma genérica por main.js (form.reset() +
     // sobrescreve .results-area com o texto placeholder) - pensado para o
     // padrão "só recalcula ao apertar Calcular" das outras páginas. Tabela e
@@ -288,6 +270,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // apertar Calcular" das outras páginas do site.
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        // sanitizarTodosCampos ainda roda aqui (rede de segurança de
+        // min/max) - mas os 12 campos de fase/seq têm data-ignorar-passo no
+        // HTML, então não arredondam pro step. Sem essa marcação, arredondar
+        // os 12 campos pro step (ex: passo=1) de uma vez quebrava a relação
+        // matemática entre fase e sequência: o lado que o usuário NÃO tinha
+        // acabado de editar (arredondado ao acaso) virava a origem
+        // "canônica" no recálculo abaixo, sobrescrevendo o valor preciso que
+        // o usuário tinha acabado de digitar do outro lado.
         sanitizarTodosCampos(form);
         recalcularAPartirDasFases();
         if (window.renderizarEquacoes && ultimoDados) window.renderizarEquacoes(ultimoDados);

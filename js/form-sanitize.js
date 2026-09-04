@@ -4,6 +4,11 @@
 
 // Ajusta um único campo: limita a [min, max] e arredonda para o degrau (step)
 // mais próximo, alinhado a partir do mínimo (ou de 0, se não houver mínimo).
+// Campos com o atributo data-ignorar-passo pulam só a parte do step - usado
+// pela página de Componentes Simétricas, onde fase e sequência são
+// matematicamente amarradas (editar uma recalcula a outra ao vivo); arredondar
+// pro step no blur de QUALQUER um dos dois lados sobrescrevia silenciosamente
+// o valor preciso que o usuário acabou de digitar no outro lado.
 function sanitizarCampoNumerico(input) {
     if (input.value === '' || input.value === null) return;
 
@@ -13,11 +18,12 @@ function sanitizarCampoNumerico(input) {
     const min = input.min !== '' ? parseFloat(input.min) : null;
     const max = input.max !== '' ? parseFloat(input.max) : null;
     const step = input.step && input.step !== 'any' ? parseFloat(input.step) : null;
+    const ignorarStep = input.hasAttribute('data-ignorar-passo');
 
     if (min !== null && valor < min) valor = min;
     if (max !== null && valor > max) valor = max;
 
-    if (step !== null && step > 0) {
+    if (!ignorarStep && step !== null && step > 0) {
         const base = min !== null ? min : 0;
         valor = base + Math.round((valor - base) / step) * step;
         if (min !== null && valor < min) valor = min;

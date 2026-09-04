@@ -421,6 +421,27 @@ body {
   }
 }
 
+/* Fases e Componentes Simétricas lado a lado (página de Componentes
+   Simétricas) — mesmo esquema de duas colunas de .grid-supervisao-direcional,
+   mas mais simples: cada lado é um bloco só (título + 3 campos), sem
+   entrelaçamento campo a campo entre os dois lados, então não precisa de
+   grid-template-areas nomeada. Em tela estreita empilha (Fases primeiro,
+   já é a ordem do HTML), igual ao padrão de fase/terra da página 21. */
+.grid-fases-sequencias {
+  display: grid;
+  position: relative;
+  grid-template-columns: 1fr;
+  row-gap: 20px;
+}
+
+@media (min-width: 769px) {
+  .grid-fases-sequencias {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    row-gap: 0;
+  }
+}
+
 /* Linha divisória entre as colunas de fase e terra — só faz sentido no modo
    lado a lado (769px+); um pseudo-elemento (em vez de borda nos campos da
    coluna de terra) porque campo a campo a linha ficaria cortada pela margem
@@ -428,7 +449,8 @@ body {
    column-gap porque as duas colunas têm a mesma largura (1fr 1fr). */
 @media (min-width: 769px) {
   .grid-fase-terra::before,
-  .grid-supervisao-direcional::before {
+  .grid-supervisao-direcional::before,
+  .grid-fases-sequencias::before {
     content: '';
     position: absolute;
     top: 0;
@@ -473,9 +495,10 @@ body {
   }
 }
 
-/* Linha horizontal entre subgrupos da página 21 (Supervisão Direcional /
-   Zona 1 / Zona 2 / ...) — só entre .form-section consecutivas, nunca antes
-   da primeira. .form-section é exclusivo desta página, não afeta as outras. */
+/* Linha horizontal entre subgrupos de formulário (página 21: Supervisão
+   Direcional / Zona 1 / Zona 2 / ...; página de Componentes Simétricas:
+   Sequência de Fases / Fases+Componentes) — só entre .form-section
+   consecutivas, nunca antes da primeira. */
 .form-section + .form-section {
   margin-top: 10px;
   padding-top: 20px;

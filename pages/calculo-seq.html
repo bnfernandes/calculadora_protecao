@@ -66,115 +66,86 @@
                 </div>
                 <div class="card-body">
                     <form class="calc-form" id="form-seq">
-                        <h5 class="mb-3">Configuração</h5>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="form-group">
-                                    <label for="sequenciaFases" class="form-label">Sequência de Fases</label>
-                                    <select class="form-select" id="sequenciaFases">
-                                        <option value="ABC">ABC</option>
-                                        <option value="ACB">ACB</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">Passo</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="passoR" min="1" step="1" value="1">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="passoTheta" min="1" step="1" value="1">
-                                            <span class="input-group-text">º</span>
-                                        </div>
+                        <div class="form-section">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="sequenciaFases" class="form-label">Sequência de Fases</label>
+                                        <select class="form-select" id="sequenciaFases">
+                                            <option value="ABC">ABC</option>
+                                            <option value="ACB">ACB</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <h5 class="mt-5 mb-3">Fases</h5>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">A</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="aMagnitude" min="0" step="0.1" value="1">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="aAngulo" min="-360" max="360" step="1" value="0">
-                                            <span class="input-group-text">º</span>
+                        <div class="form-section">
+                            <div class="grid-fases-sequencias">
+                                <div class="campos-fases">
+                                    <h5 class="mb-3">Fases</h5>
+                                    <div class="form-group">
+                                        <label class="form-label">A</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="aMagnitude" min="0" step="0.1" value="1" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="aAngulo" min="-360" max="360" step="1" value="0" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">B</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="bMagnitude" min="0" step="0.1" value="2" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="bAngulo" min="-360" max="360" step="1" value="240" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">C</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="cMagnitude" min="0" step="0.1" value="3" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="cAngulo" min="-360" max="360" step="1" value="120" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">B</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="bMagnitude" min="0" step="0.1" value="2">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="bAngulo" min="-360" max="360" step="1" value="240">
-                                            <span class="input-group-text">º</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">C</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="cMagnitude" min="0" step="0.1" value="3">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="cAngulo" min="-360" max="360" step="1" value="120">
-                                            <span class="input-group-text">º</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <h5 class="mt-5 mb-3">Componentes Simétricas</h5>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">Seq0</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="seq0Magnitude" min="0" step="0.1" value="0.577">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="seq0Angulo" min="-360" max="360" step="1" value="150">
-                                            <span class="input-group-text">º</span>
+                                <div class="campos-seq">
+                                    <h5 class="mb-3">Componentes Simétricas</h5>
+                                    <div class="form-group">
+                                        <label class="form-label">Seq0</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="seq0Magnitude" min="0" step="0.1" value="0.577" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="seq0Angulo" min="-360" max="360" step="1" value="150" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">Seq1</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="seq1Magnitude" min="0" step="0.1" value="2">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="seq1Angulo" min="-360" max="360" step="1" value="0">
-                                            <span class="input-group-text">º</span>
+                                    <div class="form-group">
+                                        <label class="form-label">Seq1</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="seq1Magnitude" min="0" step="0.1" value="2" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="seq1Angulo" min="-360" max="360" step="1" value="0" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="form-group">
-                                    <label class="form-label">Seq2</label>
-                                    <div class="fasor-row">
-                                        <input type="number" class="form-control" id="seq2Magnitude" min="0" step="0.1" value="0.577">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="seq2Angulo" min="-360" max="360" step="1" value="-150">
-                                            <span class="input-group-text">º</span>
+                                    <div class="form-group">
+                                        <label class="form-label">Seq2</label>
+                                        <div class="fasor-row">
+                                            <input type="number" class="form-control" id="seq2Magnitude" min="0" step="0.1" value="0.577" data-ignorar-passo>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="seq2Angulo" min="-360" max="360" step="1" value="-150" data-ignorar-passo>
+                                                <span class="input-group-text">º</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
