@@ -89,7 +89,7 @@
                                 <div class="form-group">
                                     <label for="angulo" class="form-label">Ângulo [º]</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="angulo" placeholder="Ex: 90" min="0" max="359" step="1">
+                                        <input type="number" class="form-control" id="angulo" placeholder="Ex: 60" min="0" max="359" step="1">
                                         <span class="input-group-text">º</span>
                                     </div>
                                 </div>
@@ -98,7 +98,7 @@
                                 <div class="form-group">
                                     <label for="amplitude" class="form-label">Amplitude [º]</label>
                                     <div class="input-group">
-                                        <input type="number" class="form-control" id="amplitude" placeholder="Ex: 130" min="90" max="170" step="1">
+                                        <input type="number" class="form-control" id="amplitude" placeholder="Ex: 170" min="90" max="170" step="1">
                                         <span class="input-group-text">º</span>
                                     </div>
                                 </div>
@@ -117,22 +117,68 @@
                             </div>
                         </div>
 
+                        <!-- data-omitir-impressao: essas grandezas de falta já aparecem,
+                             congeladas no momento do cálculo, na 1ª seção dos Resultados
+                             (grandezasFaltaHTML, calc_67_echarts.js) — omitido aqui na
+                             impressão pra não duplicar (main.js, construirTabelaParametrosHTML). -->
+                        <div data-omitir-impressao>
                         <h5 class="mt-5 mb-3">Grandezas Elétricas de Falta</h5>
 
-                        <div class="row">
-                            <div class="col-3">
+                        <div class="grid-2-colunas">
+                            <div>
+                                <h6 class="mt-4 mb-3">Tensões</h6>
                                 <div class="form-group">
-                                    <label for="iaMagnitude" class="form-label">Ia [A]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="iaMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
-                                        <span class="input-group-text">A</span>
+                                    <label for="vaMagnitude" class="form-label">Va</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vaMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
+                                            <span class="input-group-text">V</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vaAngulo" placeholder="Ex: 0" min="-360" max="360" step="1" value="0">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="va" title="Equilibrar as 3 tensões a partir da fase A">E</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vbMagnitude" class="form-label">Vb</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vbMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
+                                            <span class="input-group-text">V</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vbAngulo" placeholder="Ex: 240" min="-360" max="360" step="1" value="240">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="vb" title="Equilibrar as 3 tensões a partir da fase B">E</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vcMagnitude" class="form-label">Vc</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vcMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
+                                            <span class="input-group-text">V</span>
+                                        </div>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="vcAngulo" placeholder="Ex: 120" min="-360" max="360" step="1" value="120">
+                                            <span class="input-group-text">º</span>
+                                        </div>
+                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="vc" title="Equilibrar as 3 tensões a partir da fase C">E</button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-3">
+                            <div>
+                                <h6 class="mt-4 mb-3">Correntes</h6>
                                 <div class="form-group">
-                                    <label for="iaAngulo" class="form-label">θ<sub>Ia</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
+                                    <label for="iaMagnitude" class="form-label">Ia</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="iaMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
+                                            <span class="input-group-text">A</span>
+                                        </div>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="iaAngulo" placeholder="Ex: 0" min="-360" max="360" step="1" value="0">
                                             <span class="input-group-text">º</span>
@@ -140,23 +186,13 @@
                                         <button type="button" class="btn-equilibrar" data-grupo="corrente" data-fase="ia" title="Equilibrar as 3 correntes a partir da fase A">E</button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-3">
                                 <div class="form-group">
-                                    <label for="ibMagnitude" class="form-label">Ib [A]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="ibMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
-                                        <span class="input-group-text">A</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="ibAngulo" class="form-label">θ<sub>Ib</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
+                                    <label for="ibMagnitude" class="form-label">Ib</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="ibMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
+                                            <span class="input-group-text">A</span>
+                                        </div>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="ibAngulo" placeholder="Ex: 240" min="-360" max="360" step="1" value="240">
                                             <span class="input-group-text">º</span>
@@ -164,23 +200,13 @@
                                         <button type="button" class="btn-equilibrar" data-grupo="corrente" data-fase="ib" title="Equilibrar as 3 correntes a partir da fase B">E</button>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-3">
                                 <div class="form-group">
-                                    <label for="icMagnitude" class="form-label">Ic [A]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="icMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
-                                        <span class="input-group-text">A</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="icAngulo" class="form-label">θ<sub>Ic</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
+                                    <label for="icMagnitude" class="form-label">Ic</label>
+                                    <div class="fasor-row">
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="icMagnitude" placeholder="Ex: 1.00" min="0" max="150.00" step="0.01" value="1">
+                                            <span class="input-group-text">A</span>
+                                        </div>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="icAngulo" placeholder="Ex: 120" min="-360" max="360" step="1" value="120">
                                             <span class="input-group-text">º</span>
@@ -190,79 +216,8 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vaMagnitude" class="form-label">Va [V]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="vaMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
-                                        <span class="input-group-text">V</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vaAngulo" class="form-label">θ<sub>Va</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="vaAngulo" placeholder="Ex: 0" min="-360" max="360" step="1" value="0">
-                                            <span class="input-group-text">º</span>
-                                        </div>
-                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="va" title="Equilibrar as 3 tensões a partir da fase A">E</button>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vbMagnitude" class="form-label">Vb [V]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="vbMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
-                                        <span class="input-group-text">V</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vbAngulo" class="form-label">θ<sub>Vb</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="vbAngulo" placeholder="Ex: 240" min="-360" max="360" step="1" value="240">
-                                            <span class="input-group-text">º</span>
-                                        </div>
-                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="vb" title="Equilibrar as 3 tensões a partir da fase B">E</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vcMagnitude" class="form-label">Vc [V]</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="vcMagnitude" placeholder="Ex: 66.40" min="0" max="150.00" step="0.01" value="66.4">
-                                        <span class="input-group-text">V</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-3">
-                                <div class="form-group">
-                                    <label for="vcAngulo" class="form-label">θ<sub>Vc</sub> [º]</label>
-                                    <div class="d-flex align-items-center campo-com-equilibrar">
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="vcAngulo" placeholder="Ex: 120" min="-360" max="360" step="1" value="120">
-                                            <span class="input-group-text">º</span>
-                                        </div>
-                                        <button type="button" class="btn-equilibrar" data-grupo="tensao" data-fase="vc" title="Equilibrar as 3 tensões a partir da fase C">E</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="d-flex justify-content-end mt-4">
                             <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnLimpar">Limpar</button>
                             <button type="submit" class="btn btn-primary" id="btnCalcular">Calcular</button>
@@ -270,8 +225,8 @@
                     </form>
                 </div>
             </div>
-            
-            <div class="card">
+
+            <div class="card" id="cardResultados67">
                 <div class="card-header">
                     <h5 class="card-title">Resultados</h5>
                 </div>

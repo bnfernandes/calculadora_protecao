@@ -350,14 +350,6 @@ body {
   min-height: 2.6em;
 }
 
-/* Botão "Equilibrar" (E) — fica colado ao campo de ângulo (não solto na
-   extremidade direita da linha, onde passaria batido). .campo-com-equilibrar
-   é um flex simples, então acompanha o campo de ângulo tanto lado a lado
-   (desktop) quanto empilhado (celular, onde .col-3 vira 100%). */
-.campo-com-equilibrar {
-  gap: 6px;
-}
-
 /* Zona da função 21: ajustes de fase e terra lado a lado quando a largura
    permite, cada ajuste alinhado com seu equivalente na outra coluna (ex.:
    Alcance X Frente Fase ao lado de Alcance X Frente Terra). Módulo/Ângulo kn
@@ -444,13 +436,16 @@ body {
   }
 }
 
-/* Fases e Componentes Simétricas lado a lado (página de Componentes
-   Simétricas) — mesmo esquema de duas colunas de .grid-supervisao-direcional,
-   mas mais simples: cada lado é um bloco só (título + 3 campos), sem
-   entrelaçamento campo a campo entre os dois lados, então não precisa de
-   grid-template-areas nomeada. Em tela estreita empilha (Fases primeiro,
-   já é a ordem do HTML), igual ao padrão de fase/terra da página 21. */
-.grid-fases-sequencias {
+/* Dois blocos lado a lado (Componentes Simétricas: Fases/Componentes;
+   função 67: Correntes/Tensões; função 87: Enrolamento 1/Enrolamento 2) —
+   mesmo esquema de duas colunas de .grid-supervisao-direcional, mas mais
+   simples: cada lado é um bloco só (título + N campos), sem entrelaçamento
+   campo a campo entre os dois lados, então não precisa de
+   grid-template-areas nomeada — a ordem de Tab sai correta (todo o 1º bloco,
+   depois o 2º) só por estarem em blocos de DOM contíguos. Em tela estreita
+   empilha (1º bloco primeiro, já é a ordem do HTML), igual ao padrão de
+   fase/terra da página 21. */
+.grid-2-colunas {
   display: grid;
   position: relative;
   grid-template-columns: 1fr;
@@ -458,10 +453,17 @@ body {
 }
 
 @media (min-width: 769px) {
-  .grid-fases-sequencias {
+  .grid-2-colunas {
     grid-template-columns: 1fr 1fr;
     column-gap: 30px;
-    row-gap: 0;
+    /* 0 nos usos de 1 linha só (seq, 67) — sem efeito aí, já que row-gap só
+       conta entre linhas e não existe uma 2ª. Só entra em jogo na 87 com 3
+       enrolamentos, onde o 3º item do grid (Enrolamento 3) cai sozinho numa
+       2ª linha, abaixo do Enrolamento 1 (mesma largura, coluna da direita
+       vazia — como se houvesse um Enrolamento 4 ali) por posicionamento
+       automático do grid, sem precisar de grid-template-areas: 20px evita
+       que ele fique colado no Enrolamento 1. */
+    row-gap: 20px;
   }
 }
 
@@ -473,7 +475,7 @@ body {
 @media (min-width: 769px) {
   .grid-fase-terra::before,
   .grid-supervisao-direcional::before,
-  .grid-fases-sequencias::before {
+  .grid-2-colunas::before {
     content: '';
     position: absolute;
     top: 0;
@@ -526,10 +528,6 @@ body {
   margin-top: 10px;
   padding-top: 20px;
   border-top: 1px solid #ddd;
-}
-
-.campo-com-equilibrar .input-group {
-  flex: 1;
 }
 
 .btn-equilibrar,
@@ -1268,7 +1266,8 @@ input[readonly] {
   .fase-box,
   .form-section,
   .form-subsection,
-  .tabela-correntes-injetadas {
+  .tabela-correntes-injetadas,
+  .tabela-grandezas-falta {
     break-inside: avoid;
   }
 

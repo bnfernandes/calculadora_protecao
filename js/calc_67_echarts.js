@@ -39,6 +39,11 @@ class Complexo {
     }
 }
 
+// Controla se o card de Resultados entra na versão impressa (ver
+// ajustarCardResultadoImpressao67 mais abaixo) — só depois de "Calcular",
+// senão o PDF mostraria o placeholder "aparecerão aqui" em vez de nada.
+let resultadosGerados67 = false;
+
 // Função auxiliar para normalizar ângulos no intervalo [0, 360)
 function normalizarAngulo(angulo) {
     while (angulo < 0) angulo += 360;
@@ -446,10 +451,38 @@ function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, par
     return secaoResultadoHTML(`Região de Disparo ${nomeI}`, conteudo);
 }
 
+// Formata uma grandeza {magnitude, angulo} como "mag∠ang°" — mesmo par de
+// campos usado em ia/ib/ic/va/vb/vc dentro de parametrosUsados.
+function fmtGrandeza67(g) {
+    return `${g.magnitude.toFixed(2)}∠${g.angulo.toFixed(2)}°`;
+}
+
+// Tabela Corrente/Tensão por fase com os valores exatamente como lidos do
+// formulário no momento do cálculo (congelados) — mesmo papel de
+// correntesInjetadasHTML na função 87 (js/calc_87_eq.js): a 1ª coisa exibida
+// nos Resultados, antes de qualquer valor calculado, pra o PDF continuar
+// mostrando as grandezas de falta usadas mesmo com o formulário omitido.
+function grandezasFaltaHTML(parametrosUsados) {
+    const { ia, ib, ic, va, vb, vc } = parametrosUsados;
+    let html = '<div class="table-responsive tabela-grandezas-falta"><table class="tabela-pontos-teste">';
+    // Sem coluna "Fase": a letra já vai no subscrito de cada valor (I_a, V_a,
+    // ...), mesmo padrão das tabelas de correntesInjetadasHTML (87) e das de
+    // falta trifásica/monofásica (21) — uma coluna à parte só pra repetir a
+    // mesma letra que já está em cada célula é redundante.
+    html += '<thead><tr><th>Tensão</th><th>Corrente</th></tr></thead><tbody>';
+    [['a', ia, va], ['b', ib, vb], ['c', ic, vc]].forEach(([sub, i, v]) => {
+        html += `<tr><td>V<sub>${sub}</sub> = ${fmtGrandeza67(v)} V</td><td>I<sub>${sub}</sub> = ${fmtGrandeza67(i)} A</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    return html;
+}
+
 // Função para formatar resultados em HTML
 function formatarResultadosHTML(resultados) {
     const { parametrosUsados } = resultados;
     let html = '<div class="resultados-67">';
+
+    html += secaoResultadoHTML('Grandezas Elétricas de Falta', grandezasFaltaHTML(parametrosUsados));
 
     html += construirSecaoFase('a', resultados.VpolIa, resultados.anguloMaxTorqueIa, resultados.regiaoDisparoIa, parametrosUsados, 'grafico-ia');
     html += construirSecaoFase('b', resultados.VpolIb, resultados.anguloMaxTorqueIb, resultados.regiaoDisparoIb, parametrosUsados, 'grafico-ib');
@@ -524,6 +557,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Exibir resultados
                 const resultadosDiv = document.getElementById('resultados');
                 resultadosDiv.innerHTML = formatarResultadosHTML(resultados);
+                resultadosGerados67 = true;
 
                 // Criar gráficos após o DOM ser atualizado — em try/catch próprio,
                 // já que o try externo não cobre erros de um callback assíncrono
@@ -549,6 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btnLimpar.addEventListener('click', function() {
                 form.reset();
                 document.getElementById('resultados').innerHTML = '';
+                resultadosGerados67 = false;
             });
         }
     }
@@ -590,6 +625,15 @@ function equilibrarFase(grupo, faseClicada) {
     document.getElementById(`${faseAnterior}Magnitude`).value = magnitudePivo;
     document.getElementById(`${faseAnterior}Angulo`).value = normalizarAngulo(anguloPivo - delta);
 }
+
+// O PDF deve refletir só o que o usuário efetivamente pediu pra ver — card
+// Resultados só entra na impressão se "Calcular" já foi usado (senão iria o
+// placeholder "aparecerão aqui" pro papel). Mesmo papel de
+// ajustarCardsResultadoImpressao87 (pages/calculo-87.html).
+function ajustarCardResultadoImpressao67() {
+    document.getElementById('cardResultados67').classList.toggle('oculto-impressao', !resultadosGerados67);
+}
+window.addEventListener('beforeprint', ajustarCardResultadoImpressao67);
 
 // Exportar funções para uso global
 window.calcularFuncao67 = calcularFuncao67;

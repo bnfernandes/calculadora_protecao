@@ -14,7 +14,11 @@ function textoRetangular(fasor) {
 // Um <tbody> por fase: rowspan="3" nas colunas Fase/Fasor da 1ª linha do
 // grupo (mesmo padrão de js/calc_87_pontos_teste.js), com os 3 termos
 // rotacionados (s0/s1/s2, já com a anotação "a"/"a²" certa para ABC ou ACB -
-// ver calc_seq.js) nas 3 linhas do grupo.
+// ver calc_seq.js) nas 3 linhas do grupo. Único lugar do site com uma coluna
+// "Fase" à parte (nas demais tabelas — 67, 87, 21 — a letra vai embutida no
+// rótulo do próprio valor, ex. "I_a = ..."): aqui cada grupo tem 3 linhas
+// (não 1), então uma coluna dedicada ajuda a identificar o grupo de relance,
+// em vez de depender só do texto dentro da célula de Fasor.
 function construirGrupoFase(letra, fasorOriginal, termos) {
     const nomesBase = ['s0', 's1', 's2'];
     let html = '<tbody>';
