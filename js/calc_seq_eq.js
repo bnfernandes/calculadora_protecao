@@ -19,7 +19,7 @@ function construirGrupoFase(letra, fasorOriginal, termos) {
     const nomesBase = ['s0', 's1', 's2'];
     let html = '<tbody>';
     termos.forEach((t, i) => {
-        const rotulo = t.anotacao ? `${nomesBase[i]} ${t.anotacao}` : nomesBase[i];
+        const rotulo = t.anotacao ? `${t.anotacao} ${nomesBase[i]}` : nomesBase[i];
         html += `<tr${i === 0 ? ' class="linha-novo-ponto"' : ''}>`;
         if (i === 0) {
             html += `<td rowspan="3">${letra}</td>` +
@@ -135,7 +135,7 @@ function renderizarEquacoes(dados) {
     const matrizInv = matrizHTML(acb
         ? [['1', '1', '1'], ['1', 'a²', 'a'], ['1', 'a', 'a²']]
         : [['1', '1', '1'], ['1', 'a', 'a²'], ['1', 'a²', 'a']]);
-    const vetorAbc = vetorColuna(['a', 'b', 'c']);
+    const vetorAbc = vetorColuna(['A', 'B', 'C']);
     const vetorSeq = vetorColuna(['s0', 's1', 's2']);
 
     let html = '';

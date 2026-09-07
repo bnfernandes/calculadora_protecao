@@ -118,6 +118,29 @@ body {
   font-weight: 600;
 }
 
+/* Cabeçalho com título + botão "Gerar PDF" (calc_51/67/87/ref/seq) — reúne o
+   que antes era .d-flex.justify-content-between.align-items-center +
+   style="flex-wrap:wrap;gap:10px" repetido em cada página. O margin-bottom
+   fica AQUI (no cabeçalho todo), não em .page-title: como título e botão
+   viram itens flex, o margin-bottom de .page-title (pensado pra separar o
+   título do primeiro card, nas páginas sem botão - 21/sobre/referências)
+   ficava "preso" entre o título e o botão quando ele quebrava pra baixo em
+   tela estreita (título longo o suficiente pra não caber ao lado do botão)
+   - sobrava espaço vazio ali e faltava exatamente esse espaço depois do
+   botão, colando ele no primeiro card. */
+.cabecalho-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.cabecalho-pagina .page-title {
+  margin-bottom: 0;
+}
+
 /* Cards */
 .card {
   background-color: #fff;
@@ -632,6 +655,17 @@ body {
   justify-content: flex-end;
 }
 
+/* Recuar/Gerar Ponto de Teste/Avançar (Sugestão de Pontos de Teste, função
+   87): 3 botões, um deles com texto bem mais longo que os outros — .d-flex
+   sozinho não quebra linha, então em tela estreita cortava/gerava scroll
+   horizontal em vez de empilhar. gap substitui o margin-right inline que os
+   dois primeiros botões tinham (senão duplicava o espaçamento quando cai
+   pra próxima linha). */
+.botoes-ponto-teste-87 {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .align-items-center {
   align-items: center;
 }
@@ -786,8 +820,17 @@ body {
   .col-6, .col-4, .col-3 {
     flex: 0 0 100%;
     max-width: 100%;
+    /* Em telas largas, esse padding (15px de cada lado) é o "gutter" entre
+       colunas vizinhas, compensado pela margem negativa de .row abaixo. Com
+       uma coluna só por linha (empilhado), não sobra vizinho pra dar gutter
+       - o padding só encolhe o campo à toa (30px de largura perdidos à
+       toa, sem a .grid-fase-terra/.grid-fases-sequencias correspondente,
+       que usa column-gap em vez de padding e por isso nunca teve esse
+       problema - ficava visivelmente mais estreita ao lado delas). */
+    padding-left: 0;
+    padding-right: 0;
   }
-  
+
   .row {
     margin-right: 0;
     margin-left: 0;
@@ -935,6 +978,23 @@ input[readonly] {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Em tela estreita, o mínimo seguro (min-content) de cada card ainda cabe
+   lado a lado espremido (números/frações encolhem bastante antes de
+   realmente precisar quebrar linha) — 3 cards cabem espremidos, cada um
+   minúsculo, com a fórmula quebrando em várias linhas dentro dele. Um piso
+   de largura por card (em vez de forçar 1 por linha via display:block, que
+   deixa até 2 cards folgados empilhados à toa num celular comum) faz o
+   flex-wrap decidir sozinho: 2 cabem lado a lado num celular (~390px de
+   tela), só cai pra 1 por linha em telas realmente estreitas. Mesmo ponto
+   de corte (699px) já usado por .fase-box .cards-lado-a-lado (função 67)
+   pro mesmo problema. */
+@media screen and (max-width: 699px) {
+  .cards-lado-a-lado > .resultado-box,
+  .cards-lado-a-lado > .formula {
+    min-width: 150px;
+  }
 }
 
 .cards-lado-a-lado > .resultado-box,

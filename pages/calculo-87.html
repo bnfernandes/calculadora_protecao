@@ -44,7 +44,7 @@
     <!-- Conteúdo principal -->
     <main class="main-content">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center" style="flex-wrap: wrap; gap: 10px;">
+            <div class="cabecalho-pagina">
                 <h1 class="page-title">Função 87 - Proteção Diferencial de Transformador</h1>
                 <button type="button" class="btn btn-secondary" id="btnGerarPdf">🖨️ Gerar PDF</button>
             </div>
@@ -105,7 +105,7 @@
                                     <select class="form-select" id="enrolRef">
                                         <option value="1">Enrolamento 1</option>
                                         <option value="2">Enrolamento 2</option>
-                                        <option value="3">Enrolamento 3</option>
+                                        <option value="3" id="optEnrolRef3">Enrolamento 3</option>
                                     </select>
                                 </div>
                             </div>
@@ -733,9 +733,9 @@
                     </div>
 
                     <div id="secaoPontoUnicoAcoes">
-                        <div class="d-flex justify-content-end mt-3">
-                            <button type="button" class="btn btn-secondary" style="margin-right: 10px;" id="btnRecuarIfren">◀ Recuar</button>
-                            <button type="button" class="btn btn-primary" style="margin-right: 10px;" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
+                        <div class="d-flex justify-content-end mt-3 botoes-ponto-teste-87">
+                            <button type="button" class="btn btn-secondary" id="btnRecuarIfren">◀ Recuar</button>
+                            <button type="button" class="btn btn-primary" id="btnGerarPontoTeste">Gerar Ponto de Teste</button>
                             <button type="button" class="btn btn-secondary" id="btnAvancarIfren">Avançar ▶</button>
                         </div>
 
@@ -800,6 +800,17 @@
                     elem.style.display = mostrar ? '' : 'none';
                 }
             });
+
+            // Com 2 enrolamentos, "Enrolamento 3" não existe pra ser
+            // referência — some da lista e, se era o valor selecionado,
+            // volta pro Enrolamento 1 (não dá pra deixar um enrolamento
+            // inexistente marcado como referência).
+            const optEnrolRef3 = document.getElementById('optEnrolRef3');
+            const enrolRef = document.getElementById('enrolRef');
+            optEnrolRef3.hidden = !mostrar;
+            if (!mostrar && enrolRef.value === '3') {
+                enrolRef.value = '1';
+            }
 
             // Se a potência e o kV/RTC do 3º enrolamento já estavam
             // preenchidos antes de mudar para 3 enrolamentos, preenche o
