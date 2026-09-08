@@ -1,6 +1,7 @@
 // formula-html.js - Helpers compartilhados para exibir resultados e fórmulas
 // em HTML puro (sem LaTeX), com frações em duas linhas, reaproveitados pelas
-// funções 51, 67 e 87 para manter a mesma aparência em todas as páginas.
+// funções 51, 67, 87 e Componentes Simétricas (seq) para manter a mesma
+// aparência em todas as páginas.
 
 // Fração em duas linhas: numerador em cima, traço, denominador embaixo.
 // Aceita HTML como numerador/denominador (ex: com <sub>, ∠, etc.)
@@ -63,6 +64,40 @@ function matrizHTML(linhas) {
     return `<span class="matriz"><span class="matriz-colchete matriz-colchete-esq"></span><span class="matriz-corpo">${linhasHTML}</span><span class="matriz-colchete matriz-colchete-dir"></span></span>`;
 }
 
+// Grade estilo LaTeX \align que alinha o "=" de várias linhas (equação
+// algébrica, numérica e resultado) numa coluna reta usando CSS Grid nativo
+// (ver .eq-grade-igual em equations.css) — sem nenhuma medição em JS. Usada
+// pela função 67 (Tensão de Polarização, calc_67_echarts.js) e pela página
+// de Componentes Simétricas (linha "= resultado" das equações numéricas,
+// calc_seq_eq.js).
+//
+// Por que não medir a posição em pixels e aplicar um deslocamento (1ª
+// versão desse alinhamento, em ambas as páginas): esse valor fica congelado
+// na escala de fonte de quando foi calculado (tipicamente a da tela) — a
+// impressão/PDF muda a escala de fonte do site inteiro (@media print
+// redefine html{font-size:10px}, ver ESCALA DE TEXTO em equations.css) numa
+// passagem de layout própria do motor de impressão, testada com um PDF real
+// gerado pelo Chromium (não só emulação de mídia — o evento "beforeprint"
+// não é confiável pra isso: o PDF final saía desalinhado mesmo
+// recalculando nele). CSS Grid não tem esse problema porque é recalculado
+// pelo próprio motor de layout do navegador em QUALQUER passagem de
+// renderização (tela, impressão, PDF), sem depender de JS nem de eventos.
+//
+// linhas: array de {rotulo, conteudo, resultado}. "resultado" (booleano)
+// marca a linha final em negrito/vermelho (equivalente ao antigo
+// .resultado-valor). Como a coluna 1 (rótulo) é a MESMA em todas as linhas
+// da grid, o "=" (sempre o último caractere do rótulo) sai naturalmente
+// alinhado entre elas — inclusive uma linha com mais de um "=" no meio do
+// conteúdo (ex. "Vpol Ia = Vbc = Vb - Vc"): só o da coluna 1 conta pro
+// alinhamento, o resto é conteúdo livre da coluna 2.
+function gradeAlinhadaHTML(linhas) {
+    const celulas = linhas.map(({ rotulo, conteudo, resultado }) => {
+        const classe = resultado ? ' eq-linha-resultado' : '';
+        return `<span class="eq-linha-rotulo${classe}">${rotulo}</span><span class="eq-linha-conteudo${classe}">${conteudo}</span>`;
+    }).join('');
+    return `<div class="eq-grade-igual">${celulas}</div>`;
+}
+
 window.fracaoHTML = fracaoHTML;
 window.somaHTML = somaHTML;
 window.absHTML = absHTML;
@@ -71,3 +106,4 @@ window.formulaBoxHTML = formulaBoxHTML;
 window.secaoResultadoHTML = secaoResultadoHTML;
 window.boxResultadoHTML = boxResultadoHTML;
 window.matrizHTML = matrizHTML;
+window.gradeAlinhadaHTML = gradeAlinhadaHTML;

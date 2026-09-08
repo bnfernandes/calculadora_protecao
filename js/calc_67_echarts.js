@@ -395,50 +395,133 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     registrarResizeGraficosFasoriais67();
 }
 
+// Alinhamento estilo LaTeX \align da Tensão de Polarização — via a grade
+// compartilhada gradeAlinhadaHTML (js/formula-html.js, ver .eq-grade-igual
+// em equations.css), não por medição em JS. Uma 1ª versão calculava um
+// deslocamento em pixels (posição do "=") e o aplicava com position:left,
+// mas esse valor fica congelado na escala de fonte de quando foi calculado
+// (tipicamente a da tela) — a impressão/PDF muda a escala de fonte do site
+// inteiro (@media print redefine html{font-size:10px}, ver ESCALA DE TEXTO
+// no topo de equations.css) numa passagem de layout própria do motor de
+// impressão, testada com um PDF real gerado pelo Chromium (não só emulação
+// de mídia — o evento "beforeprint" não é confiável pra isso: o PDF final
+// saía desalinhado mesmo recalculando nele). CSS Grid não tem esse problema
+// porque é recalculado pelo próprio motor de layout do navegador em
+// QUALQUER passagem de renderização (tela, impressão, PDF), sem depender de
+// JS nem de quando um evento dispara.
+
+// Monta uma equação com resultado como pares [rótulo, termo] — ex.
+// ["Vpol Ia =", "(...)"], ["-", "(...)"]. No desktop cai tudo numa linha só,
+// normal. Em telas estreitas ou quando a equação não cabe numa linha só (ver
+// ajustarEmpilhamentoEquacoes67), vira uma grid de 2 colunas (rótulo |
+// termo): o 1º termo fica ao lado do "=", os demais ao lado do rótulo deles
+// (ex. "-") — como a coluna de termo é a mesma em toda a grid, o 2º termo já
+// sai alinhado com o 1º sem precisar medir nada em JS.
+function gradeTermosHTML67(pares) {
+    const linhas = pares.map(([rotulo, termo]) =>
+        `<span class="eq-termo-rotulo">${rotulo}</span><span class="eq-termo">${termo}</span>`
+    ).join('');
+    return `<span class="eq-termos-empilhaveis">${linhas}</span>`;
+}
+
+// Decide, pra cada equação empilhável dentro do container, se ela precisa da
+// classe .eq-empilhado — não por um breakpoint fixo de largura de tela, mas
+// medindo se ESSA equação cabe numa linha só no espaço realmente disponível
+// (mesmo método de ajustarEmpilhamentoEquacoes em calc_seq_eq.js). O bloco
+// agora vive dentro de uma célula da grid externa (.eq-linha-conteudo, ver
+// gradeAlinhadaHTML em formula-html.js), não mais de um .formula-equation —
+// o pai direto (bloco.parentElement) continua sendo a "linha" certa a medir
+// nos dois casos, então não precisa mudar o restante da lógica.
+function ajustarEmpilhamentoEquacoes67(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.eq-termos-empilhaveis').forEach(bloco => {
+        const linha = bloco.parentElement;
+        if (!linha) return;
+        bloco.classList.remove('eq-empilhado');
+        const larguraDisponivel = linha.clientWidth;
+        linha.style.whiteSpace = 'nowrap';
+        const larguraNecessaria = linha.scrollWidth;
+        linha.style.whiteSpace = '';
+        if (larguraNecessaria > larguraDisponivel) {
+            bloco.classList.add('eq-empilhado');
+        }
+    });
+}
+
+
 // Monta a seção de resultados de uma fase (Vpol, ângulo de máximo torque,
 // ângulo de disparo e gráfico fasorial) — reaproveitada para Ia, Ib e Ic.
 function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, parametrosUsados, graficoId) {
     const nomeI = `I${letraFase}`; // Ia, Ib, Ic
 
-    // Linha com os valores substituídos, antes do resultado final — mostra a
-    // subtração dos dois fasores de tensão de fase que formam o Vpol
+    // Bloco da Tensão de Polarização, como uma grid de 3 (ou 5, com
+    // Reverso) linhas — ver gradeAlinhadaHTML (formula-html.js). A equação numérica fica sem o
+    // resultado embutido nela mesma ("= valor" solto no fim): o resultado
+    // vem numa linha própria logo abaixo, com o "=" alinhado ao das demais
+    // pela grid, mesmo estilo LaTeX \align da página de Componentes
+    // Simétricas.
     const { f1, f2 } = vpol.par;
     const semDirecao = f1.fasor.subtrair(f2.fasor);
+    const rotuloVpol = `V<sub>pol ${nomeI}</sub> =`;
     const linhasVpol = [
-        linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = ${vpol.formula}`),
-        linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> = (${f1.fasor}) - (${f2.fasor}) = ${semDirecao}`)
+        { rotulo: rotuloVpol, conteudo: vpol.formula },
+        { rotulo: rotuloVpol, conteudo: gradeTermosHTML67([
+            ['', `(${f1.fasor})`],
+            ['-', `(${f2.fasor})`]
+        ]) },
+        { rotulo: rotuloVpol, conteudo: `${semDirecao}`, resultado: true }
     ];
     // Direção "Reverso" soma 180° depois da subtração — sem essa linha, o
     // resultado final pareceria não bater com a subtração mostrada acima
     if (vpol.reverso) {
-        linhasVpol.push(linhaEquacaoHTML(`V<sub>pol ${nomeI}</sub> (Reverso) = ${semDirecao} + 180° = ${vpol.fasor}`));
+        const rotuloReverso = `V<sub>pol ${nomeI}</sub> (Reverso) =`;
+        linhasVpol.push(
+            { rotulo: rotuloReverso, conteudo: gradeTermosHTML67([
+                ['', `${semDirecao}`],
+                ['+', '180°']
+            ]) },
+            { rotulo: rotuloReverso, conteudo: `${vpol.fasor}`, resultado: true }
+        );
     }
 
     let conteudo = formulaBoxHTML({
         titulo: `Tensão de Polarização (V<sub>pol ${nomeI}</sub>)`,
-        linhas: linhasVpol,
-        resultado: `${vpol.fasor.magnitude().toFixed(2)} ∠ ${vpol.fasor.angulo().toFixed(2)}°`
+        linhas: [gradeAlinhadaHTML(linhasVpol)]
     });
 
+
+    // Mesma grade alinhada por "=" da Tensão de Polarização (gradeAlinhadaHTML)
+    // — a linha de resultado vira "θmax torque = valor" em vez de um número
+    // solto, com o "=" alinhado às duas equações acima.
+    const rotuloTorque = `θ<sub>max torque</sub> =`;
     conteudo += formulaBoxHTML({
         titulo: 'Ângulo de Máximo Torque',
-        linhas: [
-            linhaEquacaoHTML(`θ<sub>max torque</sub> = arg(V<sub>pol ${nomeI}</sub>) + 90° - ${parametrosUsados.angulo}°`),
-            linhaEquacaoHTML(`θ<sub>max torque</sub> = ${vpol.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°`)
-        ],
-        resultado: `${anguloMaxTorque.toFixed(2)}°`
+        linhas: [gradeAlinhadaHTML([
+            { rotulo: rotuloTorque, conteudo: `arg(V<sub>pol ${nomeI}</sub>) + 90° - ${parametrosUsados.angulo}°` },
+            { rotulo: rotuloTorque, conteudo: `${vpol.fasor.angulo().toFixed(2)}° + 90° - ${parametrosUsados.angulo}°` },
+            { rotulo: rotuloTorque, conteudo: `${anguloMaxTorque.toFixed(2)}°`, resultado: true }
+        ])]
     });
 
     // O ° precisa ficar junto do numerador (amplitude), não solto depois da
     // fração inteira — senão fica alinhado ao meio do bloco de duas linhas,
     // mais baixo que o número da amplitude.
     const metade = fracaoHTML(`${parametrosUsados.amplitude}°`, 2);
+    // θmin e θmax são 2 equações DIFERENTES (não uma equação + seu próprio
+    // resultado, como as demais grades desta página) — cada uma tem 2 "="
+    // (ex. "θmin = θmax torque - .../2 = 300.00° - 85.00°"), então o rótulo
+    // de cada uma leva só até o 1º "=" (θmin =/θmax =), e o 2º "=" de cada
+    // linha fica solto dentro do conteúdo, sem entrar no alinhamento da
+    // grade — mesmo cuidado do "Vpol Ia = Vbc = Vb - Vc" (só que aqui as
+    // duas linhas não compartilham o mesmo resultado no fim, então a caixa
+    // com a desigualdade final continua separada, como já era).
     conteudo += formulaBoxHTML({
         titulo: 'Ângulo de Disparo',
-        linhas: [
-            linhaEquacaoHTML(`θ<sub>min</sub> = θ<sub>max torque</sub> - ${metade} = ${anguloMaxTorque.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°`),
-            linhaEquacaoHTML(`θ<sub>max</sub> = θ<sub>max torque</sub> + ${metade} = ${anguloMaxTorque.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°`)
-        ],
+        linhas: [gradeAlinhadaHTML([
+            { rotulo: `θ<sub>min</sub> =`, conteudo: `θ<sub>max torque</sub> - ${metade} = ${anguloMaxTorque.toFixed(2)}° - ${(parametrosUsados.amplitude / 2).toFixed(2)}°` },
+            { rotulo: `θ<sub>max</sub> =`, conteudo: `θ<sub>max torque</sub> + ${metade} = ${anguloMaxTorque.toFixed(2)}° + ${(parametrosUsados.amplitude / 2).toFixed(2)}°` }
+        ])],
         resultado: `${regiaoDisparo.min.toFixed(2)}° &lt; θ<sub>${letraFase}</sub> &lt; ${regiaoDisparo.max.toFixed(2)}°`
     });
 
@@ -558,6 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const resultadosDiv = document.getElementById('resultados');
                 resultadosDiv.innerHTML = formatarResultadosHTML(resultados);
                 resultadosGerados67 = true;
+                reajustarEquacoesVpol67();
 
                 // Criar gráficos após o DOM ser atualizado — em try/catch próprio,
                 // já que o try externo não cobre erros de um callback assíncrono
@@ -634,6 +718,28 @@ function ajustarCardResultadoImpressao67() {
     document.getElementById('cardResultados67').classList.toggle('oculto-impressao', !resultadosGerados67);
 }
 window.addEventListener('beforeprint', ajustarCardResultadoImpressao67);
+
+function reajustarEquacoesVpol67() {
+    if (!resultadosGerados67) return;
+    ajustarEmpilhamentoEquacoes67('resultados');
+}
+
+// Reagir a redimensionamento/rotação: o critério de empilhar (ver
+// ajustarEmpilhamentoEquacoes67) depende do espaço realmente disponível, não
+// de um breakpoint fixo — se a janela mudar de tamanho, a decisão pode mudar
+// também (mesmo raciocínio de calc_seq_eq.js, na página de Componentes
+// Simétricas). Só reajusta o que já está na tela, e só se já houver
+// resultados calculados. Não precisa de listener de beforeprint/afterprint
+// aqui: o alinhamento do "=" agora é resolvido só por CSS Grid
+// (gradeAlinhadaHTML, formula-html.js — ver comentário em cima de ajustarEmpilhamentoEquacoes67),
+// que não depende de JS nem de quando um evento dispara — só essa decisão de
+// empilhar os termos por falta de espaço depende de medir a largura
+// disponível, e reagir ao resize já cobre isso.
+let resizeEquacoesTimeoutId67 = null;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeEquacoesTimeoutId67);
+    resizeEquacoesTimeoutId67 = setTimeout(reajustarEquacoesVpol67, 150);
+});
 
 // Exportar funções para uso global
 window.calcularFuncao67 = calcularFuncao67;

@@ -87,6 +87,18 @@ function fasorAlinhadoHTML(fasor) {
 function alinharColunasEquacoes(containerId, grupos) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    // Largura em REM, não em px: um valor fixo em pixels (medido na escala
+    // de tela, raiz a 16px) fica desproporcional quando a escala de fonte
+    // muda depois (impressão redefine html{font-size:10px}, ver ESCALA DE
+    // TEXTO em equations.css) — testado com um PDF real: o card de
+    // "Substituição Numérica" ficava esticado, ocupando a largura toda do
+    // card, com espaços enormes entre os termos (a largura em px continuava
+    // a mesma, mas o texto ao redor encolheu). REM é relativo à RAIZ, então
+    // o mesmo valor reescala sozinho, proporcionalmente, em qualquer escala
+    // de fonte — sem precisar recalcular nada em JS (nem depender de quando
+    // um evento como beforeprint dispara, que já se mostrou não confiável
+    // pra isso, ver gradeAlinhadaHTML em formula-html.js).
+    const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     grupos.forEach(grupo => {
         // .eq-antes (colunas da tabela, alinhamento à direita) e .eq-centro
         // (várias linhas de equação, alinhamento centralizado) usam o mesmo
@@ -96,7 +108,7 @@ function alinharColunasEquacoes(containerId, grupos) {
         if (spans.length === 0) return;
         spans.forEach(el => { el.style.width = 'auto'; });
         const largura = Math.max(...Array.from(spans).map(el => el.getBoundingClientRect().width));
-        spans.forEach(el => { el.style.width = largura + 'px'; });
+        spans.forEach(el => { el.style.width = (largura / remPx) + 'rem'; });
     });
 }
 
@@ -181,29 +193,6 @@ function gradeTermosHTML(pares, grupo, cadaTermoAlinhado) {
     return `<span class="${classes}"${dataAttr}>${linhas}</span>`;
 }
 
-// Acha o 1º caractere visível (não espaço) dentro de um elemento, em
-// profundidade, e devolve sua posição X real via Range — diferente de
-// elemento.getBoundingClientRect().left, que mediria a borda da CAIXA do
-// bloco (ex. .formula-equation ocupa a largura toda do .formula, mesmo com
-// o texto centralizado bem mais pra dentro) e não onde o texto realmente
-// começa a ser desenhado. Funciona tanto quando o conteúdo começa dentro
-// de um <span> (linhas "algfase"/"subfase") quanto como texto solto
-// (linhas "algseq"/"subseq", que começam com "s0 = " sem span nenhum).
-function medirInicioVisivelHTML(elemento) {
-    const walker = document.createTreeWalker(elemento, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-        const idx = node.textContent.search(/\S/);
-        if (idx >= 0) {
-            const range = document.createRange();
-            range.setStart(node, idx);
-            range.setEnd(node, idx + 1);
-            return range.getBoundingClientRect().left;
-        }
-    }
-    return elemento.getBoundingClientRect().left;
-}
-
 // Decide, PRA CADA equação "empilhável" (ver gradeTermosHTML), se ela
 // precisa da classe .eq-empilhado (grid, 1 termo por linha — ver
 // equations.css) — não por um breakpoint fixo de largura de tela, mas
@@ -215,16 +204,18 @@ function medirInicioVisivelHTML(elemento) {
 //
 // Método: força white-space:nowrap por um instante só pra medir a largura
 // que a linha PRECISARIA pra caber inteira sem quebrar (scrollWidth), e
-// compara com o espaço que ela REALMENTE tem disponível (clientWidth, já
-// que .formula-equation é um <div> - ocupa a largura toda do pai). Se
+// compara com o espaço que ela REALMENTE tem disponível (clientWidth). Se
 // precisar de mais do que tem, ativa o grid; a marca de "medir sem
 // quebrar" é desfeita antes de continuar (senão a própria medição forçaria
-// a linha a nunca quebrar de verdade).
+// a linha a nunca quebrar de verdade). O bloco vive dentro de uma célula da
+// grade externa (.eq-linha-conteudo, ver gradeAlinhadaHTML em
+// formula-html.js) — o pai direto (bloco.parentElement) é a "linha" certa
+// a medir.
 function ajustarEmpilhamentoEquacoes(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.querySelectorAll('.eq-termos-empilhaveis').forEach(bloco => {
-        const linha = bloco.closest('.formula-equation');
+        const linha = bloco.parentElement;
         if (!linha) return;
         bloco.classList.remove('eq-empilhado');
         const larguraDisponivel = linha.clientWidth;
@@ -234,29 +225,6 @@ function ajustarEmpilhamentoEquacoes(containerId) {
         if (larguraNecessaria > larguraDisponivel) {
             bloco.classList.add('eq-empilhado');
         }
-    });
-}
-
-// Alinha cada linha "resposta" (ex. "A = 1.000∠-0.000°", classe
-// .resultado-valor-alinhado) com a equação mais longa logo ACIMA dela
-// (irmã anterior no DOM, ex. "A = (0.577∠150.000°) + ..."). A resposta tem
-// largura livre de propósito (não teve o "=" jogado num grupo medido, ao
-// contrário da equação de cima) — então não dá pra confiar no
-// text-align:center do parágrafo pra fazer o "=" bater: ele centraliza a
-// linha INTEIRA, resposta incluída, e como ela varia de tamanho entre as
-// fases/sequências, cada uma centralizaria num ponto ligeiramente
-// diferente. Em vez disso, mede onde a equação de cima realmente começa
-// (ela já está correta, alinhada via grupo compartilhado) e desloca o
-// parágrafo com padding-left pra começar exatamente no mesmo x — daí em
-// diante, se o "=" de cada uma cai no mesmo lugar depende só do texto até
-// o "=" ser idêntico nas duas linhas (é o caso: mesmo rótulo "A"/"s0"...).
-function alinharRespostaComEquacaoAcima(seletorResposta) {
-    document.querySelectorAll(seletorResposta).forEach(p => {
-        const equacao = p.previousElementSibling;
-        if (!equacao || !equacao.classList.contains('formula-equation')) return;
-        p.style.paddingLeft = '0px';
-        const delta = medirInicioVisivelHTML(equacao) - medirInicioVisivelHTML(p);
-        p.style.paddingLeft = Math.max(0, delta) + 'px';
     });
 }
 
@@ -365,16 +333,19 @@ function construirLinhasFase(letra, dados) {
 
     // 1º termo ao lado do "=", os demais ao lado do "+" — cada um alinhado
     // com o termo de cima (grupo "subfase") via grid no celular (ver
-    // gradeTermosHTML). A resposta usa a MESMA letra "solta" (sem span) —
-    // como as duas linhas começam com o mesmo texto exato,
-    // alinharRespostaComEquacaoAcima já basta pro "=" bater.
-    const pares = [[`${letra} =`, termosTexto[0]], ['+', termosTexto[1]], ['+', termosTexto[2]]];
+    // gradeTermosHTML). O rótulo "A =" não entra no 1º par aqui (fica
+    // vazio): quem fornece "A =" é a grade externa (gradeAlinhadaHTML, em
+    // formula-html.js), compartilhada com a linha de resposta logo abaixo —
+    // assim as duas ficam com o "=" garantidamente na mesma coluna,
+    // resolvido só por CSS Grid, sem depender de nenhuma medição em JS (ver
+    // .eq-grade-igual em equations.css pro motivo).
+    const pares = [['', termosTexto[0]], ['+', termosTexto[1]], ['+', termosTexto[2]]];
     const linhaLonga = gradeTermosHTML(pares, 'subfase', true);
 
-    return [
-        linhaEquacaoHTML(linhaLonga),
-        `<p class="resultado-valor resultado-valor-alinhado">${letra} = ${textoPolar(dados[letra])}</p>`
-    ];
+    return [gradeAlinhadaHTML([
+        { rotulo: `${letra} =`, conteudo: linhaLonga },
+        { rotulo: `${letra} =`, conteudo: textoPolar(dados[letra]), resultado: true }
+    ])];
 }
 
 // Mesma ideia de construirLinhasFase, na direção "seq = 1/3 x soma de termos
@@ -392,21 +363,24 @@ function construirLinhasSeq(indice, dados) {
 
     // Só o "(" e o ")" mais externos alinham entre s0/s1/s2 (grupo próprio
     // "subseq" — termos numéricos bem mais largos que os da versão
-    // simbólica, "algseq"): o "(" vai junto do rótulo da 1ª linha (com o
-    // rótulo e a fração 1/3), o ")" junto do último termo — o conteúdo
-    // entre eles fica solto (sem alinhamento por "+" individual), só o
-    // container inteiro (não cada termo) que alinha entre s0/s1/s2.
+    // simbólica, "algseq"): o "(" vai junto do rótulo da 1ª linha (com a
+    // fração 1/3), o ")" junto do último termo — o conteúdo entre eles fica
+    // solto (sem alinhamento por "+" individual), só o container inteiro
+    // (não cada termo) que alinha entre s0/s1/s2. O rótulo "s0 =" também
+    // não entra no 1º par aqui (só a fração e o "("): quem fornece "s0 =" é
+    // a grade externa (gradeAlinhadaHTML), compartilhada com a linha de
+    // resposta logo abaixo — mesmo motivo de construirLinhasFase.
     const pares = [
-        [`${nome} = ${fracaoHTML('1', '3')} (`, termosTexto[0]],
+        [`${fracaoHTML('1', '3')} (`, termosTexto[0]],
         ['+', termosTexto[1]],
         ['+', `${termosTexto[2]})`]
     ];
     const linhaLonga = gradeTermosHTML(pares, 'subseq', false);
 
-    return [
-        linhaEquacaoHTML(linhaLonga),
-        `<p class="resultado-valor resultado-valor-alinhado">${nome} = ${textoPolar(resultado)}</p>`
-    ];
+    return [gradeAlinhadaHTML([
+        { rotulo: `${nome} =`, conteudo: linhaLonga },
+        { rotulo: `${nome} =`, conteudo: textoPolar(resultado), resultado: true }
+    ])];
 }
 
 function renderizarEquacoes(dados) {
@@ -468,8 +442,12 @@ function renderizarEquacoes(dados) {
 
     container.innerHTML = html;
     alinharColunasEquacoes('equacoes-container', ['algfase', 'algseq', 'subfase', 'subseq']);
+    reajustarEquacoesImpressaoSeq();
+}
+
+function reajustarEquacoesImpressaoSeq() {
+    if (!document.getElementById('equacoes-container')) return;
     ajustarEmpilhamentoEquacoes('equacoes-container');
-    alinharRespostaComEquacaoAcima('#equacoes-container .resultado-valor-alinhado');
 }
 
 // Reagir a redimensionamento/rotação: o critério de empilhar (ver
@@ -480,14 +458,16 @@ function renderizarEquacoes(dados) {
 // alinharColunasEquacoes não precisam ser remedidas: dependem do TEXTO de
 // cada termo, que não muda com o redimensionamento, só ficam ocultas atrás
 // do "width:auto !important" de .eq-empilhado enquanto ele estiver ativo.
+// Não precisa de listener de beforeprint/afterprint aqui: o alinhamento do
+// "=" da resposta (equação numérica → resultado) é resolvido só por CSS
+// Grid (gradeAlinhadaHTML, formula-html.js — ver .eq-grade-igual em
+// equations.css), que não depende de JS nem de quando um evento dispara —
+// só essa decisão de empilhar os termos por falta de espaço depende de
+// medir a largura disponível, e reagir ao resize já cobre isso.
 let resizeEquacoesTimeoutId = null;
 window.addEventListener('resize', function() {
     clearTimeout(resizeEquacoesTimeoutId);
-    resizeEquacoesTimeoutId = setTimeout(function() {
-        if (!document.getElementById('equacoes-container')) return;
-        ajustarEmpilhamentoEquacoes('equacoes-container');
-        alinharRespostaComEquacaoAcima('#equacoes-container .resultado-valor-alinhado');
-    }, 150);
+    resizeEquacoesTimeoutId = setTimeout(reajustarEquacoesImpressaoSeq, 150);
 });
 
 window.renderizarSequenciaAtiva = renderizarSequenciaAtiva;
