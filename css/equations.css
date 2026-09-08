@@ -179,6 +179,118 @@
     text-align: center;
 }
 
+/* Alinhamento estilo LaTeX \align (tabela de decomposição da página de
+   Componentes Simétricas, js/calc_seq_eq.js: alinharPorSimboloHTML +
+   alinharColunasEquacoes) — cada valor vira 2 metades, a de "antes" do
+   símbolo de referência (∠, "s", sinal de "j") alinhada à direita dentro de
+   uma largura fixa (calculada em JS, igual pra todo o grupo), a de "depois"
+   alinhada à esquerda logo em seguida — o efeito de coluna reta vem da
+   largura ser a MESMA em todas as linhas do grupo, não deste CSS sozinho. */
+.eq-alinhada {
+    display: inline-flex;
+}
+
+.eq-antes {
+    display: inline-block;
+    text-align: right;
+}
+
+.eq-depois {
+    text-align: left;
+}
+
+/* Trecho centralizado (equações algébricas fase = soma de termos, ex.
+   "A = s0 + s1 + s2" / "B = s0 + a²·s1 + a·s2") — mesma mecânica de medir-e-
+   aplicar largura de .eq-antes, mas sem lado "antes"/"depois": o conteúdo
+   inteiro do trecho fica centralizado dentro da largura compartilhada. */
+.eq-centro {
+    display: inline-block;
+    text-align: center;
+}
+
+/* Linha "resposta" (ex. "A = 1.000∠-0.000°") que acompanha uma equação
+   maior acima, na página de Componentes Simétricas — substitui o
+   text-align:center padrão de .resultado-valor: a posição real vem de
+   alinharRespostaComEquacaoAcima (js/calc_seq_eq.js), que mede onde a
+   equação de cima começa e desloca esta linha com padding-left. Continuar
+   centralizando aqui brigaria com esse deslocamento (a resposta tem
+   largura livre, então cada fase centralizaria em um x diferente). */
+.resultado-valor-alinhado {
+    text-align: left;
+}
+
+/* Quando o próprio container empilhável é o span medido/alinhado (ver
+   gradeTermosHTML, !cadaTermoAlinhado — ex. "subseq"), o "(" fica DENTRO
+   dele agora (no rótulo da 1ª linha), não mais fora como texto solto — sem
+   isso, o text-align:center herdado de .eq-centro recentralizava o
+   conteúdo dentro da largura compartilhada, e como s0 (sem multiplicador)
+   tem menos conteúdo que s1/s2 (com "a·"/"a²·"), cada um centralizava com
+   uma folga diferente, descolando o "(" entre as linhas. Alinhado à
+   esquerda, a folga (quando existe) sobra só do lado direito, e o "("
+   começa sempre no mesmo x. */
+.eq-termos-empilhaveis.eq-centro {
+    text-align: left;
+}
+
+/* Rótulo de cada linha dentro de .eq-termos-empilhaveis ("A =" na 1ª, "+"
+   nas seguintes) — margem pros dois lados cobre tanto o desktop (espaço
+   antes/depois do "+", igual ao resto do site) quanto o celular (a margem
+   direita vira o respiro entre a coluna de rótulo e a de termo). */
+.eq-termo-rotulo {
+    margin: 0 6px;
+}
+
+/* Termos "empilháveis" das equações grandes (substituição numérica, ex.
+   "A = (0.577∠150°) + (2.000∠0°) + (0.577∠-150°)") — largas demais pra
+   caber numa linha só em telas/espaços estreitos, onde o navegador
+   quebrava em qualquer ponto (às vezes no meio de um termo). Por padrão é
+   só um <span> comum, sem efeito nenhum na linha — cai tudo numa linha só,
+   na ordem normal.
+
+   Vira uma grid de 2 colunas (rótulo | termo) só quando ganha a classe
+   .eq-empilhado, aplicada em JS por ajustarEmpilhamentoEquacoes
+   (calc_seq_eq.js) — não é uma media query de largura de tela: mede se
+   ESSA equação específica cabe numa linha só no espaço realmente
+   disponível, então reage tanto a tela estreita quanto a uma equação
+   grande demais mesmo em tela larga, sem depender de nenhum breakpoint
+   fixo (e sem afetar nenhum outro componente do site, que continua nos
+   breakpoints de sempre). O 1º termo fica ao lado do "=" (não sozinho numa
+   linha), os seguintes ao lado do "+" — como a coluna de termo é a MESMA
+   em todas as linhas da grid, o termo já sai alinhado com o de cima
+   sozinho (grid-template-columns), sem precisar medir nada em JS. */
+.eq-termos-empilhaveis.eq-empilhado {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    /* não "baseline": a 1ª linha da equação de s0/s1/s2 tem a fração 1/3
+       no rótulo, cuja linha de base não é a do texto normal — "baseline"
+       descolava o termo um pouco pra baixo do rótulo nessa linha
+       especificamente. */
+    align-items: center;
+    row-gap: 4px;
+    column-gap: 4px;
+}
+
+.eq-empilhado > .eq-termo-rotulo {
+    text-align: right;
+    margin: 0;
+}
+
+.eq-empilhado > .eq-centro,
+.eq-empilhado > .eq-termo {
+    text-align: left;
+}
+
+/* A largura fixa calculada em JS (alinharColunasEquacoes) só faz sentido
+   lado a lado — na grid, a coluna do termo (1fr) já dá espaço de sobra, e
+   uma largura fixa de quando media a equação numa linha só só apertaria o
+   conteúdo à toa. Cobre os dois casos de gradeTermosHTML: termo com seu
+   próprio .eq-centro (filho) e o próprio container empilhável sendo o
+   .eq-centro (fundido nele mesmo, ex. "subseq"). */
+.eq-empilhado .eq-centro,
+.eq-empilhado.eq-centro {
+    width: auto !important;
+}
+
 /* Estilos para sobrescritos e subscritos */
 sup {
     font-size: 0.8em;

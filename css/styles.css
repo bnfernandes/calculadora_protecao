@@ -1186,6 +1186,19 @@ input[readonly] {
   border-top: 2px solid #ccc;
 }
 
+/* Coluna "Fase" da tabela de decomposição (Componentes Simétricas) — só uma
+   letra (A/B/C/N), centralizar já basta. Por classe explícita (.col-fase),
+   não :first-child: com rowspan="3" nas células de Fase/Fasor, as linhas 2 e
+   3 de cada grupo não têm célula de Fase no DOM — o :first-child real delas
+   passa a ser a célula de Seq, que ficava centralizada por engano.
+   Especificidade ".tabela-pontos-teste td.col-fase" (não só ".col-fase")
+   de propósito: precisa empatar ou superar ".tabela-pontos-teste td"
+   (text-align:left, acima) para realmente vencer a cascata. */
+.tabela-pontos-teste td.col-fase,
+.tabela-pontos-teste th.col-fase {
+  text-align: center;
+}
+
 /* Tabela de parâmetros para impressão: só existe na página impressa, gerada
    dinamicamente em main.js a partir do .calc-form no momento do print. Precisa
    vir ANTES do bloco @media print abaixo — mesma especificidade, então a regra
