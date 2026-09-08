@@ -20,6 +20,11 @@ class Complexo {
     }
 
     angulo() {
+        // Ângulo de um fasor com magnitude ~0 não tem significado físico -
+        // atan2(~0,~0) devolve um valor ruidoso (erro de ponto flutuante),
+        // não uma direção real. Mesmo tratamento usado em calc_seq.js
+        // (Fasor.angulo()) e calc_87.js (anguloSeguro).
+        if (this.magnitude() < 1e-9) return 0;
         let angulo = Math.atan2(this.imag, this.real) * 180 / Math.PI;
         if (angulo < 0) angulo += 360;
         return angulo;

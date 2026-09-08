@@ -9,6 +9,19 @@ function normalizarAngulo(ang) {
     return ((ang % 360) + 360) % 360;
 }
 
+// Ângulo de um fasor com magnitude ~0 não tem significado físico -
+// atan2(~0,~0) devolve um valor ruidoso (erro de ponto flutuante nos
+// componentes real/imag), não uma direção real - ex: a sequência zero (I0)
+// de uma injeção de corrente equilibrada deveria zerar exatamente, mas
+// aparecia com um ângulo qualquer tipo "0.000∠116.6°". Mesmo tratamento já
+// usado em calc_seq.js (Fasor.angulo()) e calc_67_echarts.js
+// (Complexo.angulo()), aplicado aqui em todo ângulo exibido na tela
+// (filtro homopolar e compensação por código horário).
+function anguloSeguro(imagPart, realPart) {
+    if (Math.sqrt(realPart * realPart + imagPart * imagPart) < 1e-9) return 0;
+    return Math.atan2(imagPart, realPart) * 180 / Math.PI;
+}
+
 // Lê os campos comuns do formulário (config + enrolamentos), usados tanto pelo
 // cálculo a partir das correntes de falta quanto pelo gerador de pontos de teste
 function lerFormulario87() {
@@ -156,16 +169,16 @@ function calcularDiferencial87() {
                 fases.push({
                     letra: ['a', 'b', 'c'][faseIdx],
                     antesMag: Math.sqrt(I_a[faseIdx][devIdx] ** 2 + I_jb[faseIdx][devIdx] ** 2),
-                    antesAng: Math.atan2(I_jb[faseIdx][devIdx], I_a[faseIdx][devIdx]) * 180 / Math.PI,
+                    antesAng: anguloSeguro(I_jb[faseIdx][devIdx], I_a[faseIdx][devIdx]),
                     depoisMag: Math.sqrt(Ih_a[faseIdx][devIdx] ** 2 + Ih_jb[faseIdx][devIdx] ** 2),
-                    depoisAng: Math.atan2(Ih_jb[faseIdx][devIdx], Ih_a[faseIdx][devIdx]) * 180 / Math.PI
+                    depoisAng: anguloSeguro(Ih_jb[faseIdx][devIdx], Ih_a[faseIdx][devIdx])
                 });
             }
 
             filtroHomopolarInfo.push({
                 dev: devIdx,
                 i0Mag: Math.sqrt(i0Real ** 2 + i0Imag ** 2),
-                i0Ang: Math.atan2(i0Imag, i0Real) * 180 / Math.PI,
+                i0Ang: anguloSeguro(i0Imag, i0Real),
                 fases
             });
         } else {
@@ -430,7 +443,7 @@ function descreverGiro(Im_a, Im_jb, dev, codigo, faseAlvo) {
     function fasor(idxFase) {
         const a = Im_a[idxFase][dev];
         const b = Im_jb[idxFase][dev];
-        return { letra: letras[idxFase], mag: Math.sqrt(a * a + b * b), ang: Math.atan2(b, a) * 180 / Math.PI };
+        return { letra: letras[idxFase], mag: Math.sqrt(a * a + b * b), ang: anguloSeguro(b, a) };
     }
 
     if (info.tipo === 'neg') {
@@ -584,7 +597,7 @@ function calcularDiferencial_VBA(If_a, If_jb, taps, C, enrolamentos, config, Im_
 
         for (let dev = 0; dev < numEnrol; dev++) {
             const mag = Math.sqrt(If_a[fase][dev] ** 2 + If_jb[fase][dev] ** 2);
-            const ang = Math.atan2(If_jb[fase][dev], If_a[fase][dev]) * 180 / Math.PI;
+            const ang = anguloSeguro(If_jb[fase][dev], If_a[fase][dev]);
             const rtcFactor = rtc[dev] / rtc[0];
 
             let contrib_a, contrib_jb;

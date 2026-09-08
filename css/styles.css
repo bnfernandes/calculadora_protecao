@@ -995,6 +995,20 @@ input[readonly] {
   }
 }
 
+/* Filtro Homopolar (Função 87): cada card tem 4 linhas de equação com
+   fasores completos (ex: "Ia′ = Ia - I0 = (3.138∠0.0°) - (0.000∠116.6°) =
+   3.138∠-0.0°"), bem mais longas que as de TAP/Constantes C - o piso de
+   150px acima ainda deixa 2 cards caberem lado a lado num celular comum,
+   espremidos ao ponto da própria equação quebrar em várias linhas. Empilha
+   1 por linha abaixo de 699px, mesmo ponto de corte usado por
+   .fase-box .cards-lado-a-lado (Idif/Ifren) pro mesmo problema - acima
+   disso volta ao flex-wrap padrão (2-3 cards lado a lado conforme couber). */
+@media screen and (max-width: 699px) {
+  .cards-filtro-homopolar {
+    display: block;
+  }
+}
+
 .cards-lado-a-lado > .resultado-box,
 .cards-lado-a-lado > .formula {
   /* flex-basis:0 (não "auto") é o que importa aqui: o flexbox só quebra

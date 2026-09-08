@@ -130,15 +130,19 @@ function ifrenSubstituidaHTML(config, termos, enrolamentos, eTap1) {
 // usada ali já é a pós-filtro, que zerou antes de chegar no giro).
 function filtroHomopolarHTML(info, nomeEnrol) {
     const i0 = fmtPolar(info.i0Mag, info.i0Ang);
+    // As 3 linhas por fase têm 3 "=" cada (algébrica = numérica = resultado) -
+    // rotulo/conteudo são montados à mão (nunca por busca no texto já
+    // montado) pra garantir que só o 1º "=" (fim do rotulo) entre no
+    // alinhamento da grade, os outros dois ficam livres dentro do conteúdo -
+    // mesmo cuidado tomado nas grades da função 67 (gradeAlinhadaHTML,
+    // formula-html.js).
     const linhas = [
-        linhaEquacaoHTML(`I<sub>0</sub> = ${fracaoHTML('I<sub>a</sub> + I<sub>b</sub> + I<sub>c</sub>', '3')} = ${i0}`)
+        linhaEquacaoHTML(`I<sub>0</sub> = ${fracaoHTML('I<sub>a</sub> + I<sub>b</sub> + I<sub>c</sub>', '3')} = ${i0}`),
+        gradeAlinhadaHTML(info.fases.map(f => ({
+            rotulo: `I<sub>${f.letra}</sub>′ =`,
+            conteudo: `I<sub>${f.letra}</sub> - I<sub>0</sub> = (${fmtPolar(f.antesMag, f.antesAng)}) - (${i0}) = ${fmtPolar(f.depoisMag, f.depoisAng)}`
+        })))
     ];
-    info.fases.forEach(f => {
-        linhas.push(linhaEquacaoHTML(
-            `I<sub>${f.letra}</sub>′ = I<sub>${f.letra}</sub> - I<sub>0</sub> = ` +
-            `(${fmtPolar(f.antesMag, f.antesAng)}) - (${i0}) = ${fmtPolar(f.depoisMag, f.depoisAng)}`
-        ));
-    });
     return formulaBoxHTML({ titulo: `Filtro Homopolar — ${nomeEnrol}`, linhas });
 }
 
@@ -197,7 +201,7 @@ function exibirResultados(config, enrolamentos, taps, C, resultados, filtroHomop
     // Seção de Filtro Homopolar (só enrolamentos com o filtro ativo) — mesmo
     // padrão de cards lado a lado na impressão usado em TAPs/Constantes C
     if (filtroHomopolarInfo.length > 0) {
-        let filtroSecao = '<div class="cards-lado-a-lado">';
+        let filtroSecao = '<div class="cards-lado-a-lado cards-filtro-homopolar">';
         filtroHomopolarInfo.forEach(info => {
             filtroSecao += boxResultadoHTML(filtroHomopolarHTML(info, enrolamentos[info.dev].nome));
         });
