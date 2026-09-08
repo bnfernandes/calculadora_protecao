@@ -81,6 +81,7 @@ function gerarRazoesCorrente(min = 1.05, max = 40, quantidade = 80) {
 function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0, razaoPontoAtuacao = null) {
     const correntes = [];
     const tempos = [];
+    const temposBrutos = [];
 
     const constants = CURVE_CONSTANTS[tipoCurva];
     const padrao = constants ? constants.padrao : null;
@@ -112,9 +113,21 @@ function gerarPontosCurva(tipoCurva, multiplicador, I0, tempoMinimo = 0, razaoPo
         } catch (error) {
             tempos.push(null);
         }
+
+        // Curva "bruta", sem o piso do tempo mínimo — usada só para desenhar
+        // a continuação em cinza claro abaixo do piso (ver criarGrafico).
+        // TEMPO-FIXO não tem curva nenhuma (o tempo já É o piso, sempre),
+        // então não existe "bruto" pra calcular ali.
+        if (tipoCurva !== 'TEMPO-FIXO') {
+            try {
+                temposBrutos.push(calcularTempoBruto(tipoCurva, multiplicador, I, I0));
+            } catch (error) {
+                temposBrutos.push(null);
+            }
+        }
     }
 
-    return { correntes, tempos };
+    return { correntes, tempos, temposBrutos };
 }
 
 // Função principal de cálculo da função 51
@@ -306,6 +319,18 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         Math.log10(pontosCurva.tempos[i])
     ]).filter(([, logTempo]) => Number.isFinite(logTempo));
 
+    // Continuação "não válida" da curva, sem o piso do tempo mínimo (cinza
+    // claro) — mesmos pontos de corrente da curva válida, mas com o tempo
+    // bruto da fórmula em vez do tempo já limitado pelo piso. Onde o piso
+    // não corta nada (bruto >= tempo mínimo), os dois traços coincidem
+    // exatamente e o vermelho (desenhado por cima, ver série abaixo) cobre o
+    // cinza por completo; só aparece cinza visível na faixa em que o piso
+    // "achata" a curva vermelha em uma reta.
+    const dadosBrutos = (pontosCurva.temposBrutos || []).map((tempoBruto, i) => [
+        Math.log10(pontoAtuacao ? pontosCurva.correntes[i] / pontoAtuacao.parametrosUsados.correntePartida : pontosCurva.correntes[i]),
+        Math.log10(tempoBruto)
+    ]).filter(([, logTempo]) => Number.isFinite(logTempo));
+
     // Corrente/tempo fora da faixa de atuação da curva (ex: I/I0 abaixo do
     // pickup) resultam em tempoAtuacao = Infinity — log10 disso não é um
     // número finito, e um ponto/markLine assim não deve ser desenhado (o
@@ -337,6 +362,11 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         valoresX.push(Math.log10(pontoAtuacao.fatorCalculado));
         valoresY.push(Math.log10(pontoAtuacao.tempoAtuacao));
     }
+    // A curva não válida (cinza) também dimensiona os eixos, igual à curva
+    // válida acima — senão a parte dela que se estende além do piso do tempo
+    // mínimo ficaria cortada fora da área visível, sem cumprir o propósito
+    // de mostrar a continuação.
+    dadosBrutos.forEach(([x, y]) => { valoresX.push(x); valoresY.push(y); });
     if (valoresX.length === 0) valoresX.push(0); // caso degenerado: nenhum ponto finito
     if (valoresY.length === 0) valoresY.push(0);
     const xMin = Math.min(...valoresX) - MARGEM_EIXO_DECADAS;
@@ -380,6 +410,18 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             lineStyle: { color: '#eee', type: 'solid', width: 1 },
             data: gradesMenores
         }
+    }, {
+        // Mesma zlevel da curva válida, mas entra ANTES dela no array — na
+        // mesma zlevel, quem entra depois é desenhado por cima, então o
+        // vermelho sempre cobre o cinza onde os dois coincidem.
+        name: 'Curva sem tempo mínimo',
+        type: 'line',
+        data: dadosBrutos,
+        lineStyle: { color: '#ccc', width: 2 },
+        itemStyle: { color: '#ccc' },
+        symbol: 'none',
+        smooth: false,
+        zlevel: 1
     }, {
         name: 'Curva de Proteção',
         type: 'line',
@@ -433,6 +475,37 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         });
     }
 
+    // Ícones da legenda calcados no conteúdo real de cada série (mesma ideia
+    // já usada na 87, js/calc_87_grafico.js) — o ícone padrão do ECharts pra
+    // série 'line' sempre desenha uma bolinha no meio, mesmo com symbol:
+    // 'none' na série (Curva de Proteção/Curva sem tempo mínimo não têm
+    // marcador nenhum no traço real). "Projeção do Ponto" nem é uma linha de
+    // verdade (é um markLine tracejado numa série scatter) — sem um ícone
+    // customizado, a legenda mostraria só um círculo, sem relação com o
+    // tracejado que ela realmente desenha. "Ponto de Atuação" fica de fora
+    // deste mapa de propósito: seu símbolo já é o "X" customizado da própria
+    // série, herdado automaticamente pela legenda sem precisar de ícone à
+    // parte.
+    const iconeLinha = 'path://M-10,-1.5L10,-1.5L10,1.5L-10,1.5Z'; // barra fina = linha sem marcador
+    const ICONES_LEGENDA = {
+        'Curva de Proteção': { icon: iconeLinha, itemStyle: { color: '#e30613' } },
+        'Curva sem tempo mínimo': { icon: iconeLinha, itemStyle: { color: '#ccc' } },
+        // 3 barrinhas PREENCHIDAS (mesma técnica de retângulo fechado do
+        // iconeLinha acima, só que 3 vezes com vãos) em vez de contorno
+        // tracejado sobre um traço de área zero — este saía sólido na
+        // prática (o preenchimento por área é o que realmente funciona no
+        // ícone da legenda do ECharts, testado visualmente).
+        'Projeção do Ponto': { icon: 'path://M-10,-1.5L-5,-1.5L-5,1.5L-10,1.5Z M-2.5,-1.5L2.5,-1.5L2.5,1.5L-2.5,1.5Z M5,-1.5L10,-1.5L10,1.5L5,1.5Z', itemStyle: { color: '#495057' } }
+    };
+    const nomesSeries = series.filter(s => s.name !== 'GradeMenor').map(s => s.name);
+    // "Curva sem tempo mínimo" sempre por último na legenda — só a posição
+    // visual do item, não interfere na ordem de sobreposição no gráfico
+    // (essa é definida pela ordem em `series`/zlevel, não pela legenda).
+    const dadosLegenda = [
+        ...nomesSeries.filter(nome => nome !== 'Curva sem tempo mínimo'),
+        ...nomesSeries.filter(nome => nome === 'Curva sem tempo mínimo')
+    ].map(nome => ICONES_LEGENDA[nome] ? { name: nome, ...ICONES_LEGENDA[nome] } : nome);
+
     // Reaproveita a instância existente no container, se houver
     const chart = echarts.getInstanceByDom(container) || echarts.init(container);
 
@@ -451,7 +524,7 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         // sobrepor uns aos outros em telas estreitas
         legend: {
             type: 'scroll',
-            data: series.filter(s => s.name !== 'GradeMenor').map(s => s.name),
+            data: dadosLegenda,
             top: 36,
             left: 'center'
         },
