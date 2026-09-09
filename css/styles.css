@@ -956,6 +956,15 @@ input[readonly] {
   margin-top: 0;
 }
 
+/* Título "Gráfico Fasorial - Fase X" (calc_67_echarts.js) — logo depois de
+   passar a ser o 1º elemento do card (gráfico antes das contas), a margem
+   padrão de <p> (16px em cima/embaixo) somava com a margem de baixo do
+   título da seção (.resultado-titulo, acima) e deixava um vão grande demais
+   entre os dois títulos seguidos. */
+.titulo-grafico-fasorial {
+  margin: 6px 0 8px;
+}
+
 .resultado-box {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
@@ -1403,19 +1412,48 @@ input[readonly] {
     break-inside: avoid;
   }
 
-  /* Gráficos fasoriais da função 67: menores na impressão que na tela (eram
-     600px nos dois) — contrapartida em CSS do redesenho feito em
-     ajustarGraficoFasorialImpressao67 (calc_67_echarts.js, LARGURA_IMPRESSAO_
-     FASORIAL_67). Precisa do !important pra vencer o max-width:600px inline
-     (HTML) do elemento — sem isso, a regra “#grafico-ia canvas { width:100%
-     !important }” logo acima esticaria de volta o canvas (já redesenhado
-     menor pelo JS) pros 600px originais do wrapper. Só estas 3 ids — as
-     outras páginas/gráficos deste grupo (51, 87, seq) não pediram esse
-     ajuste e continuam com o max-width normal da tela. */
+  /* Gráficos fasoriais da função 67 e da página de Componentes Simétricas:
+     menores na impressão do que na tela — contrapartida em CSS do redesenho
+     feito em ajustarGraficoFasorialImpressao67 (calc_67_echarts.js,
+     LARGURA_IMPRESSAO_FASORIAL_67) e ajustarGraficoFasorialImpressaoSeq
+     (calc_seq_grafico.js, LARGURA_IMPRESSAO_FASORIAL_SEQ). Precisa do
+     !important pra vencer, na 67, o max-width:600px inline (HTML) do
+     elemento — sem isso a regra "#grafico-ia canvas { width:100% !important
+     }" logo acima esticaria de volta o canvas (já redesenhado menor pelo
+     JS) pros 600px originais do wrapper; na seq não há max-width inline,
+     mas o valor evita que o canvas menor fique esticado até a largura da
+     célula do grid (.grid-graficos-fasoriais-seq), que pode ser bem maior.
+     Só estas ids — a 51 e a 87 não pediram esse ajuste e continuam com o
+     max-width normal da tela. */
   #grafico-ia,
   #grafico-ib,
   #grafico-ic {
     max-width: 400px !important;
+  }
+
+  #grafico-abc,
+  #grafico-seq0,
+  #grafico-seq1,
+  #grafico-seq2 {
+    max-width: 240px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* .grid-graficos-fasoriais-seq só vira 2 colunas em @media (min-width:769px)
+     — na impressão, essa largura é avaliada contra a área útil da página
+     (largura do papel menos as margens), que varia com o destino de
+     impressão (testado: com a margem de 1.5cm do @page acima cabia nos
+     769px e virava 2 colunas; com uma margem maior, comum em alguns drivers
+     de impressão como o "Microsoft Print to PDF" do Windows, ficava abaixo
+     de 769px e a regra de 2 colunas nem chegava a valer — caía pra 1 coluna
+     inteira, não só "quase" cabendo lado a lado). Forçar 2 colunas aqui
+     independe dessa largura instável — os gráficos já foram reduzidos o
+     bastante (240px cada, ver LARGURA_IMPRESSAO_FASORIAL_SEQ em
+     calc_seq_grafico.js) pra sempre caberem lado a lado numa página A4,
+     mesmo com margens maiores que as 1.5cm assumidas pelo @page. */
+  .grid-graficos-fasoriais-seq {
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .resumo-idif-ifren {

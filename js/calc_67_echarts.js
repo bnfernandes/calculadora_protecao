@@ -581,7 +581,16 @@ function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, par
         );
     }
 
-    let conteudo = formulaBoxHTML({
+    // Gráfico antes das contas — é o que dá o contexto visual (fasores,
+    // região de disparo) pra entender as equações que vêm depois, não o
+    // contrário.
+    let conteudo = boxResultadoHTML(
+        `<p class="titulo-grafico-fasorial"><strong>Gráfico Fasorial - Fase ${nomeI}</strong></p>` +
+        `<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">` +
+        `<div id="${graficoId}" style="width: 100%; max-width: 600px;"></div></div>`
+    );
+
+    conteudo += formulaBoxHTML({
         titulo: `Tensão de Polarização (V<sub>pol ${nomeI}</sub>)`,
         linhas: [gradeAlinhadaHTML(linhasVpol)]
     });
@@ -620,12 +629,6 @@ function construirSecaoFase(letraFase, vpol, anguloMaxTorque, regiaoDisparo, par
         ])],
         resultado: `${regiaoDisparo.min.toFixed(2)}° &lt; θ<sub>${letraFase}</sub> &lt; ${regiaoDisparo.max.toFixed(2)}°`
     });
-
-    conteudo += boxResultadoHTML(
-        `<p><strong>Gráfico Fasorial — Fase ${nomeI}</strong></p>` +
-        `<div style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">` +
-        `<div id="${graficoId}" style="width: 100%; max-width: 600px;"></div></div>`
-    );
 
     return secaoResultadoHTML(`Região de Disparo ${nomeI}`, conteudo);
 }
