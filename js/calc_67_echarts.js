@@ -166,6 +166,82 @@ function buildSectorPoints(startDeg, endDeg, step = 2) {
 // criarGraficoFasorial (chamada 3x por cálculo), que acumulava indefinidamente
 // e podia referenciar instâncias já descartadas por dispose().
 const GRAFICOS_FASORIAIS_67 = ['grafico-ia', 'grafico-ib', 'grafico-ic'];
+
+// Largura (em px) do container medida na TELA a partir da qual a legenda
+// lateral (coluna vertical à direita) é usada em vez da legenda embaixo
+// (rolável, horizontal). Abaixo disso — a maioria dos celulares, que aqui
+// giram em torno de 320-380px de largura útil de card — mantém o layout
+// original.
+const LARGURA_MIN_LEGENDA_LATERAL_67 = 420;
+
+// Largura "de projeto" do gráfico fasorial NA IMPRESSÃO/PDF — um valor fixo
+// e independente da largura medida na tela (container.offsetWidth), de
+// propósito. A largura da tela é só o tamanho da janela do navegador de
+// quem está calculando — não tem nenhuma relação com o tamanho físico do
+// papel, então reaproveitar aquele número pra decidir o tamanho/layout da
+// impressão seria repetir a mesma classe de bug já corrigida nesta página
+// (pixels congelados na escala de UM contexto sendo usados como se
+// valessem no OUTRO — ver o comentário grande em cima de gradeAlinhadaHTML,
+// formula-html.js). Aqui a impressão sempre desenha para este valor fixo, e
+// sempre com legenda lateral — ver ajustarGraficoFasorialImpressao67, que
+// redesenha o gráfico faseado. chart.resize()/setOption() só no clique de
+// "Gerar PDF" (nunca no beforeprint — mesma regra de sempre, ver nota no
+// topo de main.js), e css/styles.css tem a contrapartida em CSS: reduz o
+// max-width do container de 600px pra este mesmo valor só na impressão
+// (senão a regra existente que força width:100% do canvas relativo ao
+// container esticaria esse canvas menor de volta pros 600px).
+const LARGURA_IMPRESSAO_FASORIAL_67 = 400;
+
+// Geometria do gráfico fasorial (área quadrada de plotagem + coluna da
+// legenda, se aplicável) a partir de uma largura de projeto em pixels —
+// pura função de `largura`, sem ler nada do DOM: usada tanto para a tela
+// (chamada com container.offsetWidth) quanto para a impressão (chamada com
+// LARGURA_IMPRESSAO_FASORIAL_67, sempre forçando legenda lateral).
+function layoutFasorial67(largura, forcarLegendaLateral = false) {
+    const titleHeight = 15; // Pequena margem superior
+    const usarLegendaLateral = forcarLegendaLateral || largura >= LARGURA_MIN_LEGENDA_LATERAL_67;
+
+    let plotSize, plotLeft, gridBottom, legendOption;
+    if (usarLegendaLateral) {
+        const legendWidth = Math.max(110, Math.min(170, largura * 0.32));
+        const gapLegenda = 15;
+        plotSize = largura - legendWidth - gapLegenda;
+        plotLeft = 0;
+        gridBottom = 10; // só uma pequena margem inferior, sem legenda aqui embaixo
+        legendOption = {
+            type: 'scroll',
+            orient: 'vertical',
+            right: 5,
+            top: 'middle',
+            itemWidth: 20,
+            itemHeight: 12,
+            itemGap: 10,
+            textStyle: { fontSize: 10 },
+            pageIconSize: 10,
+            padding: [5, 5]
+        };
+    } else {
+        const legendHeight = 50; // Espaço para legenda (rolável, não quebra linha)
+        plotSize = Math.min(largura * 0.8, largura - 40);
+        plotLeft = (largura - plotSize) / 2;
+        gridBottom = legendHeight;
+        legendOption = {
+            type: 'scroll',
+            bottom: 5,
+            left: 'center',
+            orient: 'horizontal',
+            itemWidth: 20,
+            itemHeight: 12,
+            itemGap: 12,
+            textStyle: { fontSize: 10 },
+            pageIconSize: 10,
+            padding: [5, 10]
+        };
+    }
+
+    return { plotSize, plotLeft, gridBottom, titleHeight, legendOption, totalHeight: titleHeight + plotSize + gridBottom };
+}
+
 let resizeListenerRegistrado67 = false;
 function registrarResizeGraficosFasoriais67() {
     if (resizeListenerRegistrado67) return;
@@ -253,10 +329,19 @@ function criarGraficoFasorial(containerId, fase, resultados) {
     // borda do círculo (o grid corta o que ultrapassar a área visível)
     const nomeMaxTorque = `Âng. Máx. Torque: ${anguloMaxTorque.toFixed(0)}°`;
 
+    // Nomes de Va/Vb/Vc extraídos em variáveis (em vez de só inline dentro do
+    // phasor() abaixo) para reaproveitar exatamente o mesmo texto no ícone
+    // customizado da legenda (dadosLegenda, mais abaixo) sem duplicar a
+    // lógica de formatação.
+    const nomeVa = `Va: ${Va.magnitude().toFixed(1)}∠${Va.angulo().toFixed(0)}°`;
+    const nomeVb = `Vb: ${Vb.magnitude().toFixed(1)}∠${Vb.angulo().toFixed(0)}°`;
+    const nomeVc = `Vc: ${Vc.magnitude().toFixed(1)}∠${Vc.angulo().toFixed(0)}°`;
+
     // Série custom para desenhar o setor preenchido (região de operação)
+    const nomeRegiao = `Região ${anguloMin.toFixed(0)}°–${anguloMax.toFixed(0)}°`;
     const sectorSeries = {
         type: 'custom',
-        name: `Região ${anguloMin.toFixed(0)}°–${anguloMax.toFixed(0)}°`,
+        name: nomeRegiao,
         coordinateSystem: 'cartesian2d',
         silent: true,
         renderItem: function(params, api) {
@@ -304,21 +389,36 @@ function criarGraficoFasorial(containerId, fase, resultados) {
         return style;
     }
 
+    // Ícones da legenda calcados no conteúdo real de cada série (mesma ideia
+    // já usada nas páginas 51 e 87) — o ícone padrão do ECharts pra série
+    // 'lines' não reflete symbol/lineStyle da forma esperada (linha+bolinha
+    // genérica, sem seta, sem diferenciar sólido/tracejado). Os traços
+    // tracejados/pontilhados são desenhados como sub-caminhos SEPARADOS (não
+    // via itemStyle.borderType) — testado visualmente na página 51 que um
+    // traço de área zero com borderType:'dashed' sai sólido na prática.
+    const iconeSetaSolida = 'path://M-10,0L5,0M5,-3L10,0L5,3Z';
+    const iconeSetaTracejada = 'path://M-10,0L-6,0M-3,0L1,0M4,-3L10,0L4,3Z';
+    const iconePontilhadoSemSeta = 'path://M-9,-1L-7,-1L-7,1L-9,1Z M-4,-1L-2,-1L-2,1L-4,1Z M1,-1L3,-1L3,1L1,1Z M6,-1L8,-1L8,1L6,1Z';
+    const dadosLegenda = [
+        { name: nomeRegiao, icon: 'rect', itemStyle: { color: corFase, borderWidth: 0 } },
+        { name: nomeVa, icon: iconeSetaSolida, itemStyle: { color: '#1976d2', borderColor: '#1976d2', borderWidth: 2 } },
+        { name: nomeVb, icon: iconeSetaSolida, itemStyle: { color: '#000000', borderColor: '#000000', borderWidth: 2 } },
+        { name: nomeVc, icon: iconeSetaSolida, itemStyle: { color: '#d32f2f', borderColor: '#d32f2f', borderWidth: 2 } },
+        { name: nomeCorrenteFase, icon: iconeSetaTracejada, itemStyle: { color: corFasorCorrente, borderColor: corFasorCorrente, borderWidth: 2 } },
+        { name: nomeMaxTorque, icon: iconePontilhadoSemSeta, itemStyle: { color: corFasorCorrente } },
+        { name: nomeVpol, icon: iconeSetaTracejada, itemStyle: { color: '#8e24aa', borderColor: '#8e24aa', borderWidth: 2 } }
+    ];
+
     // Calcular dimensões para garantir área plotável quadrada
     // (sem título interno do gráfico — o texto já aparece no cabeçalho HTML acima
     // dele — e legenda do tipo "scroll", que não sobrepõe o gráfico em telas estreitas)
     const containerWidth = container.offsetWidth;
-    const titleHeight = 15;  // Pequena margem superior
-    const legendHeight = 50; // Espaço para legenda (rolável, não quebra linha)
-    const verticalMargin = titleHeight + legendHeight;
-    
-    // Área plotável deve ser quadrada
-    const plotSize = Math.min(containerWidth * 0.8, containerWidth - 40);
-    const totalHeight = plotSize + verticalMargin;
-    
+    const layout = layoutFasorial67(containerWidth);
+    const { plotSize, plotLeft, gridBottom, titleHeight, legendOption, totalHeight } = layout;
+
     // Ajustar altura do container
     container.style.height = totalHeight + 'px';
-    
+
     // Criar gráfico
     const chart = echarts.init(container, null, { renderer: 'canvas' });
 
@@ -333,7 +433,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
                 type: 'image',
                 style: {
                     image: '../img/coordpolar.png',
-                    x: (containerWidth - plotSize) / 2,
+                    x: plotLeft,
                     y: titleHeight,
                     width: plotSize,
                     height: plotSize
@@ -342,16 +442,15 @@ function criarGraficoFasorial(containerId, fase, resultados) {
             }
         ],
         grid: {
-            left: (containerWidth - plotSize) / 2,
-            right: (containerWidth - plotSize) / 2,
+            left: plotLeft,
             top: titleHeight,
-            bottom: legendHeight,
+            bottom: gridBottom,
             width: plotSize,
             height: plotSize,
             containLabel: false
         },
         xAxis: {
-            min: -1.1, 
+            min: -1.1,
             max: 1.1,
             show: false,
             axisLine: { show: false },
@@ -360,7 +459,7 @@ function criarGraficoFasorial(containerId, fase, resultados) {
             splitLine: { show: false }
         },
         yAxis: {
-            min: -1.1, 
+            min: -1.1,
             max: 1.1,
             show: false,
             axisLine: { show: false },
@@ -369,24 +468,16 @@ function criarGraficoFasorial(containerId, fase, resultados) {
             splitLine: { show: false }
         },
         legend: {
-            type: 'scroll',
-            bottom: 5,
-            left: 'center',
-            orient: 'horizontal',
-            itemWidth: 20,
-            itemHeight: 12,
-            itemGap: 12,
-            textStyle: { fontSize: 10 },
-            pageIconSize: 10,
-            padding: [5, 10],
+            ...legendOption,
+            data: dadosLegenda,
             // Vpol começa desmarcado — só aparece se o usuário clicar nele
             selected: { [nomeVpol]: false }
         },
         series: [
             sectorSeries,
-            phasor(Va, escala, '#1976d2', `Va: ${Va.magnitude().toFixed(1)}∠${Va.angulo().toFixed(0)}°`, 'solid'),
-            phasor(Vb, escala, '#000000', `Vb: ${Vb.magnitude().toFixed(1)}∠${Vb.angulo().toFixed(0)}°`, 'solid'),
-            phasor(Vc, escala, '#d32f2f', `Vc: ${Vc.magnitude().toFixed(1)}∠${Vc.angulo().toFixed(0)}°`, 'solid'),
+            phasor(Va, escala, '#1976d2', nomeVa, 'solid'),
+            phasor(Vb, escala, '#000000', nomeVb, 'solid'),
+            phasor(Vc, escala, '#d32f2f', nomeVc, 'solid'),
             phasor(corrente, escalaCorrente, corFasorCorrente, nomeCorrenteFase, 'dashed'),
             phasor(Complexo.fromPolar(2, anguloMaxTorque), 1, corFasorCorrente, nomeMaxTorque, 'dotted', false),
             phasor(Vpol, escala, '#8e24aa', nomeVpol, 'dashed')
@@ -723,6 +814,62 @@ function ajustarCardResultadoImpressao67() {
     document.getElementById('cardResultados67').classList.toggle('oculto-impressao', !resultadosGerados67);
 }
 window.addEventListener('beforeprint', ajustarCardResultadoImpressao67);
+
+// PDF: redesenha o gráfico fasorial um pouco menor, sempre com legenda
+// lateral (LARGURA_IMPRESSAO_FASORIAL_67 — largura fixa, independente da
+// largura medida na tela, ver comentário grande em cima dela), e remove da
+// legenda os itens desativados (hoje só Vpol, que começa desmarcado por
+// padrão) — sem interatividade no papel, um ícone acinzentado de algo que
+// nem aparece no círculo é só ruído. chart.getOption() já reflete o estado
+// ATUAL da legenda (inclusive se o usuário reativou Vpol na tela antes de
+// imprimir), então o filtro nunca fica "hardcoded" pra um item específico.
+// Guarda o tamanho de TELA (chart.getWidth()/getHeight(), não
+// container.offsetWidth de novo — já é a resolução real do canvas) e a
+// legenda completa em cada container pra restaurar exatamente depois
+// (afterprint). Roda no click de "Gerar PDF" (nunca no beforeprint —
+// mesma regra de sempre, ver nota no topo de main.js: setOption/resize ali
+// corrompe o snapshot de impressão).
+function ajustarGraficoFasorialImpressao67(paraImpressao) {
+    GRAFICOS_FASORIAIS_67.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.chartInstance) return;
+        const chart = el.chartInstance;
+        const legendAtual = chart.getOption().legend[0];
+
+        let layout, tamanhoAlvo, dadosLegendaAlvo;
+        if (paraImpressao) {
+            el.legendaFasorialCompleta = legendAtual.data;
+            el.tamanhoFasorialTela = { width: chart.getWidth(), height: chart.getHeight() };
+
+            const selecionados = legendAtual.selected || {};
+            dadosLegendaAlvo = legendAtual.data.filter(item => {
+                const nome = typeof item === 'string' ? item : item.name;
+                return selecionados[nome] !== false;
+            });
+            layout = layoutFasorial67(LARGURA_IMPRESSAO_FASORIAL_67, true);
+            tamanhoAlvo = { width: LARGURA_IMPRESSAO_FASORIAL_67, height: layout.totalHeight };
+        } else if (el.tamanhoFasorialTela) {
+            dadosLegendaAlvo = el.legendaFasorialCompleta || legendAtual.data;
+            layout = layoutFasorial67(el.tamanhoFasorialTela.width);
+            tamanhoAlvo = el.tamanhoFasorialTela;
+        } else {
+            return;
+        }
+
+        chart.resize(tamanhoAlvo);
+        chart.setOption({
+            graphic: [{ style: { x: layout.plotLeft, y: layout.titleHeight, width: layout.plotSize, height: layout.plotSize } }],
+            grid: { left: layout.plotLeft, top: layout.titleHeight, bottom: layout.gridBottom, width: layout.plotSize, height: layout.plotSize },
+            legend: { ...layout.legendOption, data: dadosLegendaAlvo }
+        });
+        el.style.height = tamanhoAlvo.height + 'px';
+    });
+}
+window.addEventListener('afterprint', function() { ajustarGraficoFasorialImpressao67(false); });
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPdf = document.getElementById('btnGerarPdf');
+    if (btnPdf) btnPdf.addEventListener('click', function() { ajustarGraficoFasorialImpressao67(true); });
+});
 
 function reajustarEquacoesVpol67() {
     if (!resultadosGerados67) return;

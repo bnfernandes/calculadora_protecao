@@ -1403,6 +1403,21 @@ input[readonly] {
     break-inside: avoid;
   }
 
+  /* Gráficos fasoriais da função 67: menores na impressão que na tela (eram
+     600px nos dois) — contrapartida em CSS do redesenho feito em
+     ajustarGraficoFasorialImpressao67 (calc_67_echarts.js, LARGURA_IMPRESSAO_
+     FASORIAL_67). Precisa do !important pra vencer o max-width:600px inline
+     (HTML) do elemento — sem isso, a regra “#grafico-ia canvas { width:100%
+     !important }” logo acima esticaria de volta o canvas (já redesenhado
+     menor pelo JS) pros 600px originais do wrapper. Só estas 3 ids — as
+     outras páginas/gráficos deste grupo (51, 87, seq) não pediram esse
+     ajuste e continuam com o max-width normal da tela. */
+  #grafico-ia,
+  #grafico-ib,
+  #grafico-ic {
+    max-width: 400px !important;
+  }
+
   .resumo-idif-ifren {
     gap: 15px;
     margin: 6px 0 8px;
