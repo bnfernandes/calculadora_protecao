@@ -203,15 +203,28 @@ function layoutFasorial67(largura, forcarLegendaLateral = false) {
 
     let plotSize, plotLeft, gridBottom, legendOption;
     if (usarLegendaLateral) {
-        const legendWidth = Math.max(110, Math.min(170, largura * 0.32));
-        const gapLegenda = 15;
+        // legendWidth é uma RESERVA (o quanto o círculo encolhe pra abrir
+        // espaço), fixa e independente de `largura` — o tamanho do texto da
+        // legenda não muda com a largura do gráfico. Valor generoso o
+        // bastante pro item mais longo ("Âng. Máx. Torque: 300°").
+        const legendWidth = 140;
+        const gapLegenda = 20; // margem entre o fim do círculo e a legenda
         plotSize = largura - legendWidth - gapLegenda;
         plotLeft = 0;
         gridBottom = 10; // só uma pequena margem inferior, sem legenda aqui embaixo
         legendOption = {
             type: 'scroll',
             orient: 'vertical',
-            right: 5,
+            // Ancorada no fim do CÍRCULO (plotLeft + plotSize + gap), não na
+            // borda do container (`right:5`, versão anterior) — com `right`,
+            // a folga real dependia do quanto a legenda de fato precisava
+            // (largura automática, calcada no conteúdo), podendo encolher
+            // até quase encostar no círculo quando o texto era mais curto
+            // que a reserva estimada (ou pior, mais longo — bug relatado:
+            // ficava colada nele no PDF). Ancorando pelo fim do círculo, a
+            // margem é sempre a mesma, garantida, não importa a largura real
+            // do texto.
+            left: plotLeft + plotSize + gapLegenda,
             top: 'middle',
             itemWidth: 20,
             itemHeight: 12,
