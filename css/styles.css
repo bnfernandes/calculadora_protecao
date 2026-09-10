@@ -116,6 +116,15 @@ body {
   color: #e30613;
   margin-bottom: 30px;
   font-weight: 600;
+  /* Sem isto, herda "normal" do navegador — bem mais espaçado que o resto
+     do site quando o título quebra em 2 linhas (título longo, ex: "Função
+     67 - Proteção Direcional", numa coluna estreita — mais comum na
+     impressão, onde a área útil da página costuma ser mais estreita que a
+     tela). Unitless (não px): escala sozinho com o font-size herdado, então
+     vale igual na tela e na impressão (@media print redefine
+     html{font-size:10px}, ver ESCALA DE TEXTO em equations.css) sem
+     precisar de uma regra separada pra cada uma. */
+  line-height: 1.25;
 }
 
 /* Cabeçalho com título + botão "Gerar PDF" (calc_51/67/87/ref/seq) — reúne o
@@ -134,7 +143,7 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 30px;
+  margin-bottom: 22px;
 }
 
 .cabecalho-pagina .page-title {
@@ -158,7 +167,7 @@ body {
 
 .card-header {
   background-color: #f8f9fa;
-  padding: 15px 20px;
+  padding: 12px 18px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   border-bottom: 1px solid #eee;
@@ -170,6 +179,12 @@ body {
   /* Sem isto, herda o tamanho padrão da tag <h5> do navegador (~0.83em,
      MENOR que o corpo de texto) — ver ESCALA DE TEXTO em equations.css */
   font-size: 1.25rem;
+  /* Mesmo motivo do line-height de .page-title (acima): "normal" (padrão do
+     navegador) fica espaçado demais quando o título quebra em 2 linhas
+     ("Parâmetros de Entrada", "Resultados", ...) numa coluna estreita —
+     mais comum na impressão. Unitless: escala sozinho com o font-size
+     herdado, vale igual na tela e na impressão sem regra separada. */
+  line-height: 1.25;
 }
 
 .card-body {
@@ -1284,6 +1299,20 @@ input[readonly] {
 
   .card-body {
     padding: 10px 14px;
+  }
+
+  /* .card-header (título "Parâmetros de Entrada"/"Resultados"/...) e
+     .cabecalho-pagina (título da página + botão "Gerar PDF") ficaram de
+     fora do aperto acima — continuavam com o padding/margin de tela (15px
+     20px / 30px), destoando do resto já reduzido pra impressão. Mesmo
+     padding de .card-body (acima), pra ficar consistente entre cabeçalho e
+     corpo do card. */
+  .card-header {
+    padding: 10px 14px;
+  }
+
+  .cabecalho-pagina {
+    margin-bottom: 15px;
   }
 
   /* Nunca tinha sido reduzida pra impressão (só a tela: margin-top:20px,
