@@ -292,27 +292,108 @@ function formatarPotenciaDez(expoente) {
     return exp >= 0 ? String(10 ** exp) : (10 ** exp).toFixed(-exp);
 }
 
-// Função para criar gráfico (ECharts, com scroll/zoom nos eixos como na Função 21)
+// Função para criar gráfico (ECharts) — sem zoom/scroll nos eixos (removido a
+// pedido: atrapalhava mais do que ajudava aqui). Os eixos são log-log, mas os
+// dados são pré-convertidos para log10 e plotados num eixo type:'value' comum
+// em vez de um eixo type:'log' nativo — não por causa do zoom (que nem existe
+// mais), mas porque a grade de marcações menores (gerarTicksMenores/
+// gerarTicksDecada, mais abaixo) já é calculada em espaço log10 uniforme,
+// pensada para um eixo linear; os rótulos e o tooltip convertem de volta
+// (10^valor) para mostrar os números reais.
+// Largura (tela) a partir da qual a legenda do gráfico de curva vira lateral,
+// e constantes do layout resultante — compartilhadas com
+// ajustarLegendaToolboxImpressao51 (mais abaixo), que precisa das mesmas
+// contas pra restaurar o grid/título certos depois de imprimir.
+const LARGURA_MIN_LEGENDA_LATERAL_51 = 460;
+const GRID_LEFT_51 = 60;
+const GRID_RIGHT_NATURAL_51 = 30; // margem direita do gráfico em si, igual nos 2 modos
+const GAP_LEGENDA_LATERAL_51 = 20;
+const LARGURA_LEGENDA_LATERAL_51 = 150;
+
+// Decide se a legenda fica lateral e, se sim, ALARGA o container pra caber a
+// coluna da legenda ALÉM do tamanho natural do gráfico — em vez de espremer
+// o gráfico pra caber a legenda dentro da largura de sempre (1ª versão desta
+// ideia; o círculo/curva ficava visivelmente fora do centro, puxado pra
+// esquerda pela margem direita bem maior que a esquerda). Assim o gráfico
+// sempre tem o mesmo tamanho/proporção de quando não há legenda lateral, só
+// squeeze ganha uma coluna extra do lado.
 //
-// Os eixos são log-log, mas o dataZoom do ECharts sempre mapeia a % da barra
-// linearmente sobre o valor bruto do eixo — mesmo em eixo type:'log' (é uma
-// limitação da biblioteca). Isso fazia a barra "acelerar" perto do início e
-// "andar devagar" perto do fim. Para corrigir, os dados são pré-convertidos
-// para log10 e plotados num eixo type:'value' comum (onde % da barra já
-// corresponde a uma distância uniforme); os rótulos e o tooltip convertem de
-// volta (10^valor) para mostrar os números reais.
+// container.dataset.maxWidthOriginal guarda o max-width do HTML (ex:
+// "550px") na 1ª chamada, antes de qualquer alargamento — sem isso, alargar
+// numa chamada e ler esse valor JÁ alargado como "tamanho natural" na
+// próxima faria o container crescer sem parar a cada novo cálculo.
+function ajustarLarguraContainer51(container) {
+    if (container.dataset.maxWidthOriginal === undefined) {
+        container.dataset.maxWidthOriginal = container.style.maxWidth || getComputedStyle(container).maxWidth;
+    }
+    container.style.maxWidth = container.dataset.maxWidthOriginal;
+    const larguraNatural = container.offsetWidth;
+
+    const lateral = larguraNatural >= LARGURA_MIN_LEGENDA_LATERAL_51;
+    if (lateral) {
+        container.style.maxWidth = (larguraNatural + GAP_LEGENDA_LATERAL_51 + LARGURA_LEGENDA_LATERAL_51) + 'px';
+    }
+    // container.offsetWidth de novo: se o pai (card/coluna) não tiver espaço
+    // pro alargamento pedido, o navegador já limita sozinho (width:100% do
+    // pai continua valendo) — containerWidth aqui reflete o que REALMENTE
+    // coube, nunca estoura o layout da página.
+    return { larguraNatural, containerWidth: container.offsetWidth, lateral };
+}
+
+// Config da legenda de tela (lateral ou embaixo) — função à parte (não só
+// inline dentro de criarGrafico) porque ajustarLegendaToolboxImpressao51,
+// mais abaixo, também precisa montar exatamente a mesma legenda ao restaurar
+// o estado de tela depois de imprimir. Cada variante define TODAS as
+// propriedades relevantes (itemWidth/itemHeight/itemGap/textStyle/padding),
+// mesmo repetindo o padrão do ECharts — nunca conta com o setOption anterior
+// (impressão, com valores diferentes) já ter deixado alguma pra trás: um
+// setOption parcial faz merge, não reset, então uma propriedade omitida aqui
+// ficaria com o que sobrou do estado anterior (impressão) em vez do padrão.
+function legendOptionTela51(larguraNatural, lateral) {
+    return lateral
+        ? { type: 'scroll', orient: 'vertical', left: larguraNatural + GAP_LEGENDA_LATERAL_51, top: 'middle', itemWidth: 16, itemHeight: 10, itemGap: 8, textStyle: { fontSize: 9 }, pageIconSize: 9, padding: [4, 4] }
+        : { type: 'scroll', orient: 'horizontal', top: 36, left: 'center', itemWidth: 25, itemHeight: 14, itemGap: 10, textStyle: { fontSize: 12 }, padding: [5, 5] };
+}
+
+// Largura "de projeto" do gráfico de curva NA IMPRESSÃO/PDF — fixa e
+// independente da largura medida na tela (natural ou já alargada pra
+// legenda lateral), pelo mesmo motivo já documentado em
+// LARGURA_IMPRESSAO_FASORIAL_67/SEQ (calc_67_echarts.js/calc_seq_grafico.js):
+// a largura de tela é só o tamanho da janela de quem calculou, sem relação
+// com o papel. Menor que o natural de tela (550) a pedido; sempre com
+// legenda lateral (mesma ideia da 67/seq: a impressão nunca herda a decisão
+// lateral/embaixo tomada pra tela, decide sozinha).
+const LARGURA_IMPRESSAO_NATURAL_51 = 400;
+
+// Grid/título de uma largura "natural" (a do gráfico em si, tela ou
+// impressão) + a largura REAL do container (pode ser maior, quando lateral e
+// alargado pra caber a coluna da legenda) — usada pelas 3 chamadas que
+// precisam montar esse trio (criarGrafico e os 2 ramos de
+// ajustarLegendaToolboxImpressao51), sempre com a mesma conta.
+function opcoesGridTitulo51(larguraNatural, containerWidthReal) {
+    return {
+        gridRight: (containerWidthReal - larguraNatural) + GRID_RIGHT_NATURAL_51,
+        tituloLeft: (GRID_LEFT_51 + larguraNatural - GRID_RIGHT_NATURAL_51) / 2
+    };
+}
+
 function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Altura responsiva (proporcional à largura real do container) em vez de
-    // fixa — antes 800px, o que (a) cortava em monitores comuns (a tela é
-    // quase sempre paisagem, sobra pouca altura de viewport) e (b) numa tela
-    // de celular a largura encolhe mas a altura continuava travada em 800px,
-    // deixando o gráfico espremido e desproporcional. ×1.2 mantém a
-    // orientação vertical (mais alto que largo) em qualquer largura; piso e
-    // teto evitam ficar baixo demais numa tela minúscula ou alto demais.
-    container.style.height = Math.max(380, Math.min(660, container.offsetWidth * 1.2)) + 'px';
+    const { larguraNatural, containerWidth, lateral: usarLegendaLateral51 } = ajustarLarguraContainer51(container);
+
+    // Altura responsiva (proporcional à largura NATURAL do gráfico, não à
+    // largura total já alargada com a coluna da legenda — senão o alto
+    // ficaria calculado como se o círculo fosse bem maior do que realmente
+    // é) em vez de fixa — antes 800px, o que (a) cortava em monitores
+    // comuns (a tela é quase sempre paisagem, sobra pouca altura de
+    // viewport) e (b) numa tela de celular a largura encolhe mas a altura
+    // continuava travada em 800px, deixando o gráfico espremido e
+    // desproporcional. ×1.2 mantém a orientação vertical (mais alto que
+    // largo) em qualquer largura; piso e teto evitam ficar baixo demais numa
+    // tela minúscula ou alto demais.
+    container.style.height = Math.max(380, Math.min(660, larguraNatural * 1.2)) + 'px';
 
     const dadosValidos = pontosCurva.correntes.map((corrente, i) => [
         Math.log10(pontoAtuacao ? corrente / pontoAtuacao.parametrosUsados.correntePartida : corrente),
@@ -330,6 +411,19 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         Math.log10(pontoAtuacao ? pontosCurva.correntes[i] / pontoAtuacao.parametrosUsados.correntePartida : pontosCurva.correntes[i]),
         Math.log10(tempoBruto)
     ]).filter(([, logTempo]) => Number.isFinite(logTempo));
+
+    // Só desenha (e só entra na legenda) quando de fato aparece na tela em
+    // algum ponto — compara o tempo bruto com o já limitado pelo piso ponto
+    // a ponto (não os valores de tempoFixoMinimo/faixa da curva, mais
+    // simples e cobre os dois casos pedidos numa checagem só): tempo mínimo
+    // nulo (bruto === piso sempre, por definição de Math.max) e tempo
+    // mínimo menor que o piso natural da curva em toda a faixa plotada
+    // (Math.max nunca escolhe o piso). Nos dois casos o traço cinza ficaria
+    // 100% encoberto pelo vermelho, então nem vale a pena desenhar.
+    const curvaSemTempoMinimoVisivel = (pontosCurva.temposBrutos || []).some((bruto, i) => {
+        const piso = pontosCurva.tempos[i];
+        return Number.isFinite(bruto) && Number.isFinite(piso) && Math.abs(bruto - piso) > 1e-9;
+    });
 
     // Corrente/tempo fora da faixa de atuação da curva (ex: I/I0 abaixo do
     // pickup) resultam em tempoAtuacao = Infinity — log10 disso não é um
@@ -365,8 +459,13 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     // A curva não válida (cinza) também dimensiona os eixos, igual à curva
     // válida acima — senão a parte dela que se estende além do piso do tempo
     // mínimo ficaria cortada fora da área visível, sem cumprir o propósito
-    // de mostrar a continuação.
-    dadosBrutos.forEach(([x, y]) => { valoresX.push(x); valoresY.push(y); });
+    // de mostrar a continuação. Só quando ela de fato aparece (ver
+    // curvaSemTempoMinimoVisivel) — do contrário seus pontos são idênticos
+    // aos de dadosValidos, já incluídos acima, então não mudaria nada mesmo
+    // entrando.
+    if (curvaSemTempoMinimoVisivel) {
+        dadosBrutos.forEach(([x, y]) => { valoresX.push(x); valoresY.push(y); });
+    }
     if (valoresX.length === 0) valoresX.push(0); // caso degenerado: nenhum ponto finito
     if (valoresY.length === 0) valoresY.push(0);
     const xMin = Math.min(...valoresX) - MARGEM_EIXO_DECADAS;
@@ -410,19 +509,24 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             lineStyle: { color: '#eee', type: 'solid', width: 1 },
             data: gradesMenores
         }
-    }, {
-        // Mesma zlevel da curva válida, mas entra ANTES dela no array — na
-        // mesma zlevel, quem entra depois é desenhado por cima, então o
-        // vermelho sempre cobre o cinza onde os dois coincidem.
+    },
+    // Só entra no array quando de fato aparece (curvaSemTempoMinimoVisivel) —
+    // tempo mínimo nulo ou irrelevante pra faixa plotada nem calcula/mostra
+    // essa curva, nem na legenda. Mesma zlevel da curva válida, mas entra
+    // ANTES dela no array — na mesma zlevel, quem entra depois é desenhado
+    // por cima, então o vermelho sempre cobre o cinza onde os dois coincidem
+    // (quando ambas aparecem).
+    ...(curvaSemTempoMinimoVisivel ? [{
         name: 'Curva sem tempo mínimo',
         type: 'line',
         data: dadosBrutos,
-        lineStyle: { color: '#ccc', width: 2 },
+        lineStyle: { color: '#ccc', width: 2, type: 'dotted' },
         itemStyle: { color: '#ccc' },
         symbol: 'none',
         smooth: false,
         zlevel: 1
-    }, {
+    }] : []),
+    {
         name: 'Curva de Proteção',
         type: 'line',
         data: dadosValidos,
@@ -487,9 +591,13 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     // série, herdado automaticamente pela legenda sem precisar de ícone à
     // parte.
     const iconeLinha = 'path://M-10,-1.5L10,-1.5L10,1.5L-10,1.5Z'; // barra fina = linha sem marcador
+    // 5 pontinhos (mais numerosos e menores que os 3 traços de "Projeção do
+    // Ponto" abaixo) — combina com o type:'dotted' da linha real da curva
+    // sem tempo mínimo, sem confundir com o tracejado da projeção.
+    const iconePontilhado = 'path://M-9,-1L-7,-1L-7,1L-9,1Z M-5,-1L-3,-1L-3,1L-5,1Z M-1,-1L1,-1L1,1L-1,1Z M3,-1L5,-1L5,1L3,1Z M7,-1L9,-1L9,1L7,1Z';
     const ICONES_LEGENDA = {
         'Curva de Proteção': { icon: iconeLinha, itemStyle: { color: '#e30613' } },
-        'Curva sem tempo mínimo': { icon: iconeLinha, itemStyle: { color: '#ccc' } },
+        'Curva sem tempo mínimo': { icon: iconePontilhado, itemStyle: { color: '#ccc' } },
         // 3 barrinhas PREENCHIDAS (mesma técnica de retângulo fechado do
         // iconeLinha acima, só que 3 vezes com vãos) em vez de contorno
         // tracejado sobre um traço de área zero — este saía sólido na
@@ -506,6 +614,26 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         ...nomesSeries.filter(nome => nome === 'Curva sem tempo mínimo')
     ].map(nome => ICONES_LEGENDA[nome] ? { name: nome, ...ICONES_LEGENDA[nome] } : nome);
 
+    // Legenda lateral (coluna vertical à direita do gráfico) em vez de no
+    // topo, quando o container é largo o bastante — mesma ideia já usada nos
+    // fasoriais da 67/Componentes Simétricas, mas posicionada por `left`
+    // (logo depois do fim natural do gráfico + um respiro pequeno,
+    // GAP_LEGENDA_LATERAL_51) em vez de `right` (rente à borda do
+    // container): como o container já foi alargado especificamente pra
+    // caber essa coluna (ajustarLarguraContainer51, topo do arquivo), ancorar
+    // pela borda direita funcionaria igual na prática, mas ancorar pelo fim
+    // do gráfico deixa a intenção clara mesmo se o container não alargar
+    // totalmente (ex: pai sem espaço de sobra) — a legenda sempre cola
+    // imediatamente após o círculo, nunca flutua solta longe dele.
+    const legendOption51 = legendOptionTela51(larguraNatural, usarLegendaLateral51);
+    const gridTop51 = usarLegendaLateral51 ? 45 : 70;
+    // Centraliza o título sobre o gráfico em si (largura NATURAL), nunca
+    // sobre o container inteiro (que pode incluir a coluna da legenda) —
+    // title.left:'center' (padrão do ECharts) centralizaria contra o
+    // container inteiro, puxando o título visivelmente pra direita do
+    // centro real do gráfico quando há legenda lateral.
+    const { gridRight: gridRight51, tituloLeft: tituloLeft51 } = opcoesGridTitulo51(larguraNatural, containerWidth);
+
     // Reaproveita a instância existente no container, se houver
     const chart = echarts.getInstanceByDom(container) || echarts.init(container);
 
@@ -513,7 +641,8 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         title: {
             text: 'Curva Característica de Proteção',
             top: 8,
-            left: 'center',
+            left: tituloLeft51,
+            textAlign: 'center',
             textStyle: { fontSize: 16, fontWeight: 'bold' }
         },
         tooltip: {
@@ -523,26 +652,23 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
         // Título, legenda e toolbox cada um em sua própria linha, para nunca
         // sobrepor uns aos outros em telas estreitas
         legend: {
-            type: 'scroll',
-            data: dadosLegenda,
-            top: 36,
-            left: 'center'
+            ...legendOption51,
+            data: dadosLegenda
         },
         // Margens em pixels (não %) para a área do gráfico ficar de fato mais
         // alta que larga — em % elas cresceriam junto com a altura do
         // container e a área plotada continuaria quase quadrada
         grid: {
-            left: 60,
-            right: 90,
-            top: 95,
-            bottom: 90,
+            left: GRID_LEFT_51,
+            right: gridRight51,
+            top: gridTop51,
+            bottom: 55,
             containLabel: true,
-            // Borda nos 4 lados da área plotada — antes só ficavam visíveis
-            // as linhas dos próprios eixos (embaixo e à esquerda) e, na
-            // tela, as barras de zoom (embaixo e à direita) davam a
-            // impressão de uma borda parcial e inconsistente. Mesma cor das
-            // grades de década (estiloDecada), pra parecer uma extensão da
-            // própria grade em vez de um elemento novo destoante.
+            // Borda nos 4 lados da área plotada — sem isto só ficam visíveis
+            // as linhas dos próprios eixos (embaixo e à esquerda), dando a
+            // impressão de uma borda parcial. Mesma cor das grades de década
+            // (estiloDecada), pra parecer uma extensão da própria grade em
+            // vez de um elemento novo destoante.
             show: true,
             borderColor: '#ccc',
             borderWidth: 1
@@ -552,7 +678,10 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             name: 'I/I₀',
             nameLocation: 'middle',
             nameGap: 30,
-            nameTextStyle: { fontSize: 14, fontWeight: 'bold' },
+            // Sem "color" explícito, herda o cinza padrão do tema do
+            // ECharts (o mesmo dos números do eixo) — bem mais claro que o
+            // resto do texto do site, pedido pra escurecer
+            nameTextStyle: { fontSize: 14, fontWeight: 'bold', color: '#333' },
             // Começa um pouco antes de 1 (10^-0.2 ≈ 0.63), só para dar um
             // respiro antes da curva. Sem "interval" fixo aqui de propósito:
             // com esse mínimo fora de uma potência de dez, um interval fixo
@@ -570,9 +699,9 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             // topo e direita (só a borda do grid, sem linha de eixo) ficavam
             // mais claros — dava a impressão de borda desigual nos 4 lados.
             axisLine: { onZero: false, lineStyle: { color: '#ccc' } },
-            // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
-            // limite do zoom que não cai numa potência de dez — como as
-            // grades menores já marcam a régua toda, essas ficam desativadas
+            // As marquinhas nativas do eixo coincidiriam com as grades
+            // menores (markLine da série "GradeMenor", que já marcam a
+            // régua toda) — desativadas pra não duplicar
             axisTick: { show: false },
             axisLabel: { formatter: formatarPotenciaDez },
             // Grade tracejada nativa desativada a pedido — só ficam as
@@ -584,7 +713,7 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             name: 'Tempo (s)',
             nameLocation: 'middle',
             nameGap: 50,
-            nameTextStyle: { fontSize: 14, fontWeight: 'bold' },
+            nameTextStyle: { fontSize: 14, fontWeight: 'bold', color: '#333' },
             // Sem "interval" fixo aqui de propósito (mesmo caso do eixo X):
             // ao dar zoom, o ECharts recalcula os ticks a partir do novo
             // limite visível (raramente redondo) e soma o interval dali —
@@ -600,65 +729,24 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
             // topo e direita (só a borda do grid, sem linha de eixo) ficavam
             // mais claros — dava a impressão de borda desigual nos 4 lados.
             axisLine: { onZero: false, lineStyle: { color: '#ccc' } },
-            // As marquinhas nativas do eixo seguem o mesmo tick "forçado" no
-            // limite do zoom que não cai numa potência de dez — como as
-            // grades menores já marcam a régua toda, essas ficam desativadas
+            // As marquinhas nativas do eixo coincidiriam com as grades
+            // menores (markLine da série "GradeMenor", que já marcam a
+            // régua toda) — desativadas pra não duplicar
             axisTick: { show: false },
             axisLabel: { formatter: formatarPotenciaDez },
             // Grade tracejada nativa desativada a pedido — só ficam as
             // grades menores (markLine da série "GradeMenor")
             splitLine: { show: false }
         },
-        series,
-        toolbox: {
-            feature: {
-                saveAsImage: { title: 'Salvar como imagem', pixelRatio: 2 },
-                dataZoom: { title: { zoom: 'Zoom', back: 'Restaurar' } },
-                restore: { title: 'Restaurar' }
-            },
-            right: 10,
-            top: 64
-        },
-        dataZoom: [
-            { type: 'inside', xAxisIndex: 0, filterMode: 'none' },
-            { type: 'inside', yAxisIndex: 0, filterMode: 'none' },
-            { type: 'slider', xAxisIndex: 0, filterMode: 'none', bottom: 10 },
-            { type: 'slider', yAxisIndex: 0, filterMode: 'none', right: 10 }
-        ]
+        // Zoom/scroll nos eixos removido a pedido (atrapalhava mais do que
+        // ajudava) — toolbox removido junto (só tinha o ícone de "salvar
+        // como imagem", também a pedido). Sem dataZoom, os eixos são sempre
+        // a faixa inteira calculada (xMin/xMax/yMin/yMax), então as
+        // linhas-guia da "Projeção do Ponto" (mais abaixo, no push da
+        // série) já terminam direto nessas bordas, sem precisar recalcular
+        // em nenhum evento.
+        series
     }, true);
-
-    // As linhas-guia terminam nas bordas do eixo (xMin/yMin) — mas isso é a
-    // borda do eixo INTEIRO, não da área visível depois de um zoom. Se o
-    // usuário der zoom e cortar fora a ponta onde a linha termina, ela some
-    // (o ECharts não desenha um markLine cujo ponto final ficou fora do
-    // range atualmente visível). Por isso, a cada zoom/pan, recalcula os
-    // pontos finais para a borda VISÍVEL no momento, lendo o start/end (%)
-    // dos componentes dataZoom e convertendo de volta pra valor no eixo.
-    if (pontoValido) {
-        const xPonto = Math.log10(pontoAtuacao.fatorCalculado);
-        const yPonto = Math.log10(pontoAtuacao.tempoAtuacao);
-
-        const atualizarLinhasGuia = () => {
-            const dz = chart.getOption().dataZoom;
-            const visivelXMin = xMin + (xMax - xMin) * dz[0].start / 100;
-            const visivelYMin = yMin + (yMax - yMin) * dz[1].start / 100;
-
-            chart.setOption({
-                series: [{
-                    name: 'Projeção do Ponto',
-                    markLine: {
-                        data: [
-                            [{ coord: [xPonto, yPonto] }, { coord: [xPonto, Math.min(visivelYMin, yPonto)] }],
-                            [{ coord: [xPonto, yPonto] }, { coord: [Math.min(visivelXMin, xPonto), yPonto] }]
-                        ]
-                    }
-                }]
-            });
-        };
-
-        chart.off('datazoom');
-        chart.on('datazoom', atualizarLinhasGuia);
-    }
 
     // Reaproveita a mesma instância entre recálculos (getInstanceByDom acima)
     // — registra o listener de resize só na primeira vez, senão cada novo
@@ -669,28 +757,78 @@ function criarGrafico(containerId, pontosCurva, pontoAtuacao = null) {
     }
 }
 
-// Legenda ("Curva de Proteção"/"Ponto de Atuação"/"Projeção do Ponto") e
-// toolbox (ícones de zoom/restaurar/salvar imagem) não servem pra nada no
-// papel — nada clicável, e a curva/marcador já são claros sem o rótulo. A
+// Impressão: gráfico menor (LARGURA_IMPRESSAO_NATURAL_51, independente do
+// tamanho de tela) e legenda lateral — igual à tela, e sempre lateral (nunca
+// herda a decisão embaixo/lateral tomada pra tela, mesma ideia de
+// LARGURA_IMPRESSAO_FASORIAL_67/SEQ). type:'plain' em vez de 'scroll' (que
+// paginaria com setas "◀ 1/2 ▶" clicáveis — no papel esconderia itens sem
+// jeito de ver a página seguinte, mesmo cuidado já tomado pra impressão da
+// Componentes Simétricas, calc_seq_grafico.js) — na prática os 4 itens
+// sempre cabem numa coluna vertical só, mas o type certo evita qualquer
+// risco se a lista crescer no futuro. O toolbox já foi removido de vez do
+// gráfico, não só da impressão — não precisa mais ser alternado aqui. A
 // barra de zoom em si já é tratada à parte por alternarBarrasZoomImpressao
-// (main.js). Chamada do clique em "Gerar PDF" (antes do print) e do evento
-// afterprint (restaura o estado interativo normal da tela) — nunca do
-// beforeprint, mesmo motivo já documentado em main.js: setOption ali
-// corrompe o snapshot de impressão.
+// (main.js, sem efeito aqui desde que o dataZoom foi removido). Chamada do
+// clique em "Gerar PDF" (antes do print) e do evento afterprint (restaura o
+// estado interativo normal da tela) — nunca do beforeprint, mesmo motivo já
+// documentado em main.js: setOption ali corrompe o snapshot de impressão.
 function ajustarLegendaToolboxImpressao51(paraImpressao) {
-    const chart = echarts.getInstanceByDom(document.getElementById('grafico-curva'));
-    if (!chart) return;
-    chart.setOption({
-        legend: { show: !paraImpressao },
-        toolbox: { show: !paraImpressao },
-        // Sem legenda/toolbox/barra de zoom, o espaço reservado pra eles
-        // (topo e direita) e pra barra de zoom horizontal (embaixo) sobra em
-        // branco — aperta as margens só nesse estado; containLabel:true
-        // ainda expande automaticamente se algum rótulo não couber.
-        grid: paraImpressao
-            ? { top: 40, right: 20, bottom: 55 }
-            : { top: 95, right: 90, bottom: 90 }
-    });
+    const container = document.getElementById('grafico-curva');
+    const chart = echarts.getInstanceByDom(container);
+    if (!chart || !container) return;
+
+    // O ECharts só faz merge de propriedades entre chamadas de setOption
+    // quando o "type"/"orient" do componente não muda — mudar legend.type
+    // ('scroll' <-> 'plain') ou orient faz tratar como um componente novo,
+    // descartando "data" (os ícones customizados) em vez de herdá-lo.
+    // Captura o data ATUAL antes de trocar essas propriedades, pra reenviar
+    // explicitamente nos dois ramos abaixo (testado: sem isso, a legenda
+    // ficava sem nenhum item).
+    const dadosLegendaAtual = chart.getOption().legend[0].data;
+
+    if (paraImpressao) {
+        if (container.dataset.maxWidthOriginal === undefined) {
+            container.dataset.maxWidthOriginal = container.style.maxWidth || getComputedStyle(container).maxWidth;
+        }
+        container.style.maxWidth = (LARGURA_IMPRESSAO_NATURAL_51 + GAP_LEGENDA_LATERAL_51 + LARGURA_LEGENDA_LATERAL_51) + 'px';
+        const containerWidth = container.offsetWidth;
+        const { gridRight, tituloLeft } = opcoesGridTitulo51(LARGURA_IMPRESSAO_NATURAL_51, containerWidth);
+
+        chart.setOption({
+            legend: {
+                show: true,
+                ...legendOptionTela51(LARGURA_IMPRESSAO_NATURAL_51, true),
+                type: 'plain',
+                data: dadosLegendaAtual
+            },
+            title: { left: tituloLeft, textAlign: 'center' },
+            grid: { top: 45, right: gridRight, bottom: 55 }
+        });
+        // O container mudou de tamanho (acima) mas o CANVAS do ECharts
+        // continua com a resolução antiga (a da tela) até algo pedir pra
+        // remedir — setOption sozinho não faz isso. Sem o resize(), a nova
+        // margem valeria contra a largura antiga, e o gráfico "esticaria"
+        // visualmente pro espaço sobrando, cortado só pela borda de verdade
+        // do container na hora de imprimir de fato. Aqui é seguro chamar
+        // (dispara no clique de "Gerar PDF", nunca no beforeprint — mesma
+        // regra de sempre).
+        chart.resize();
+    } else {
+        // Restaura o estado de tela recalculando do zero pela mesma função
+        // de criarGrafico — inclusive realarga o container se a legenda
+        // lateral estiver ativa (a impressão, acima, sempre usa seu próprio
+        // tamanho fixo, nunca o de tela).
+        const { larguraNatural, containerWidth, lateral } = ajustarLarguraContainer51(container);
+        const { gridRight, tituloLeft } = opcoesGridTitulo51(larguraNatural, containerWidth);
+        chart.setOption({
+            legend: { show: true, ...legendOptionTela51(larguraNatural, lateral), data: dadosLegendaAtual },
+            title: { left: tituloLeft, textAlign: 'center' },
+            grid: { top: lateral ? 45 : 70, right: gridRight, bottom: 55 }
+        });
+        // Mesmo motivo do resize() no ramo de impressão, acima, só que
+        // devolvendo o canvas pro tamanho de tela (que pode ter alargado).
+        chart.resize();
+    }
 }
 
 // Exporta as funções para uso global
