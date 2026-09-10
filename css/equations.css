@@ -229,6 +229,16 @@
     margin: 0 6px;
 }
 
+/* O 1º termo de gradeTermosHTML67/gradeTermosHTML (sem sinal antes dele, ex.
+   "(66.40∠240°) - (66.40∠120°)") usa um rótulo VAZIO só pra manter a grid de
+   2 colunas alinhada quando empilhado (.eq-empilhado, mais abaixo, já zera a
+   margem à parte) — sem isto, fora do modo empilhado a margem de 6px de
+   cada lado do rótulo (acima) ainda se aplicava ao span vazio, abrindo um
+   vão de 12px entre o "=" da linha e o 1º termo. */
+.eq-termo-rotulo:empty {
+    margin: 0;
+}
+
 /* Termos "empilháveis" das equações grandes (substituição numérica, ex.
    "A = (0.577∠150°) + (2.000∠0°) + (0.577∠-150°)") — largas demais pra
    caber numa linha só em telas/espaços estreitos, onde o navegador
